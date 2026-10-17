@@ -362,6 +362,7 @@ textarea.inp{font-family:ui-monospace,Menlo,monospace;font-size:12px;min-height:
 .codebox b{font-size:19px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace}
 @media (max-width:340px){ .donut-wrap{grid-template-columns:1fr} .donut-wrap svg{max-width:160px;margin:0 auto} }
 @media (prefers-reduced-motion:reduce){ *,*::before{animation:none!important;transition:none!important} .anim .ln:not(.dash){stroke-dasharray:none;stroke-dashoffset:0} }
+.loanbox{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:13.5px}.loanbox .lr b{white-space:nowrap}.loanbox .lr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}.loanbox .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.loanbox .tiny{font-size:11.5px;line-height:1.4}
 </style>
 
 <div class="app">
@@ -721,11 +722,12 @@ const giftsLocked=()=>S.tx.filter(t=>t.by!==S.me&&(t.sealed||t.hidden));
 const kitaCount=()=>S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length+giftsReady().length;
 function ago(ts){const d=(Date.now()-ts)/36e5;if(d<1)return 'baru saja';if(d<24)return Math.round(d)+' jam lalu';const dd=Math.round(d/24);return dd===1?'kemarin':dd+' hari lalu';}
 function totals(k,uptoDay,scope){
-  const r={in:0,out:0,hin:0,hout:0,cats:{},icats:{},ip:{},op:{},bi:{},bo:{},ba:{},aset:0,n:0},own=scope&&scope!=='home';
+  const r={in:0,out:0,hin:0,hout:0,cats:{},icats:{},ip:{},op:{},bi:{},bo:{},ba:{},aset:0,n:0,L:{}},own=scope&&scope!=='home';
   inMonth(k).forEach(t=>{if(uptoDay&&+t.date.slice(8)>uptoDay)return;
     const ub=!!t.biz&&isUsaha(t.biz);
     if(scope==='home'&&ub)return;if(own&&t.biz!==scope)return;r.n++;
     if(t.type==='in'){r.in+=t.amount;r.ip[t.pocket]=(r.ip[t.pocket]||0)+t.amount;if(ub)r.bi[t.biz]=(r.bi[t.biz]||0)+t.amount;else r.hin+=t.amount;if(!ub||own)r.icats[t.cat]=(r.icats[t.cat]||0)+t.amount;}
+    else if(t.type==='loan'){r.L[t.lk]=(r.L[t.lk]||0)+t.amount;}
     else if(t.type==='out'){const as=ub&&t.cat==='aset';
       if(own&&as){r.aset+=t.amount;return;}
       r.out+=t.amount;r.op[t.pocket]=(r.op[t.pocket]||0)+t.amount;
@@ -895,13 +897,16 @@ function donutCard(key,obj,total,label,kind){
 }
 
 /* ---------- views ---------- */
+function loanBox(L){const it=[['cair','Dana gadai/pinjaman masuk',1],['tebus','Pinjaman dilunasi',-1],['beri','Dipinjamkan ke orang',-1],['kembali','Piutang kembali',1]].filter(x=>L[x[0]]);
+  if(!it.length)return '';
+  return '<div class="loanbox">'+it.map(x=>'<div class="lr"><span class="small muted"><span class="dot" style="background:var(--'+(x[2]>0?'in':'out')+')"></span>'+x[1]+'</span><b class="num">'+(x[2]>0?'+':'−')+fmt(L[x[0]])+'</b></div>').join('')+'<div class="tiny muted" style="margin-top:4px">Ikut dihitung di sisa uang, tapi bukan pemasukan atau pengeluaran (uang pinjam-meminjam).</div></div>';}
 function vHome(){
   const mb=MODE();if(mb)return meBanner()+(bkind(mb)==='usaha'?vBizHome(mb):vBookHome(mb));
-  const t=totals(CUR),bal=t.in-t.out,st=balanceState(t.in,t.out),used=t.in>0?Math.min(100,t.out/t.in*100):(t.out>0?100:0);
+  const t=totals(CUR),L=t.L,lnet=(L.cair||0)+(L.kembali||0)-(L.tebus||0)-(L.beri||0),bal=t.in-t.out+lnet,st=balanceState(t.in,t.out),used=t.in>0?Math.min(100,t.out/t.in*100):(t.out>0?100:0);
   let h=meBanner()+syncBanner()+sampleBanner()+giftTeaser()+recCard();
   h+='<section class="hero"><div class="eyebrow">Sisa uang '+esc(mshort(CUR))+'</div><div class="big '+(bal<0?'neg':'')+'" id="herobig" data-to="'+bal+'">'+fmt(bal)+'</div>'+
     '<div class="io"><div><span class="small muted"><span class="dot in"></span>Pemasukan</span><b>'+fmt(t.in)+'</b></div><div><span class="small muted"><span class="dot out"></span>Pengeluaran</span><b>'+fmt(t.out)+'</b></div></div>'+
-    '<div class="meter"><div class="track" role="img" aria-label="Pengeluaran '+pct(t.out,t.in)+' persen dari pemasukan"><div class="fill '+st.f+'" id="herofill" style="width:'+(ANIM?0:used)+'%" data-w="'+used+'"></div></div>'+
+    loanBox(L)+'<div class="meter"><div class="track" role="img" aria-label="Pengeluaran '+pct(t.out,t.in)+' persen dari pemasukan"><div class="fill '+st.f+'" id="herofill" style="width:'+(ANIM?0:used)+'%" data-w="'+used+'"></div></div>'+
     '<div class="meter-row"><span class="muted">'+(t.in>0?'Terpakai <b class="num">'+pct(t.out,t.in)+'%</b> dari pemasukan':'Keseimbangan masuk–keluar')+'</span><span class="pill '+st.cls+'">'+st.t+'</span></div></div>'+(Object.keys(t.bi).length||Object.keys(t.bo).length?'<div class="infobox"><span>Termasuk usaha: laba <b class="num" style="color:'+(t.bizNet<0?'var(--out)':'var(--in)')+'">'+fmt(t.bizNet)+'</b></span><button class="link" data-act="mode">Lihat per usaha</button></div>':'')+'</section>';
   const B=balances(),tb=Object.keys(B).reduce((a,k)=>a+B[k],0);
   h+='<section><div class="card-h" style="margin-bottom:8px"><h2>Kantong</h2><span class="small muted">Total <b class="num" style="color:var(--ink)">'+fmt(tb)+'</b></span></div><div class="pockets">'+
