@@ -466,7 +466,7 @@ const DEFAULT_POCKETS=[
   {id:'gaji',n:'Gaji',k:0,start:0},{id:'usaha',n:'Usaha',k:1,start:0},{id:'emas',n:'Tabungan Emas',k:5,start:0,save:true},
   {id:'side1',n:'Sidejob 1',k:2,start:0},{id:'side2',n:'Sidejob 2',k:3,start:0}];
 const DEFAULT_MEMBERS=()=>[{id:'m1',n:'Suami',k:0,hideCats:['bonus'],u:1},{id:'m2',n:'Istri',k:3,hideCats:[],u:1}];
-const BKINDS={usaha:{n:'Usaha'},tabungan:{n:'Tabungan target'},cicilan:{n:'Cicilan & utang'},investasi:{n:'Investasi'},piutang:{n:'Piutang (dipinjam orang)'}};
+const BKINDS={usaha:{n:'Usaha'},tabungan:{n:'Tabungan target'},cicilan:{n:'Cicilan, utang & gadai'},investasi:{n:'Investasi'},piutang:{n:'Piutang (dipinjam orang)'}};
 const sampleBooks=()=>[
   {id:'t1',n:'Tabungan Haji',kind:'tabungan',k:4,pocket:'haji',target:35000000,deadline:iso(new Date(new Date().getFullYear()+5,4,1)),sample:true,u:1},
   {id:'c1',n:'Cicilan Rumah',kind:'cicilan',k:1,pocket:'gaji',total:180000000,inst:2150000,due:10,sample:true,u:1},
@@ -986,7 +986,7 @@ function vAdd(){
   const aiLine=ai&&ai.conf>0?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg><span>AI menebak <b>'+esc(cat(cty,ai.best).n)+'</b> · '+Math.round(ai.conf*100)+'% yakin</span>'
     :'<span class="muted">Ketik keterangan, AI akan memilih kategori dan kantong. Bisa langsung tulis nominal, misal <b>bakso 15rb</b>.</span>';
   const tabHint=!F.biz&&ty==='out'&&F.cat==='tabungan'&&activePockets().some(p=>p.save)?'<div class="ai"><span>Menabung ke kantong sendiri? Pakai <b>Pindah</b> supaya saldonya tetap terhitung.</span><button class="link" data-act="ftype:tf">Jadikan pindah</button></div>':'';
-  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+desc+amt+'<div class="field"><span class="flabel">Untuk</span><div class="chips" id="fbiz">'+bizChips()+'</div></div><div class="ai" id="fai">'+aiLine+'</div>'+
+  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+(ty==='in'&&!F.biz?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+'<div class="field"><span class="flabel">Untuk</span><div class="chips" id="fbiz">'+bizChips()+'</div></div><div class="ai" id="fai">'+aiLine+'</div>'+
     '<div class="field"><span class="flabel">Kategori</span><div class="chips" id="fcats">'+list.map(c=>'<button class="chip" data-act="fcat:'+c.id+'" aria-pressed="'+(F.cat===c.id)+'">'+esc(c.n)+(ai&&ai.conf>0&&ai.best===c.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'</div></div>'+
     '<div id="ftab">'+tabHint+'</div>'+
     '<div class="field"><span class="flabel">'+(ty==='out'?'Ambil dari kantong':'Masuk ke kantong')+'</span>'+pocketChips('fpk',F.pocket,'fpk',B,null,amount,ty==='out')+'</div>'+
@@ -1171,7 +1171,7 @@ function modeSheet(){
   let h='<section class="card"><div class="plist">'+row('home','Rp','var(--accent)','Rumah tangga','Semua kantong, pengeluaran harian, dan ringkasan semua buku')+'</div></section>';
   Object.keys(BKINDS).forEach(k=>{const L=activeBiz().filter(b=>bkind(b)===k);if(!L.length)return;
     h+='<section class="card"><div class="eyebrow" style="margin-bottom:4px">'+BKINDS[k].n+'</div><div class="plist">'+L.map(b=>row(b.id,esc(b.n.charAt(0)),'var(--k'+b.k+')',b.n,bookSub(b))).join('')+'</div></section>';});
-  openSheet(sheetHead('Pilih mode')+'<div class="stack">'+h+'<div class="btns"><button class="btn ghost" data-act="newbiz">+ Usaha</button><button class="btn ghost" data-act="newbook">+ Tabungan, cicilan, investasi</button></div><p class="hint">Di mode buku, semua yang kamu catat otomatis masuk ke buku itu, lengkap dengan ringkasan dan grafiknya sendiri.</p></div>');
+  openSheet(sheetHead('Pilih mode')+'<div class="stack">'+h+'<div class="btns"><button class="btn ghost" data-act="newbiz">+ Usaha</button><button class="btn ghost" data-act="newbook">+ Tabungan, cicilan, investasi</button><button class="btn ghost" data-act="gadai">+ Gadai emas</button></div><p class="hint">Di mode buku, semua yang kamu catat otomatis masuk ke buku itu, lengkap dengan ringkasan dan grafiknya sendiri.</p></div>');
 }
 
 /* ---------- online sync (Supabase, code-gated RPC) ---------- */
@@ -1422,8 +1422,8 @@ function bookSub(b){const k=bkind(b);if(k==='usaha'){const t=totals(CUR);return 
   if(k==='piutang'){const q=piuStats(b);return 'belum kembali '+fmtS(q.out)+(b.person?' · '+esc(b.person):'');}
   const s=invStats(b);return fmtQty(s.qty)+' '+esc(s.unit)+(s.price?' · nilai '+fmtS(s.value):' · harga belum ada');}
 function bookSummaryCard(){const L=activeBiz().filter(b=>bkind(b)!=='usaha');
-  if(!L.length)return '<section class="card"><div class="card-h" style="margin:0"><h2>Tabungan, cicilan & investasi</h2><button class="link" data-act="newbook">+ Buat buku</button></div><p class="small muted" style="margin-top:6px">Pantau tabungan haji, cicilan rumah, atau emas di buku tersendiri.</p></section>';
-  return '<section class="card"><div class="card-h"><h2>Tabungan, cicilan & investasi</h2><button class="link" data-act="newbook">+ Buku</button></div>'+L.map(b=>{const k=bkind(b);let pc=0,amt='';
+  if(!L.length)return '<section class="card"><div class="card-h" style="margin:0"><h2>Tabungan, utang, gadai & investasi</h2><button class="link" data-act="newbook">+ Buat buku</button></div><p class="small muted" style="margin-top:6px">Pantau tabungan haji, cicilan rumah, gadai emas, atau investasi emas di buku tersendiri.</p><button class="btn ghost" style="margin-top:10px" data-act="gadai">Catat gadai emas</button></section>';
+  return '<section class="card"><div class="card-h"><h2>Tabungan, utang, gadai & investasi</h2><button class="link" data-act="newbook">+ Buku</button></div>'+L.map(b=>{const k=bkind(b);let pc=0,amt='';
     if(k==='tabungan'){const x=tabStats(b);pc=x.pct;amt=fmtS(x.bal);}else if(k==='cicilan'){const c=cicStats(b);pc=c.total?(c.paid/c.total*100):0;amt=fmtS(c.rem);}else if(k==='piutang'){const q=piuStats(b);pc=q.given?q.back/q.given*100:0;amt=fmtS(q.out);}else{const v=invStats(b);pc=v.invested>0&&v.price?clamp(50+v.gain/v.invested*250,2,100):0;amt=v.price?fmtS(v.value):'—';}
     return '<button class="cbar" data-act="setmode:'+b.id+'"><span class="mono" style="--c:var(--k'+b.k+')">'+esc(b.n.charAt(0))+'</span><div style="min-width:0"><div class="lbl"><span>'+esc(b.n)+'</span><span class="muted small">'+BKINDS[k].n+'</span></div><div class="track"><div class="fill" style="width:'+pc+'%;background:var(--k'+b.k+')"></div></div><span class="hint">'+bookSub(b)+'</span></div><span class="amt">'+amt+'</span></button>';}).join('')+'</section>';}
 function bookAlerts(){const out=[],td=new Date().getDate();
@@ -1950,7 +1950,10 @@ document.addEventListener('click',e=>{
   if(a.indexOf('bpk:')===0){EDITB.pocket=v;pickIn('bz-pk','bpk',el);return;}
   if(a.indexOf('bkind:')===0){const nm=(document.getElementById('bz-name')||{}).value||'';bizSheet(null,v,nm);return;}
   if(a.indexOf('bsrc:')===0){EDITB.src=v;document.querySelectorAll('#bz-src button').forEach(x=>x.setAttribute('aria-pressed',x===el));return;}
-  if(a==='newbook'){bizSheet(null,'tabungan');return;}
+  if(a==='newbook'){UI.gadaiNext=0;bizSheet(null,'tabungan');return;}
+  if(a==='gadai'){const g=activeBiz().find(b=>bkind(b)==='cicilan'&&/gadai/i.test(b.n));
+    if(g){closeSheet();S.mode=g.id;save();TAB='add';F=newForm('cair',{typeManual:true});render(true);window.scrollTo(0,0);toast('Catat uang gadai di buku '+g.n);const fo=document.getElementById('famt');if(fo)fo.focus();}
+    else{UI.gadaiNext=1;bizSheet(null,'cicilan','Gadai Emas');}return;}
   if(a==='bsave'){const g=i=>document.getElementById(i),name=g('bz-name').value.trim(),er=g('bz-err'),fail=m=>{er.textContent=m;er.hidden=false;};
     if(!name){fail('Beri namanya dulu.');g('bz-name').focus();return;}
     const o={n:name,k:EDITB.k,kind:EDITB.kind,u:Date.now()},dec=x=>parseFloat(String(x||'0').replace(',','.'))||0;
@@ -1966,7 +1969,7 @@ document.addEventListener('click',e=>{
     if(EDITB.id){Object.assign(bizOf(EDITB.id),o);save();closeSheet();render();toast(name+' disimpan');}
     else{const id='b'+uid();S.biz.push(Object.assign({id},o));save();closeSheet();
       if(TAB==='add'&&o.kind==='usaha'&&!BOOKT[F.type]&&F.type!=='tf'){F.biz=id;F.bizManual=true;F.cat=null;F.catManual=false;F.pocketManual=false;refreshForm();toast('Usaha '+name+' terdaftar');}
-      else{S.mode=id;save();TAB='home';render(true);window.scrollTo(0,0);toast(BKINDS[o.kind].n+' '+name+' dibuat');}}
+      else{S.mode=id;save();if(UI.gadaiNext&&o.kind==='cicilan'){UI.gadaiNext=0;TAB='add';F=newForm('cair',{typeManual:true});render(true);window.scrollTo(0,0);toast('Buku '+name+' dibuat. Sekarang catat uang gadai yang diterima.');const fo=document.getElementById('famt');if(fo)fo.focus();}else{TAB='home';render(true);window.scrollTo(0,0);toast(BKINDS[o.kind].n+' '+name+' dibuat');}}}
     if(o.kind==='investasi')fetchGold(true);
     return;}
   if(a==='barchive'&&EDITB.id){const b=bizOf(EDITB.id);b.archived=!b.archived;b.u=Date.now();if(b.archived&&S.mode===b.id)S.mode='home';save();closeSheet();render();toast(b.archived?'Buku diarsipkan':'Buku aktif lagi');return;}
