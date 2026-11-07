@@ -76,13 +76,21 @@ jobs:
           path: out/
 
       - name: Publish GitHub release
-        if: env.SIGNED == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           v="1.0.${{ github.run_number }}"
-          gh release create "android-v$v" out/KasKeluarga.apk \
-            --target "${{ github.sha }}" \
-            --title "Kas Keluarga Android $v" \
-            --notes "APK Android. Pasang di HP: buka file ini, izinkan 'Instal aplikasi tak dikenal' bila diminta. Isi aplikasi otomatis ikut versi terbaru di GitHub Pages." \
-            --latest
+          if [ "$SIGNED" = "1" ]; then
+            gh release create "android-v$v" out/KasKeluarga.apk \
+              --target "${{ github.sha }}" \
+              --title "Kas Keluarga Android $v" \
+              --notes "APK Android. Pasang di HP: buka file ini, izinkan 'Instal aplikasi tak dikenal' bila diminta. Isi aplikasi otomatis ikut versi terbaru di GitHub Pages." \
+              --latest
+          else
+            # Draft releases are visible only to the repo owner: a hand-off point for signing elsewhere.
+            gh release create "android-unsigned-v$v" out/KasKeluarga-unsigned.apk \
+              --target "${{ github.sha }}" \
+              --title "Kas Keluarga Android $v (belum ditandatangani)" \
+              --notes "APK belum ditandatangani, belum bisa dipasang." \
+              --draft
+          fi
