@@ -1,0 +1,88 @@
+name: Android APK
+
+on:
+  push:
+    branches: [aplikasi-android]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install and sync Capacitor
+        working-directory: android-app
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: Restore signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android-app/android/app/release.keystore
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+          else
+            echo "::notice::No ANDROID_KEYSTORE_BASE64 secret, building an unsigned APK"
+          fi
+
+      - name: Build release APK
+        working-directory: android-app/android
+        env:
+          KAS_VERSION_CODE: ${{ github.run_number }}
+          KAS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KAS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KAS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          src=android-app/android/app/build/outputs/apk/release
+          if [ "$SIGNED" = "1" ]; then
+            cp "$src/app-release.apk" out/KasKeluarga.apk
+            apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+            "$apksigner" verify --verbose --print-certs out/KasKeluarga.apk
+          else
+            cp "$src/app-release-unsigned.apk" out/KasKeluarga-unsigned.apk
+          fi
+          rm -f android-app/android/app/release.keystore
+          ls -l out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kas-keluarga-apk-${{ github.run_number }}
+          path: out/
+
+      - name: Publish GitHub release
+        if: env.SIGNED == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="1.0.${{ github.run_number }}"
+          gh release create "android-v$v" out/KasKeluarga.apk \
+            --target "${{ github.sha }}" \
+            --title "Kas Keluarga Android $v" \
+            --notes "APK Android. Pasang di HP: buka file ini, izinkan 'Instal aplikasi tak dikenal' bila diminta. Isi aplikasi otomatis ikut versi terbaru di GitHub Pages." \
+            --latest

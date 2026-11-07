@@ -1,0 +1,19 @@
+{
+  "appId": "io.github.fatahilahuda.kaskeluarga",
+  "appName": "Kas Keluarga",
+  "webDir": "www",
+  "server": {
+    "url": "https://fatahilahuda.github.io/kas-keluarga/",
+    "errorPath": "offline.html",
+    "androidScheme": "https"
+  },
+  "android": {
+    "appendUserAgent": "KasKeluargaAndroid"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}
