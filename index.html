@@ -71,13 +71,19 @@
 :root[data-theme="dark"],:root[data-skin="dark"]{--mk-teal:#3BB3AB;--mk-navy:#4C8DD0;--mk-word:#E7EEF4}
 :root[data-skin="light"],:root[data-skin="pink"]{--mk-teal:#1D7781;--mk-navy:#124E77;--mk-word:#144A73}
 .mk .mk-s1{stop-color:var(--mk-teal)}.mk .mk-s2{stop-color:var(--mk-navy)}.mk .mk-band,.mk .mk-word2{fill:var(--mk-teal)}.mk .mk-word{fill:var(--mk-word)}
-.brand .mk-h{width:34px;height:34px;display:grid;place-items:center;flex:none}.brand .mk-h svg{width:33px;height:33px}
-#modechip{gap:9px;padding:2px 8px 2px 2px}
-#modechip .bt{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1}
-#modechip .bw{display:block;height:17px;width:auto}#modechip .bw svg{height:17px;width:auto;display:block}
-#modechip .bm{display:flex;align-items:center;gap:4px;font-family:var(--body);font-weight:600;font-size:12.5px;color:var(--muted);margin-top:4px;max-width:100%;white-space:nowrap}
-#modechip .bm span{overflow:hidden;text-overflow:ellipsis}#modechip .bm .dot{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none}
-#modechip .bm svg.chev{width:13px;height:13px}
+.brandmark{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;padding:2px 0}
+.brandmark .mk-h{width:34px;height:34px;flex:none}.brandmark .mk-h svg{width:34px;height:34px;display:block}
+.brandmark .bw{display:block;flex:none}.brandmark .bw svg{height:21px;width:auto;display:block}
+.top .ctx{order:3;flex:1 0 100%;min-width:0;max-width:100%;display:flex;gap:8px;align-items:stretch;margin-top:4px}
+#modechip{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 12px 0 10px;color:var(--ink);font-family:var(--body);font-weight:600;font-size:14px;white-space:nowrap}
+#modechip:hover{background:var(--surface-2)}
+#modechip .mi{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c,var(--accent)) 15%,transparent);color:var(--c,var(--accent))}
+#modechip .mi svg{width:15px;height:15px}
+#modechip .mn{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#modechip svg.chev{width:15px;height:15px;flex:none;color:var(--muted);margin-left:auto}
+.top .ctx .month{flex:none}
+.top .ctx .month .ib{width:38px;height:38px}
+.top .ctx .month span{flex:none;min-width:76px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
 .about{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0 4px;text-align:center}
 .about .mk{width:150px;height:auto}
 .mk-lock{width:170px;margin:4px auto 2px}.mk-lock svg{width:100%;height:auto;display:block}
@@ -103,7 +109,7 @@ h2{font-size:17px;font-weight:700}
 p{margin:0}
 
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding-block:10px 10px}
-.top .month{order:3;flex:1 0 100%;justify-content:space-between}
+.top .month{justify-content:space-between}
 .top .month span{flex:1}
 .brand{font-family:var(--display);font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
 .brand span{overflow:hidden;text-overflow:ellipsis}
@@ -655,11 +661,14 @@ body.noscroll{overflow:hidden}
 
 <div class="app">
   <header class="top">
-    <button class="brand" data-act="mode" id="modechip" aria-label="Ganti mode: rumah tangga atau usaha"><span class="mk-h"></span><span class="bt"><span class="bw"></span><span class="bm"><span>Rumah tangga</span></span></span></button>
+    <div class="brandmark" role="img" aria-label="Muarakas"><span class="mk-h" id="brandmk"></span><span class="bw" id="brandwm"></span></div>
+    <div class="ctx">
+    <button data-act="mode" id="modechip" aria-label="Ganti mode: rumah tangga atau usaha"><span class="mn">Rumah tangga</span></button>
     <div class="month" id="monthbar">
       <button class="ib" data-act="mprev" aria-label="Bulan sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
       <span id="mlabel">—</span>
       <button class="ib" data-act="mnext" aria-label="Bulan berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
     </div>
     <button class="ib" data-act="skin" aria-label="Ganti tampilan: terang, gelap, atau pink" id="skinbtn"></button>
     <button class="ib" data-act="settings" aria-label="Pengaturan, kantong, sinkron & cadangan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -2641,8 +2650,9 @@ const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,z
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button><button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button></div>';
 function render(anim){
   ANIM=!!anim&&!RM;
-  const mb=MODE(),mc=document.getElementById('modechip');if(mc)mc.innerHTML='<span class="mk-h">'+mkSvg('mark','mk-gh')+'</span><span class="bt"><span class="bw">'+MK.word+'</span><span class="bm">'+(mb?'<i class="dot" style="--c:var(--k'+mb.k+')"></i><span>'+esc(mb.n)+'</span>':'<span>Rumah tangga</span>')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>';
-  document.getElementById('mlabel').textContent=mname(CUR);
+  const mb=MODE(),mc=document.getElementById('modechip');if(mc)mc.innerHTML=(mb?'<span class="mi" style="--c:var(--k'+mb.k+')">'+ic('store')+'</span><span class="mn">'+esc(mb.n)+'</span>':'<span class="mi">'+ic('home')+'</span><span class="mn">Rumah tangga</span>')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
+  const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
+  const ml=document.getElementById('mlabel');ml.textContent=BLN[+CUR.slice(5,7)-1]+' '+CUR.slice(0,4);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
   document.getElementById('monthbar').hidden=TAB==='add';
   const kc=kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
