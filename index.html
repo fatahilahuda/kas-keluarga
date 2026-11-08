@@ -657,6 +657,20 @@ button.note{cursor:pointer}
 .prelist .mono{--c:var(--accent)}
 .prelist small{display:block;color:var(--muted);font-weight:500;font-size:12.5px}
 body.noscroll{overflow:hidden}
+.gfs .result.has-win{min-height:0;font-family:var(--body);font-size:inherit;display:flex;flex-direction:column;gap:10px}
+.gwin{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:18px;background:color-mix(in srgb,var(--tone) 13%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--tone) 50%,transparent),0 10px 24px color-mix(in srgb,var(--tone) 20%,transparent);animation:gwinIn .5s cubic-bezier(.3,1.5,.5,1) both}
+.gwin .gb{width:50px;height:50px;border-radius:50%;background:var(--tone);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 0 0 5px color-mix(in srgb,var(--tone) 22%,transparent);animation:badgeIn .6s .05s cubic-bezier(.3,1.9,.5,1) both}
+.gwin .gb svg{width:24px;height:24px}.gwin .gb .bigav{font-family:var(--display);font-weight:700;font-size:24px;line-height:1}.gwin .gb .bigemo{font-size:27px;line-height:1}
+.gwin .gt{display:flex;flex-direction:column;min-width:0;gap:1px}
+.gwin small{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--tone) 75%,var(--ink))}
+.gwin b{font-family:var(--display);font-size:22px;line-height:1.15;letter-spacing:-.01em;color:var(--ink)}
+.gwin b .w{display:inline-block;white-space:nowrap}.gwin b .ch{display:inline-block;animation:chIn .45s calc(.1s + var(--d) * 22ms) cubic-bezier(.3,1.9,.5,1) both}
+.gwin .gt>span{font-size:13.5px;color:var(--muted);font-weight:500}
+.gwin.zonk{animation:gwinIn .45s both,shake .45s .35s}
+.gwin.win .gb{animation:badgeIn .6s .05s cubic-bezier(.3,1.9,.5,1) both,glow 1.6s .9s ease-in-out 3}
+.gwin-act{display:flex;flex-direction:column;gap:8px}
+@keyframes gwinIn{from{transform:translateY(10px) scale(.94);opacity:0}}
+.gconf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 
 /* ===== games in 3D: real objects with thickness, light from the top-left ===== */
 .gtile{box-shadow:0 5px 0 color-mix(in srgb,var(--c) 58%,#000),0 12px 22px color-mix(in srgb,var(--c) 28%,transparent),inset 0 1px 0 rgba(255,255,255,.28);margin-bottom:5px;transition:transform .12s,box-shadow .12s}
@@ -1876,16 +1890,21 @@ const buzz=p=>{try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}};
 /* One shared reveal stage for every game: dim backdrop, spring card, turning rays, letter-by-letter title, confetti, fanfare. */
 const splitTitle=s=>{let i=0;return String(s).split(' ').map(w=>'<span class="w">'+Array.from(w).map(ch=>'<span class="ch" style="--d:'+Math.min(i++,24)+'">'+esc(ch)+'</span>').join('')+'</span>').join(' ');};
 function readWheelCustom(){const t=document.getElementById('wheel-custom');if(t)S.wheel.custom=t.value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,12);}
+/* Results show inside the game screen: no dim backdrop, nothing to dismiss, the play button stays one tap away. */
 function celebrate(o){
-  if(!UI.gfs)return;closeCeleb(true);const w=document.createElement('div'),snd=o.sound||'win';w.className='celeb '+snd;w.id='celeb';w.style.setProperty('--tone',o.tone||'var(--accent)');
-  w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label',(o.eyebrow||'Hasil')+': '+o.title);
-  w.innerHTML='<div class="cbg" data-act="celebclose"></div><canvas aria-hidden="true"></canvas><div class="ccard"><div class="rays" aria-hidden="true"></div><div class="cbadge">'+(o.icon||GICON.trophy)+'</div>'+
-    '<p class="eyebrow">'+esc(o.eyebrow||'Hasilnya')+'</p><h2 class="ctitle">'+splitTitle(o.title)+'</h2>'+(o.sub?'<p class="csub">'+esc(o.sub)+'</p>':'')+
-    '<div class="cact">'+(o.actions||[]).map(([l,act,cls])=>'<button class="btn '+(cls||'')+'" data-act="'+act+'">'+esc(l)+'</button>').join('')+'<button class="btn ghost" data-act="celebclose" id="celeb-x">Tutup</button></div></div>';
-  document.body.appendChild(w);celebFocus=document.activeElement;setTimeout(()=>{const x=document.getElementById('celeb-x');if(x)x.focus({preventScroll:true});},60);
+  if(!UI.gfs)return;const fs=document.getElementById('gamefs');if(!fs)return;const snd=o.sound||'win';clearWin();
+  let host=fs.querySelector('.result');
+  if(!host){const anchor=fs.querySelector('#suit-again,#sc-act,[data-act="guessnext"],#stk-go');if(!anchor)return;host=document.createElement('div');host.className='result';anchor.parentNode.insertBefore(host,anchor);}
+  host.id=host.id||'gwin-host';host.classList.remove('pop');host.classList.add('has-win');
+  /* An action that is already on screen (Lempar lagi, Main lagi…) only relabels that button; anything else gets its own button under the result. */
+  const extra=[];(o.actions||[]).forEach(([l,act,cls])=>{const b=fs.querySelector('.gfs-in [data-act="'+act+'"]:not(.gwin *)');if(b){if(b.classList.contains('big'))b.textContent=l;}else extra.push([l,act]);});
+  host.innerHTML='<div class="gwin '+snd+'" style="--tone:'+(o.tone||'var(--accent)')+'"><span class="gb">'+(o.icon||GICON.trophy)+'</span><span class="gt"><small>'+esc(o.eyebrow||'Hasilnya')+'</small><b>'+splitTitle(o.title)+'</b>'+(o.sub?'<span>'+esc(o.sub)+'</span>':'')+'</span></div>'+
+    (extra.length?'<div class="gwin-act">'+extra.map(([l,act])=>'<button class="btn" data-act="'+act+'">'+esc(l)+'</button>').join('')+'</div>':'');
+  try{host.scrollIntoView({block:'nearest',behavior:RM?'auto':'smooth'});}catch(e){}
   SFX.play(snd);buzz(snd==='zonk'?[80]:snd==='draw'?[40,60,40]:[30,40,30,40,140]);
-  if(!RM&&snd!=='zonk')confettiRain(w.querySelector('canvas'),snd==='draw'?0.45:1);
+  if(!RM&&snd==='win'){const cv=document.createElement('canvas');cv.className='gconf';cv.setAttribute('aria-hidden','true');fs.appendChild(cv);confettiRain(cv,.4);setTimeout(()=>cv.remove(),4200);}
 }
+function clearWin(){const fs=document.getElementById('gamefs');if(!fs)return;fs.querySelectorAll('.gconf').forEach(c=>c.remove());fs.querySelectorAll('.has-win').forEach(h=>{if(h.id==='gwin-host')h.remove();else{h.classList.remove('has-win');h.innerHTML='';}});}
 let celebFocus=null;
 function closeCeleb(now){const w=document.getElementById('celeb');if(!w)return;w.id='';if(now||RM){w.remove();}else{w.classList.add('out');setTimeout(()=>w.remove(),220);}
   if(!now&&celebFocus&&celebFocus.isConnected)try{celebFocus.focus({preventScroll:true});}catch(e){}}
@@ -1942,7 +1961,7 @@ function diceSide(i){const m=S.members[i],p=(UI.dv||(UI.dv=[[6,3],[4,1]]))[i],sd
     '<div class="dpair">'+die3('die-'+sd+'1',p[0])+die3('die-'+sd+'2',p[1])+'</div><p class="dnote" id="dnote-'+sd+'">'+(UI.dshown?diceNote(p):'&nbsp;')+'</p></div>';}
 function rollDice(){
   const ids=['die-a1','die-a2','die-b1','die-b2'];if(!document.getElementById(ids[0])||UI.rolling)return;
-  SFX.unlock();UI.rolling=true;UI.dshown=false;
+  SFX.unlock();clearWin();UI.rolling=true;UI.dshown=false;
   const v=ids.map(()=>1+Math.floor(Math.random()*6)),P=[[v[0],v[1]],[v[2],v[3]]],btn=document.querySelector('.gfs [data-act="roll"]');if(btn)btn.disabled=true;
   ['a','b'].forEach(sd=>{document.getElementById('ds-'+sd).classList.remove('win');document.getElementById('dsum-'+sd).textContent='';document.getElementById('dnote-'+sd).innerHTML='&nbsp;';});
   const res=document.getElementById('dice-res');res.textContent='Kocok…';res.classList.remove('pop');
@@ -1995,7 +2014,7 @@ function wheelSVG(opts){
 }
 function spinWheel(){
   if(UI.spinning)return;const opts=wheelOptions(),n=opts.length,seg=360/n,g=document.getElementById('wheel-g');if(!g)return;
-  SFX.unlock();UI.spinning=true;const btn=document.querySelector('[data-act="spin"]'),bulbs=document.getElementById('bulbs'),pin=document.querySelector('.wheel-pin');
+  SFX.unlock();clearWin();UI.spinning=true;const btn=document.querySelector('[data-act="spin"]'),bulbs=document.getElementById('bulbs'),pin=document.querySelector('.wheel-pin');
   if(btn)btn.disabled=true;g.classList.remove('done');g.querySelectorAll('.win').forEach(x=>x.classList.remove('win'));if(bulbs){bulbs.classList.remove('party');bulbs.classList.add('fast');}
   const res=document.getElementById('wheel-res');res.textContent='Berputar…';res.classList.remove('pop');document.getElementById('wheel-act').innerHTML='';
   const from=UI.wrot||0,to=from+360*5+Math.random()*360,dur=RM?60:5600,t0=performance.now();let lastSeg=Math.floor(from/seg);
@@ -2023,7 +2042,7 @@ const MELATI=(()=>{let p='',q='';for(let i=0;i<5;i++){p+='<ellipse cx="32" cy="1
 const coinBody=()=>{let e='';for(let i=0;i<17;i++)e+='<i class="ce" style="transform:translateZ('+(i-8)+'px)"></i>';
   return e+'<div class="cf a"><span class="cring"></span><b>500</b><small>ANGKA</small></div><div class="cf b"><span class="cring"></span>'+MELATI+'<small>GAMBAR</small></div>';};
 function coinFlip(){
-  const c=document.getElementById('coin'),wrap=document.getElementById('coin-toss'),stage=document.querySelector('.coin-stage');if(!c||UI.flipping)return;SFX.unlock();UI.flipping=true;
+  const c=document.getElementById('coin'),wrap=document.getElementById('coin-toss'),stage=document.querySelector('.coin-stage');if(!c||UI.flipping)return;SFX.unlock();clearWin();UI.flipping=true;
   const res=document.getElementById('coin-res');res.textContent='';res.classList.remove('pop');
   const btns=document.querySelectorAll('.gfs [data-act="coin"],.gfs [data-act="coinswap"]');btns.forEach(b=>b.disabled=true);
   const side=Math.random()<.5?'a':'b',cur=UI.coinRot||0,base=Math.ceil((cur+1)/360)*360+360*7,to=base+(side==='b'?180:0);UI.coinRot=to;
@@ -2140,7 +2159,7 @@ function initStack(){
   stkDraw();
 }
 function stkStart(){
-  const g=STK;if(!g)return;SFX.unlock();Object.assign(g,{stack:[{x:0}],drop:null,fall:[],fx:[],cam:0,camT:0,run:true});UI.stacking=true;
+  const g=STK;if(!g)return;SFX.unlock();clearWin();Object.assign(g,{stack:[{x:0}],drop:null,fall:[],fx:[],cam:0,camT:0,run:true});UI.stacking=true;
   stkSpawn();const b=document.getElementById('stk-go');if(b){b.disabled=true;b.textContent='Ketuk arena untuk menjatuhkan';}
   document.getElementById('stk-n').textContent='0';document.getElementById('stk-msg').textContent='Giliran '+S.members[UI.stk.turn].n;stkLoop();
 }
