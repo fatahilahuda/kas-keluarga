@@ -1,14 +1,19 @@
 {
- "name": "Kas Keluarga",
- "short_name": "Kas Keluarga",
+ "name": "Muarakas",
+ "short_name": "Muarakas",
  "lang": "id",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
- "background_color": "#F2F5F4",
+ "background_color": "#F9F9F2",
  "theme_color": "#2E46C7",
- "description": "Catat keuangan keluarga offline dengan AI kategori otomatis.",
+ "description": "Catat keuangan keluarga suami-istri dengan kategori otomatis.",
  "icons": [
+  {
+   "src": "favicon-32.png",
+   "sizes": "32x32",
+   "type": "image/png"
+  },
   {
    "src": "icon-192.png",
    "sizes": "192x192",
