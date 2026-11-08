@@ -36,3 +36,14 @@ Build lokal (butuh Android SDK):
 npm ci
 npm run build:apk
 ```
+
+## Menandatangani APK di luar GitHub Actions
+
+Kalau secret belum diisi, workflow menghasilkan `Muarakas-unsigned.apk` (draft release). APK itu bisa ditandatangani dengan kunci rilis (`muarakas-release.keystore`, alias `muarakas`, disimpan pemilik di luar repo):
+
+```sh
+python3 android-app/tools/v2sign.py Muarakas-unsigned.apk Muarakas.apk muarakas-release.keystore password.txt
+```
+
+Skrip ini memakai APK Signature Scheme v2 (cukup untuk minSdk 24) dan menolak APK yang entrinya belum ter-align. Sidik jari SHA-256 sertifikat rilis:
+`E8:8A:79:56:5D:8A:0E:E7:54:0D:C0:9C:6E:EE:EF:C8:D0:2F:24:26:FD:4D:F9:63:20:EA:9E:A3:02:32:2B:AF`
