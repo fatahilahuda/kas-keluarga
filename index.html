@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Kas Keluarga</title>
-<meta name="description" content="Catat keuangan keluarga offline dengan AI kategori otomatis.">
+<title>Muarakas</title>
+<meta name="description" content="Muarakas: kas keluarga, satu muara. Catat pemasukan dan pengeluaran suami-istri, kategori otomatis, pantau per anggota keluarga.">
 <meta name="theme-color" content="#2E46C7">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="icon" href="icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Kas Keluarga">
+<meta name="apple-mobile-web-app-title" content="Muarakas">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
@@ -93,6 +94,7 @@ p{margin:0}
 button.brand{max-width:calc(100% - 96px);border:0;background:none;padding:4px 8px 4px 4px;border-radius:12px;color:var(--ink);font-size:15.5px}
 button.brand:hover{background:var(--surface-2)}
 .brand svg.chev{width:16px;height:16px;flex:none;color:var(--muted)}
+.brand i.logo{background:#F9F9F2 url(logo-mark-64.png) center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
 .brand i{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;font-family:var(--body);flex:none}
 .month{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px}
 .month span{min-width:104px;text-align:center;font-weight:600;font-size:14px}
@@ -638,7 +640,7 @@ body.noscroll{overflow:hidden}
 
 <div class="app">
   <header class="top">
-    <button class="brand" data-act="mode" id="modechip" aria-label="Ganti mode: rumah tangga atau usaha"><i>Rp</i><span>Rumah tangga</span></button>
+    <button class="brand" data-act="mode" id="modechip" aria-label="Ganti mode: rumah tangga atau usaha"><i class="logo" aria-hidden="true"></i><span>Rumah tangga</span></button>
     <div class="month" id="monthbar">
       <button class="ib" data-act="mprev" aria-label="Bulan sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
       <span id="mlabel">—</span>
@@ -2422,12 +2424,12 @@ function extraSettings(){const st=SET(),cb=st.cbud;let lock=false;try{lock=!!loc
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('kas:'+t));return b64(b);}
 async function checkLock(){let h=null;try{h=localStorage.getItem('kas.lock');}catch(e){}if(!h||!crypto.subtle)return;
   const ov=document.createElement('div');ov.id='lockov';ov.style.cssText='position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px';
-  ov.innerHTML='<div class="card stack" style="width:min(340px,100%);text-align:center"><div class="brand" style="justify-content:center;margin:0"><i>Rp</i><span>Kas Keluarga</span></div><label for="lkin" class="small muted">Masukkan PIN untuk membuka</label><input class="inp amt" id="lkin" type="password" inputmode="numeric" maxlength="8" style="text-align:center"><span class="err" id="lkerr" hidden>PIN salah. Coba lagi.</span><button class="btn" id="lkbtn">Buka</button></div>';
+  ov.innerHTML='<div class="card stack" style="width:min(340px,100%);text-align:center"><img src="logo-360.png" alt="Muarakas, kas keluarga satu muara" width="190" height="147" style="margin:0 auto;border-radius:14px"><label for="lkin" class="small muted">Masukkan PIN untuk membuka</label><input class="inp amt" id="lkin" type="password" inputmode="numeric" maxlength="8" style="text-align:center"><span class="err" id="lkerr" hidden>PIN salah. Coba lagi.</span><button class="btn" id="lkbtn">Buka</button></div>';
   document.body.appendChild(ov);const go=async()=>{const v=document.getElementById('lkin').value;if(await sha(v)===h)ov.remove();else{document.getElementById('lkerr').hidden=false;document.getElementById('lkin').value='';}};
   document.getElementById('lkbtn').onclick=go;document.getElementById('lkin').onkeydown=e=>{if(e.key==='Enter')go();};setTimeout(()=>document.getElementById('lkin').focus(),50);}
 function report(){const rows=[['Tanggal','Jenis','Kategori','Keterangan','Kantong','Ke kantong','Buku','Nominal','Pencatat']];
   sortTx(inMonth(CUR)).reverse().forEach(t=>rows.push([t.date,{in:'Masuk',out:'Keluar',tf:'Pindah',loan:t.dir>0?'Pinjaman masuk':'Pinjaman keluar'}[t.type],t.type==='tf'||t.type==='loan'?'':cat(ctype(t),t.cat).n,t.desc,pname(t.pocket),t.to?pname(t.to):'',t.biz?bname(t.biz):'',(t.type==='out'||(t.type==='loan'&&t.dir<0)?-1:1)*t.amount,memName(t.by)]));
-  const csv='﻿'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",;\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;}).join(',')).join('\n'),name='kas-keluarga-'+CUR+'.csv';
+  const csv='﻿'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",;\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;}).join(',')).join('\n'),name='muarakas-'+CUR+'.csv';
   if(window.KAS_ARTIFACT){copyPlain(csv,'Laporan disalin sebagai teks CSV');return;}
   let f=null;try{f=new File([csv],name,{type:'text/csv'});}catch(e){}
   if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Laporan '+mname(CUR)}).catch(()=>{});return;}
@@ -2587,9 +2589,9 @@ function merge(o){
 }
 const mergeReport=r=>{if(r.gifts)toast('Ada '+r.gifts+' kado baru dari '+partner().n+'!','Buka',()=>{TAB='kita';UI.kt='gift';render(true);});else toast(r.added||r.updated||r.removed?'Tergabung: '+r.added+' baru, '+r.updated+' diperbarui'+(r.removed?', '+r.removed+' dihapus':''):'Data sudah sama, tidak ada yang baru');};
 function shareData(full){
-  const txt=exportText(full),name='kas-keluarga-'+(full?'cadangan-':'')+todayISO()+'.json';let file=null;
+  const txt=exportText(full),name='muarakas-'+(full?'cadangan-':'')+todayISO()+'.json';let file=null;
   try{file=new File([txt],name,{type:'application/json'});}catch(e){}
-  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:'Data Kas Keluarga'}).then(()=>toast('Data terkirim')).catch(e=>{if(e&&e.name==='AbortError')return;downloadFallback(txt,name);});return;}
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:'Data Muarakas'}).then(()=>toast('Data terkirim')).catch(e=>{if(e&&e.name==='AbortError')return;downloadFallback(txt,name);});return;}
   downloadFallback(txt,name);
 }
 function downloadFallback(txt,name){
@@ -2619,7 +2621,7 @@ const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,z
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button><button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button></div>';
 function render(anim){
   ANIM=!!anim&&!RM;
-  const mb=MODE(),mc=document.getElementById('modechip');if(mc)mc.innerHTML=(mb?'<i style="background:var(--k'+mb.k+')">'+esc(mb.n.charAt(0))+'</i><span>'+esc(mb.n)+'</span>':'<i>Rp</i><span>Rumah tangga</span>')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
+  const mb=MODE(),mc=document.getElementById('modechip');if(mc)mc.innerHTML=(mb?'<i style="background:var(--k'+mb.k+')">'+esc(mb.n.charAt(0))+'</i><span>'+esc(mb.n)+'</span>':'<i class="logo" aria-hidden="true"></i><span>Rumah tangga</span>')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
   document.getElementById('mlabel').textContent=mname(CUR);
   document.getElementById('monthbar').hidden=TAB==='add';
   const kc=kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
@@ -2754,7 +2756,7 @@ document.addEventListener('click',e=>{
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
   if(a==='fam-copy'){copyPlain(fmtCode(S.family.code),'Kode keluarga disalin');return;}
-  if(a==='fam-invite'){const txt='Yuk pakai Kas Keluarga bareng. Buka https://fatahilahuda.github.io/kas-keluarga/ lalu Pengaturan → Gabung dengan kode: '+fmtCode(S.family.code);
+  if(a==='fam-invite'){const txt='Yuk pakai Muarakas bareng. Buka https://fatahilahuda.github.io/kas-keluarga/ lalu Pengaturan → Gabung dengan kode: '+fmtCode(S.family.code);
     if(navigator.share)navigator.share({text:txt}).catch(()=>{});else copyPlain(txt,'Undangan disalin. Tempel ke chat '+partner().n);return;}
   if(a==='fam-leave'){if(el.dataset.armed!=='1'){el.dataset.armed='1';el.textContent='Ketuk lagi untuk memutuskan';return;}S.family=null;S.srvU={};save();settingsSheet();toast('Sinkron dimatikan di HP ini. Datanya tetap ada di HP.');return;}
   if(a==='pin'){pinSheet();return;}
@@ -2824,12 +2826,12 @@ document.addEventListener('click',e=>{
   if(a==='sharefull'){shareData(true);return;}
   if(a==='copyexport'){copyText(exportText(false));return;}
   if(a==='import'){document.getElementById('importfile').click();return;}
-  if(a==='pasteimport'){try{const r=merge(JSON.parse(document.getElementById('pastebox').value));closeSheet();render(true);mergeReport(r);}catch(err){toast('Teks tidak dikenali. Pastikan menyalin seluruh data dari Kas Keluarga.');}return;}
+  if(a==='pasteimport'){try{const r=merge(JSON.parse(document.getElementById('pastebox').value));closeSheet();render(true);mergeReport(r);}catch(err){toast('Teks tidak dikenali. Pastikan menyalin seluruh data dari Muarakas.');}return;}
   if(a==='install'&&deferredInstall){deferredInstall.prompt();deferredInstall=null;closeSheet();return;}
 });
 document.getElementById('importfile').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();
-  rd.onload=()=>{try{const r=merge(JSON.parse(rd.result));closeSheet();render(true);mergeReport(r);}catch(err){toast('File ini bukan data Kas Keluarga. Pilih file .json yang dikirim dari aplikasi ini.');}e.target.value='';};
+  rd.onload=()=>{try{const r=merge(JSON.parse(rd.result));closeSheet();render(true);mergeReport(r);}catch(err){toast('File ini bukan data Muarakas. Pilih file .json yang dikirim dari aplikasi ini.');}e.target.value='';};
   rd.readAsText(f);
 });
 document.addEventListener('input',e=>{
