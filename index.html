@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Muarakas</title>
-<meta name="description" content="Muarakas: kas keluarga, satu muara. Catat pemasukan dan pengeluaran suami-istri, kategori otomatis, pantau per anggota keluarga.">
+<meta name="description" content="Muarakas: catat pemasukan dan pengeluaran suami-istri, kategori otomatis, pantau per anggota keluarga.">
 <meta name="theme-color" content="#2E46C7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
@@ -2424,7 +2424,7 @@ function extraSettings(){const st=SET(),cb=st.cbud;let lock=false;try{lock=!!loc
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('kas:'+t));return b64(b);}
 async function checkLock(){let h=null;try{h=localStorage.getItem('kas.lock');}catch(e){}if(!h||!crypto.subtle)return;
   const ov=document.createElement('div');ov.id='lockov';ov.style.cssText='position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px';
-  ov.innerHTML='<div class="card stack" style="width:min(340px,100%);text-align:center"><img src="logo-360.png" alt="Muarakas, kas keluarga satu muara" width="190" height="147" style="margin:0 auto;border-radius:14px"><label for="lkin" class="small muted">Masukkan PIN untuk membuka</label><input class="inp amt" id="lkin" type="password" inputmode="numeric" maxlength="8" style="text-align:center"><span class="err" id="lkerr" hidden>PIN salah. Coba lagi.</span><button class="btn" id="lkbtn">Buka</button></div>';
+  ov.innerHTML='<div class="card stack" style="width:min(340px,100%);text-align:center"><img src="logo-360.png" alt="Muarakas" width="190" height="125" style="margin:0 auto;border-radius:14px"><label for="lkin" class="small muted">Masukkan PIN untuk membuka</label><input class="inp amt" id="lkin" type="password" inputmode="numeric" maxlength="8" style="text-align:center"><span class="err" id="lkerr" hidden>PIN salah. Coba lagi.</span><button class="btn" id="lkbtn">Buka</button></div>';
   document.body.appendChild(ov);const go=async()=>{const v=document.getElementById('lkin').value;if(await sha(v)===h)ov.remove();else{document.getElementById('lkerr').hidden=false;document.getElementById('lkin').value='';}};
   document.getElementById('lkbtn').onclick=go;document.getElementById('lkin').onkeydown=e=>{if(e.key==='Enter')go();};setTimeout(()=>document.getElementById('lkin').focus(),50);}
 function report(){const rows=[['Tanggal','Jenis','Kategori','Keterangan','Kantong','Ke kantong','Buku','Nominal','Pencatat']];
