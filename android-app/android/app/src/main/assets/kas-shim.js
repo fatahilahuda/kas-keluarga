@@ -1,5 +1,5 @@
 /*
- * Kas Keluarga, Android wrapper shim.
+ * Muarakas, Android wrapper shim.
  *
  * Injected at document start, only on https://fatahilahuda.github.io, by KasShimPlugin.
  * Android WebView has no Web Share API and ignores <a download href="blob:...">, so the

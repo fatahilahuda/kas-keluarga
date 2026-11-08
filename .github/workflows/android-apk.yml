@@ -61,18 +61,18 @@ jobs:
           mkdir -p out
           src=android-app/android/app/build/outputs/apk/release
           if [ "$SIGNED" = "1" ]; then
-            cp "$src/app-release.apk" out/KasKeluarga.apk
+            cp "$src/app-release.apk" out/Muarakas.apk
             apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
-            "$apksigner" verify --verbose --print-certs out/KasKeluarga.apk
+            "$apksigner" verify --verbose --print-certs out/Muarakas.apk
           else
-            cp "$src/app-release-unsigned.apk" out/KasKeluarga-unsigned.apk
+            cp "$src/app-release-unsigned.apk" out/Muarakas-unsigned.apk
           fi
           rm -f android-app/android/app/release.keystore
           ls -l out
 
       - uses: actions/upload-artifact@v4
         with:
-          name: kas-keluarga-apk-${{ github.run_number }}
+          name: muarakas-apk-${{ github.run_number }}
           path: out/
 
       - name: Publish GitHub release
@@ -81,16 +81,16 @@ jobs:
         run: |
           v="1.0.${{ github.run_number }}"
           if [ "$SIGNED" = "1" ]; then
-            gh release create "android-v$v" out/KasKeluarga.apk \
+            gh release create "android-v$v" out/Muarakas.apk \
               --target "${{ github.sha }}" \
-              --title "Kas Keluarga Android $v" \
+              --title "Muarakas Android $v" \
               --notes "APK Android. Pasang di HP: buka file ini, izinkan 'Instal aplikasi tak dikenal' bila diminta. Isi aplikasi otomatis ikut versi terbaru di GitHub Pages." \
               --latest
           else
             # Draft releases are visible only to the repo owner: a hand-off point for signing elsewhere.
-            gh release create "android-unsigned-v$v" out/KasKeluarga-unsigned.apk \
+            gh release create "android-unsigned-v$v" out/Muarakas-unsigned.apk \
               --target "${{ github.sha }}" \
-              --title "Kas Keluarga Android $v (belum ditandatangani)" \
+              --title "Muarakas Android $v (belum ditandatangani)" \
               --notes "APK belum ditandatangani, belum bisa dipasang." \
               --draft
           fi

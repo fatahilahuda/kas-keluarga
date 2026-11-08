@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Kas Keluarga</string>
-    <string name="title_activity_main">Kas Keluarga</string>
-    <string name="package_name">io.github.fatahilahuda.kaskeluarga</string>
-    <string name="custom_url_scheme">io.github.fatahilahuda.kaskeluarga</string>
+    <string name="app_name">Muarakas</string>
+    <string name="title_activity_main">Muarakas</string>
+    <string name="package_name">io.github.fatahilahuda.muarakas</string>
+    <string name="custom_url_scheme">io.github.fatahilahuda.muarakas</string>
 </resources>

@@ -1,6 +1,6 @@
-# Kas Keluarga untuk Android
+# Muarakas untuk Android
 
-Pembungkus [Capacitor](https://capacitorjs.com) yang menjadikan Kas Keluarga aplikasi Android (APK).
+Pembungkus [Capacitor](https://capacitorjs.com) yang menjadikan Muarakas aplikasi Android (APK).
 
 Aplikasinya memuat https://fatahilahuda.github.io/kas-keluarga/ langsung, jadi setiap perubahan di `index.html` pada branch `main` otomatis ikut ke aplikasi tanpa perlu build APK baru. Service worker situs tetap jalan, sehingga setelah dibuka sekali aplikasinya bisa dipakai tanpa internet. Kalau pembukaan pertama gagal karena tidak ada sinyal, tampil `www/offline.html`.
 
@@ -25,10 +25,10 @@ Supaya APK langsung ditandatangani dan terbit di Releases, isi secret repositori
 | --- | --- |
 | `ANDROID_KEYSTORE_BASE64` | file keystore dalam base64 |
 | `ANDROID_KEYSTORE_PASSWORD` | kata sandi keystore |
-| `ANDROID_KEY_ALIAS` | `kaskeluarga` |
+| `ANDROID_KEY_ALIAS` | `muarakas` |
 | `ANDROID_KEY_PASSWORD` | sama dengan kata sandi keystore |
 
-Tanpa secret itu, workflow menghasilkan `KasKeluarga-unsigned.apk` sebagai artifact. Semua versi harus ditandatangani dengan kunci yang sama; kalau kuncinya berganti, aplikasi lama harus di-uninstall dulu sebelum versi baru bisa dipasang.
+Tanpa secret itu, workflow menghasilkan `Muarakas-unsigned.apk` sebagai artifact. Semua versi harus ditandatangani dengan kunci yang sama; kalau kuncinya berganti, aplikasi lama harus di-uninstall dulu sebelum versi baru bisa dipasang.
 
 Build lokal (butuh Android SDK):
 

@@ -1,7 +1,7 @@
 {
   "name": "kas-keluarga-android",
   "version": "1.0.0",
-  "description": "Android wrapper (Capacitor) for Kas Keluarga. Loads https://fatahilahuda.github.io/kas-keluarga/.",
+  "description": "Android wrapper (Capacitor) for Muarakas. Loads https://fatahilahuda.github.io/kas-keluarga/.",
   "scripts": {
     "sync": "cap sync android",
     "build:apk": "cap sync android && cd android && ./gradlew assembleRelease"

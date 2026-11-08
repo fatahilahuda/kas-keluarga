@@ -1,6 +1,6 @@
 {
-  "appId": "io.github.fatahilahuda.kaskeluarga",
-  "appName": "Kas Keluarga",
+  "appId": "io.github.fatahilahuda.muarakas",
+  "appName": "Muarakas",
   "webDir": "www",
   "server": {
     "url": "https://fatahilahuda.github.io/kas-keluarga/",

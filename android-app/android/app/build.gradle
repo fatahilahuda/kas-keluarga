@@ -4,7 +4,7 @@ android {
     namespace = "io.github.fatahilahuda.kaskeluarga"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.github.fatahilahuda.kaskeluarga"
+        applicationId "io.github.fatahilahuda.muarakas"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI passes the run number so every build installs over the previous one.
