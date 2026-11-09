@@ -8,7 +8,7 @@
  * makes the hardware back button close an open sheet instead of quitting, and tells the
  * web app it is already installed so it hides the "Pasang di layar utama" card.
  * It also exposes the family-invite NFC plugin as window.KasNfc, with its events as
- * window "kasnfc" events.
+ * window "kasnfc" events, and fingerprint unlock for the app lock as window.KasBio.
  *
  * The Capacitor bridge is injected after this script, so plugins are looked up lazily.
  */
@@ -138,6 +138,29 @@
     startRead: function () { return nfcCall('startRead'); },
     stopRead: function () { return nfcCall('stopRead'); },
     openSettings: function () { return nfcCall('openSettings'); }
+  };
+
+  // Fingerprint / face unlock (KasBioPlugin). The page checks window.KasBio for the app lock.
+  // At startup the bridge may not be up yet, so wait for it briefly instead of failing.
+  function bioPlugin() {
+    return new Promise(function (resolve, reject) {
+      var started = Date.now();
+      (function look() {
+        var bio = plugins().KasBio;
+        if (bio) return resolve(bio);
+        if (Date.now() - started > 3000) return reject(new Error('KasBio plugin unavailable'));
+        setTimeout(look, 50);
+      })();
+    });
+  }
+
+  window.KasBio = {
+    status: function () {
+      return bioPlugin().then(function (bio) { return bio.status(); }, function () { return { available: false, reason: 'unavailable' }; });
+    },
+    authenticate: function (options) {
+      return bioPlugin().then(function (bio) { return bio.authenticate(options || {}); }, function () { return { ok: false, reason: 'unavailable' }; });
+    }
   };
 
   function fireNfcEvent(detail) {

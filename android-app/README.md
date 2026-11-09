@@ -18,6 +18,7 @@ APK hanya perlu dibangun ulang kalau isi folder `android-app/` berubah (ikon, na
   - **Kirim**: `NfcInviteService.java` membuat HP berperan seperti stiker NFC (NFC Forum Type 4) berisi tautan `…/kas-keluarga/#gabung=KODE`, hanya selama tombol "Kirim lewat NFC" aktif. HP Android dengan aplikasi ini langsung membuka Muarakas; iPhone menawarkan membuka tautannya; HP Android lain membukanya di browser.
   - **Terima**: mode pembaca NFC selama lembar "Terima lewat NFC" terbuka, atau ketukan biasa saat HP tidak terkunci (filter `NDEF_DISCOVERED` di manifest).
   - Kejadian `url` dan `shared` diteruskan ke halaman sebagai event `kasnfc`.
+- `window.KasBio` untuk membuka kunci aplikasi dengan sidik jari atau wajah (`KasBioPlugin.java`, BiometricPrompt Android), karena WebView tidak punya WebAuthn. `status()` memberi `{ available }`, `authenticate({ title, subtitle, cancel })` selalu selesai dengan `{ ok }` atau `{ ok: false, reason }` (`cancel`, `lockout`, `none`, `unavailable`, `error`).
 - Izin kamera untuk pemindai QR undangan.
 
 ## Build
