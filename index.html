@@ -63,14 +63,17 @@
   --tip-bg:#E5EDEA; --tip-ink:#0D1412; color-scheme:dark; }
 :root[data-skin="pink"]{
   --bg:#FFF0F5; --surface:#FFFFFF; --surface-2:#FCE3EC; --ink:#3B1527; --muted:#8C5A6F; --line:#F4C9D9;
-  --accent:#1D7781; --accent-ink:#FFFFFF; --accent-soft:#E3F1EF;
-  --in:#1E8659; --in-soft:#DDF3E8; --out:#C2334D; --out-soft:#FCE1E6; --warn:#B0701A; --warn-soft:#FBEED9;
-  --k0:#D1307E; --k1:#EE8A5A; --k2:#2A9F97; --k3:#9A5BC4; --k4:#E5679A; --k5:#C29A22; --k6:#6AA14E; --k7:#B497A4;
-  --tip-bg:#3B1527; --tip-ink:#FFF0F5; --hero-glow:var(--k4); color-scheme:light; }
+  --accent:#D1236A; --accent-ink:#FFFFFF; --accent-soft:#FDDDEA;
+  --in:#1E8659; --in-soft:#DDF3E8; --out:#C4381E; --out-soft:#FCE4DE; --warn:#B0701A; --warn-soft:#FBEED9;
+  --k0:#E5679A; --k1:#EE8A5A; --k2:#2A9F97; --k3:#9A5BC4; --k4:#7C5CD6; --k5:#C29A22; --k6:#6AA14E; --k7:#B497A4;
+  --tip-bg:#3B1527; --tip-ink:#FFF0F5; --hero-glow:#FF8FBA; color-scheme:light; }
+/* kartu saldo pink: gradasi pink tua, bukan campuran teal */
+:root[data-skin="pink"] .hero{background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--hero-glow) 55%,transparent),transparent 60%),linear-gradient(150deg,#D1236A,#A3185A);box-shadow:0 10px 30px color-mix(in srgb,#D1236A 32%,transparent)}
 :root{--mk-teal:#1D7781;--mk-navy:#124E77;--mk-word:#144A73}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--mk-teal:#3BB3AB;--mk-navy:#4C8DD0;--mk-word:#E7EEF4}}
 :root[data-theme="dark"],:root[data-skin="dark"]{--mk-teal:#3BB3AB;--mk-navy:#4C8DD0;--mk-word:#E7EEF4}
-:root[data-skin="light"],:root[data-skin="pink"]{--mk-teal:#1D7781;--mk-navy:#124E77;--mk-word:#144A73}
+:root[data-skin="light"]{--mk-teal:#1D7781;--mk-navy:#124E77;--mk-word:#144A73}
+:root[data-skin="pink"]{--mk-teal:#D1236A;--mk-navy:#8E1650;--mk-word:#6E1A40}
 .mk .mk-s1{stop-color:var(--mk-teal)}.mk .mk-s2{stop-color:var(--mk-navy)}.mk .mk-band,.mk .mk-word2{fill:var(--mk-teal)}.mk .mk-word{fill:var(--mk-word)}
 .brandmark{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;padding:2px 0}
 .brandmark .mk-h{width:34px;height:34px;flex:none}.brandmark .mk-h svg{width:34px;height:34px;display:block}
@@ -3056,7 +3059,7 @@ function fallbackSelect(txt){const b=document.getElementById('pastebox');if(b){b
 function softFocus(el){if(!el)return;try{if(matchMedia('(pointer: fine)').matches)el.focus();}catch(e){}}
 
 /* ---------- tampilan: terang / gelap / pink ---------- */
-const SKINS=[['light','Terang','#F2F5F4'],['dark','Gelap','#0D1412'],['pink','Pink','#FFF0F5']];
+const SKINS=[['light','Terang','linear-gradient(135deg,#F2F5F4 50%,#1D7781 50%)'],['dark','Gelap','linear-gradient(135deg,#0D1412 50%,#3BB3AB 50%)'],['pink','Pink','linear-gradient(135deg,#FFF0F5 50%,#D1236A 50%)']];
 const SKIN_ICON={light:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',dark:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',pink:'<path d="M12 21s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 6.3 5.3 5.3 0 0 1 21.3 12C19 16.6 12 21 12 21z"/>'};
 let SKIN='light';try{SKIN=localStorage.getItem('kas.skin')||'';}catch(e){}
 if(!SKIN_ICON[SKIN]){let dk=false;try{dk=matchMedia('(prefers-color-scheme: dark)').matches;}catch(e){}SKIN=dk?'dark':'light';try{localStorage.setItem('kas.skin',SKIN);}catch(e){}}
