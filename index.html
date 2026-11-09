@@ -2399,7 +2399,6 @@ function paintGame(){
 }
 function openGame(k){
   if(!GDEF[k])return;UI.game=k;UI.gfs=true;document.body.classList.add('noscroll');paintGame();
-  try{history.pushState({kasGame:k},'');}catch(e){}
   setTimeout(()=>{const t=document.getElementById('gfs-title');if(t)t.focus({preventScroll:true});},40);
 }
 function closeGame(){
@@ -2407,7 +2406,6 @@ function closeGame(){
   const el=document.getElementById('gamefs');if(el){el.hidden=true;el.innerHTML='';}document.body.classList.remove('noscroll');
   const b=document.querySelector('.gtile[data-act="game:'+UI.game+'"]');if(b)b.focus({preventScroll:true});
 }
-window.addEventListener('popstate',()=>{if(!UI.gfs)return;if(!document.getElementById('sheet').hidden){closeSheet();try{history.pushState({kasGame:UI.game},'');}catch(e){}return;}closeGame();});
 function wheelEditSheet(){
   const ps=Object.keys(WHEEL_PRESETS),icn={makan:'utensils',bayar:'wallet',nabung:'piggy',tugas:'home',custom:'edit'},cur=S.wheel.preset;
   const prev=k=>{const o=k==='custom'?S.wheel.custom:k==='bayar'?[me().n,partner().n,'Bagi dua']:k==='tugas'?[me().n,partner().n,'Berdua']:WHEEL_PRESETS[k][1];return (o||[]).slice(0,3).join(', ')+((o||[]).length>3?'…':'');};
@@ -3176,7 +3174,7 @@ document.addEventListener('click',e=>{
   if(a==='stkgo'){const st=UI.stk;if(!st||UI.stacking)return;if(st.sc[0]!=null&&st.sc[1]!=null){UI.stk={turn:0,sc:[null,null]};paintGame();return;}if(!STK)initStack();stkStart();return;}
   if(a==='sfx'){SFX.toggle();if(UI.gfs){const b=el;b.innerHTML=SFX.on?GICON.sound:GICON.mute;b.setAttribute('aria-pressed',String(SFX.on));}return;}
   if(a.indexOf('game:')===0){openGame(v);return;}
-  if(a==='gback'){if(history.state&&history.state.kasGame)history.back();else closeGame();return;}
+  if(a==='gback'){closeGame();return;}
   if(a==='wedit'){if(UI.spinning)return;wheelEditSheet();return;}
   if(a.indexOf('wpreset:')===0){if(UI.spinning)return;readWheelCustom();S.wheel.preset=v;UI.wres='';save();wheelEditSheet();paintGame();return;}
   if(a==='wsave'){readWheelCustom();save();closeSheet();UI.wres='';paintGame();return;}
@@ -3291,9 +3289,48 @@ document.addEventListener('focusout',e=>{if(e.target.id==='famt'){const n=amount
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.getElementById('celeb')){closeCeleb();return;}
   if(e.key==='Escape'&&!document.getElementById('sheet').hidden){closeSheet();return;}
-  if(e.key==='Escape'&&UI.gfs){if(history.state&&history.state.kasGame)history.back();else closeGame();}
+  if(e.key==='Escape'&&UI.gfs){closeGame();return;}
   if(e.key==='Enter'&&(e.target.id==='fdesc'||e.target.id==='famt')){e.preventDefault();saveForm();}
 });
+/* ---------- back button / gesture ----------
+   One step back per press: celebration, sheet, game, then the tab back to Beranda.
+   On Beranda the first press only warns; a second press within a few seconds leaves.
+   Android APK: the shim's backButton listener calls window.kasBack(). Browser and installed
+   PWA: a single guard history entry turns each back press into a popstate. */
+const EXIT_WINDOW=2800;let exitArmedUntil=0;
+const IS_APK=/KasKeluargaAndroid/.test(navigator.userAgent)||!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+function backStep(){
+  if(document.getElementById('lockov'))return false;
+  if(document.getElementById('celeb')){closeCeleb();return true;}
+  if(!document.getElementById('sheet').hidden){closeSheet();return true;}
+  if(UI.gfs){closeGame();return true;}
+  if(TAB!=='home'){TAB='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
+  return false;
+}
+function warnExit(){exitArmedUntil=Date.now()+EXIT_WINDOW;toast('Tekan kembali sekali lagi untuk keluar');}
+window.kasBack=function(){
+  if(backStep()){exitArmedUntil=0;return true;}
+  if(Date.now()<exitArmedUntil){exitArmedUntil=0;const t=document.getElementById('toast');if(t)t.hidden=true;return false;}
+  warnExit();return true;
+};
+function armBackGuard(){if(IS_APK)return;try{if(!(history.state&&history.state.kasGuard))history.pushState({kasGuard:1},'');}catch(e){}}
+window.addEventListener('popstate',()=>{
+  if(IS_APK||(history.state&&history.state.kasGuard)||/gabung=/.test(location.hash))return;
+  if(backStep()){exitArmedUntil=0;armBackGuard();return;}
+  // Now on the page's own entry: the next back press leaves. Re-arm on the next tap.
+  warnExit();
+});
+['pointerdown','keydown'].forEach(t=>document.addEventListener(t,()=>{if(Date.now()>=exitArmedUntil)armBackGuard();},true));
+// APKs built before the shim knew about kasBack only close sheets and then minimise; route that through kasBack.
+function hookOldShimBack(){
+  if(window.__kasShimBack)return;
+  const app=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+  if(!app||typeof app.minimizeApp!=='function'||app.minimizeApp.__kas)return;
+  const minimize=app.minimizeApp;
+  const f=function(){return window.kasBack()?Promise.resolve():minimize.apply(app,arguments);};f.__kas=1;
+  try{app.minimizeApp=f;}catch(e){}
+}
+if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOldShimBack);window.addEventListener('load',hookOldShimBack);}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
 render(true);
 checkLock();
