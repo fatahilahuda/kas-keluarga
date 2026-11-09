@@ -1840,7 +1840,7 @@ async function nfcBox(){const box=document.getElementById('nfcbox'),n=natNfc();i
   else if(NFC.send)box.innerHTML='<div class="nfcbox on" role="status"><span class="nfcwave">'+ic('nfc')+'</span><div><b>Tempelkan punggung HP ini ke HP '+pn+'</b><p class="small muted">HP '+pn+' cukup menyala dan tidak terkunci. Biarkan layar ini terbuka.</p></div></div><button class="btn ghost" data-act="nfc-stop">Berhenti</button>';
   else box.innerHTML='<button class="btn" data-act="nfc-send">'+ic('nfc')+'Kirim lewat NFC</button>';}
 async function nfcSend(){const n=natNfc();if(!n||!S.family)return;
-  try{await n.startShare({url:inviteURL(S.family.code)});NFC.send=true;clearTimeout(NFC.t);NFC.t=setTimeout(()=>{stopNfc();toast('Kirim lewat NFC dihentikan. Ketuk lagi kalau belum terkirim.');},120000);nfcBox();}
+  try{await n.startShare({url:inviteURL(S.family.code)});NFC.send=true;NFC.done=false;clearTimeout(NFC.t);NFC.t=setTimeout(()=>{stopNfc();toast('Kirim lewat NFC dihentikan. Ketuk lagi kalau belum terkirim.');},120000);nfcBox();}
   catch(e){toast('NFC belum bisa dipakai di HP ini. Pakai kode QR saja.');nfcBox();}}
 function stopNfc(){clearTimeout(NFC.t);const n=natNfc();
   if(NFC.send){NFC.send=false;if(n)n.stopShare().catch(()=>{});}
@@ -1865,7 +1865,7 @@ function onNfcUrl(url){const c=parseInvite(url);if(!c)return;
   else inviteLinkSheet(c);}
 window.addEventListener('kasnfc',e=>{const d=e.detail||{};
   if(d.type==='url')onNfcUrl(d.url);
-  else if(d.type==='shared'&&NFC.send){stopNfc();toast('Undangan terkirim ke HP '+partner().n+'. Tinggal ketuk Gabung di sana.');}});
+  else if(d.type==='shared'&&NFC.send&&!NFC.done){NFC.done=true;toast('Undangan terkirim ke HP '+partner().n+'. Tinggal ketuk Gabung di sana.');clearTimeout(NFC.t);NFC.t=setTimeout(stopNfc,4000);}});
 
 /* QR scan: BarcodeDetector where the browser has it (Chrome on Android), otherwise jsQR, fetched once and cached by the service worker */
 const SCAN={stream:null,t:0,busy:false};let QRDET=null;
