@@ -85,16 +85,22 @@
 .modrow .plist{margin-top:8px}
 .modadd{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
 #modechip[hidden],.top .ctx[hidden]{display:none}
-.top .ctx{justify-content:center}
 #modechip{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
 #modechip .cls{width:16px;height:16px;flex:none;margin-left:auto;color:var(--muted)}
 #modechip .mi{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c,var(--accent)) 15%,transparent);color:var(--c,var(--accent))}
 #modechip .mi svg{width:16px;height:16px}
 #modechip .mn{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #modechip svg.chev{width:15px;height:15px;flex:none;color:var(--muted);margin-left:auto}
-.top .ctx .month{flex:none}
-.top .ctx .month .ib{width:38px;height:38px}
-.top .ctx .month span{flex:none;min-width:76px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+.top .ctx{align-items:center}
+/* Month control: no floating pill. On the home row the month name sits left like a page title with
+   the arrows grouped on the right; next to a page chip it shrinks to "‹ Nov 2026 ›". */
+.top .ctx .month{flex:none;background:none;border:0;padding:0;gap:6px;border-radius:0}
+.top .ctx .month .ib{width:36px;height:36px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.top .ctx .month .ib:hover{background:var(--surface-2)}
+.top .ctx .month .ib svg{width:18px;height:18px}
+.top .ctx .month span{flex:none;min-width:34px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:var(--display);font-weight:700;font-size:14.5px;padding:0 2px}
+.top .ctx.home .month{flex:1}
+.top .ctx.home .month span{order:-1;flex:1;text-align:left;font-size:18px;letter-spacing:-.01em;padding:0}
 .about{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0 4px;text-align:center}
 .about .mk{width:150px;height:auto}
 .mk-lock{width:170px;margin:4px auto 2px}.mk-lock svg{width:100%;height:auto;display:block}
@@ -3257,9 +3263,9 @@ function render(anim){
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke rumah tangga');}}
-  const cx=document.querySelector('.top .ctx');if(cx)cx.hidden=!mb&&TAB==='add';
+  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&TAB==='add';cx.classList.toggle('home',!mb);}
   const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
-  const ml=document.getElementById('mlabel');ml.textContent=BLN[+CUR.slice(5,7)-1]+' '+CUR.slice(0,4);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
+  const ml=document.getElementById('mlabel');ml.textContent=mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
   document.getElementById('monthbar').hidden=TAB==='add';
   const kc=kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
