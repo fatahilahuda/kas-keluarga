@@ -113,6 +113,16 @@ p{margin:0}
 
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding-block:10px 10px}
 .top .month{justify-content:space-between}
+/* Pull to refresh: the spinner sits under the sticky header (z-index 4 < 5) and slides out as #view is dragged down. */
+html,body{overscroll-behavior-y:contain}
+.ptr{position:relative;height:0;z-index:4;pointer-events:none}
+.ptr-i{position:absolute;left:50%;top:0;width:38px;height:38px;margin-left:-19px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.10);display:grid;place-items:center;color:var(--muted);opacity:0;transform:translateY(-40px)}
+.ptr-i.ready,.ptr.spin .ptr-i{color:var(--accent)}
+.ptr-i svg{width:22px;height:22px;display:block}
+.ptr.spin .ptr-i svg{animation:ptrSpin .75s linear infinite}
+.ptr.back .ptr-i,#view.ptr-back{transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .25s}
+@keyframes ptrSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ptr.spin .ptr-i svg{animation-duration:1.6s}.ptr.back .ptr-i,#view.ptr-back{transition-duration:.01s}}
 .top .month span{flex:1}
 .brand{font-family:var(--display);font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
 .brand span{overflow:hidden;text-overflow:ellipsis}
@@ -3480,6 +3490,61 @@ function hookOldShimBack(){
   try{app.minimizeApp=f;}catch(e){}
 }
 if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOldShimBack);window.addEventListener('load',hookOldShimBack);}
+/* Pull to refresh. At the top of the page a downward drag pulls #view down with the finger and
+   slides a spinner out from under the sticky header; releasing past the threshold syncs with the
+   partner and refreshes gold prices, then the content springs back. Skipped on the Catat form,
+   inside fields/canvases, and while any overlay is open. */
+(function initPTR(){
+  const view=document.getElementById('view'),top=document.querySelector('.top');if(!view||!top)return;
+  const ptr=document.createElement('div');ptr.className='ptr';ptr.setAttribute('aria-hidden','true');
+  ptr.innerHTML='<div class="ptr-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="8 100"/></svg></div>';
+  top.after(ptr);
+  const dot=ptr.firstChild,arc=dot.querySelector('circle');
+  const TH=64,HOLD=58,MAX=112;
+  let y0=0,x0=0,d=0,track=false,pulling=false,busy=false;
+  const blocked=t=>TAB==='add'||UI.gfs||document.getElementById('lockov')||document.getElementById('celeb')||!document.getElementById('sheet').hidden||(t&&t.closest&&t.closest('canvas,input,textarea,select,[contenteditable],[data-noptr]'));
+  function paint(v){
+    d=v;view.style.transform=v>0.5?'translateY('+v.toFixed(1)+'px)':'';
+    const p=Math.min(1,v/TH);dot.style.opacity=busy?1:p;
+    dot.style.transform='translateY('+(v/2-19).toFixed(1)+'px)'+(busy?'':' rotate('+Math.round(v*3.2)+'deg)');
+    arc.setAttribute('stroke-dasharray',(busy?34:(6+p*30)).toFixed(1)+' 100');
+    dot.classList.toggle('ready',v>=TH);
+  }
+  function settle(v,done){ptr.classList.add('back');view.classList.add('ptr-back');paint(v);
+    setTimeout(()=>{ptr.classList.remove('back');view.classList.remove('ptr-back');if(done)done();},320);}
+  async function run(){
+    busy=true;ptr.classList.add('spin');settle(HOLD);
+    if(navigator.vibrate)try{navigator.vibrate(8);}catch(e){}
+    const t0=Date.now();
+    try{await Promise.all([S.family?syncNow(true):null,fetchGold('ptr')]);}catch(e){}
+    const wait=650-(Date.now()-t0);if(wait>0)await new Promise(r=>setTimeout(r,wait));
+    if(blocked())return finish();
+    render();if(!S.family)toast('Data diperbarui');
+    finish();
+  }
+  function finish(){settle(0,()=>{busy=false;ptr.classList.remove('spin');paint(0);});}
+  document.addEventListener('touchstart',e=>{
+    track=false;pulling=false;
+    if(busy||e.touches.length!==1||window.scrollY>0||blocked(e.target))return;
+    track=true;y0=e.touches[0].clientY;x0=e.touches[0].clientX;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!track||busy)return;
+    const t=e.touches[0],dy=t.clientY-y0,dx=t.clientX-x0;
+    if(!pulling){
+      if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){track=false;return;}
+      if(dy<-6||window.scrollY>0){track=false;return;}
+      if(dy<8)return;
+      pulling=true;y0=t.clientY;
+    }
+    const pull=Math.max(0,t.clientY-y0);
+    if(e.cancelable)e.preventDefault();
+    paint(MAX*(1-Math.exp(-pull/150)));
+  },{passive:false});
+  const end=()=>{if(!pulling){track=false;return;}track=false;pulling=false;if(d>=TH)run();else settle(0);};
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('touchcancel',end,{passive:true});
+})();
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
 render(true);
 showLock();bioProbe().then(v=>{BIO_OK=v;});
