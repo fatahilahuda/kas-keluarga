@@ -116,13 +116,20 @@ p{margin:0}
 /* Pull to refresh: the spinner sits under the sticky header (z-index 4 < 5) and slides out as #view is dragged down. */
 html,body{overscroll-behavior-y:contain}
 .ptr{position:relative;height:0;z-index:4;pointer-events:none}
-.ptr-i{position:absolute;left:50%;top:0;width:38px;height:38px;margin-left:-19px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.10);display:grid;place-items:center;color:var(--muted);opacity:0;transform:translateY(-40px)}
-.ptr-i.ready,.ptr.spin .ptr-i{color:var(--accent)}
-.ptr-i svg{width:22px;height:22px;display:block}
-.ptr.spin .ptr-i svg{animation:ptrSpin .75s linear infinite}
+.ptr-i{position:absolute;left:50%;top:0;width:46px;height:46px;margin-left:-23px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.10);display:grid;place-items:center;opacity:0;transform:translateY(-46px)}
+.ptr-i svg{width:28px;height:28px;display:block;overflow:visible}
+.ptr-i .ptr-ghost{opacity:.18}
+/* Water filling the mark: the clip path is a wave whose level (translate) follows the pull, while it drifts sideways (transform). */
+.ptr-wave{translate:0 1343px}
+.ptr.on .ptr-wave{animation:ptrDrift 1.1s linear infinite}
+.ptr.spin .ptr-wave{animation:ptrDrift 1.1s linear infinite,ptrTide 2.2s ease-in-out infinite}
+.ptr.spin .ptr-i{animation:ptrBob 2.2s ease-in-out infinite}
 .ptr.back .ptr-i,#view.ptr-back{transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .25s}
-@keyframes ptrSpin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.ptr.spin .ptr-i svg{animation-duration:1.6s}.ptr.back .ptr-i,#view.ptr-back{transition-duration:.01s}}
+@keyframes ptrDrift{to{transform:translateX(627px)}}
+@keyframes ptrTide{0%,100%{translate:0 94px}50%{translate:0 868px}}
+@keyframes ptrBob{0%,100%{scale:1}50%{scale:.94}}
+@media (prefers-reduced-motion:reduce){.ptr.on .ptr-wave,.ptr.spin .ptr-wave{animation:none;translate:0 94px}.ptr.spin .ptr-i{animation:ptrPulse 1.6s ease-in-out infinite}.ptr.back .ptr-i,#view.ptr-back{transition-duration:.01s}}
+@keyframes ptrPulse{50%{opacity:.55}}
 .top .month span{flex:1}
 .brand{font-family:var(--display);font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
 .brand span{overflow:hidden;text-overflow:ellipsis}
@@ -3497,18 +3504,23 @@ if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOl
 (function initPTR(){
   const view=document.getElementById('view'),top=document.querySelector('.top');if(!view||!top)return;
   const ptr=document.createElement('div');ptr.className='ptr';ptr.setAttribute('aria-hidden','true');
-  ptr.innerHTML='<div class="ptr-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="8 100"/></svg></div>';
+  // The Muarakas mark twice: a faint outline, and a full-colour copy clipped by a wave of "water".
+  const WP=627,WA=38;let wd='M'+(21-2*WP)+' 0';for(let i=0;i<6;i++)wd+=' q'+WP/4+' '+(-WA)+' '+WP/2+' 0 t'+WP/2+' 0';wd+=' V1500 H'+(21-2*WP)+' Z';
+  const shape=mkSvg('mark','mk-ptr').replace(/^<svg[^>]*>|<\/svg>$/g,'').replace(/<defs>.*?<\/defs>/,'');
+  const grad=(mkSvg('mark','mk-ptr').match(/<defs>(.*?)<\/defs>/)||[])[1]||'';
+  ptr.innerHTML='<div class="ptr-i"><svg class="mk" viewBox="21 23 1254 1282"><defs>'+grad+'<clipPath id="mk-ptr-c"><path class="ptr-wave" d="'+wd+'"/></clipPath></defs><g class="ptr-ghost">'+shape+'</g><g clip-path="url(#mk-ptr-c)">'+shape+'</g></svg></div>';
   top.after(ptr);
-  const dot=ptr.firstChild,arc=dot.querySelector('circle');
-  const TH=64,HOLD=58,MAX=112;
+  const dot=ptr.firstChild,wave=dot.querySelector('.ptr-wave');
+  const TH=64,HOLD=64,MAX=116;
   let y0=0,x0=0,d=0,track=false,pulling=false,busy=false;
   const blocked=t=>TAB==='add'||UI.gfs||document.getElementById('lockov')||document.getElementById('celeb')||!document.getElementById('sheet').hidden||(t&&t.closest&&t.closest('canvas,input,textarea,select,[contenteditable],[data-noptr]'));
   function paint(v){
     d=v;view.style.transform=v>0.5?'translateY('+v.toFixed(1)+'px)':'';
-    const p=Math.min(1,v/TH);dot.style.opacity=busy?1:p;
-    dot.style.transform='translateY('+(v/2-19).toFixed(1)+'px)'+(busy?'':' rotate('+Math.round(v*3.2)+'deg)');
-    arc.setAttribute('stroke-dasharray',(busy?34:(6+p*30)).toFixed(1)+' 100');
-    dot.classList.toggle('ready',v>=TH);
+    const p=Math.min(1,v/TH);ptr.classList.toggle('on',v>0.5||busy);
+    dot.style.opacity=busy?1:Math.min(1,p*1.4);
+    dot.style.transform='translateY('+(v/2-23).toFixed(1)+'px)';
+    // Water level in logo units: empty below the mark (1343) to brimming over its top (94).
+    wave.style.translate='0 '+(1343-p*1249).toFixed(0)+'px';
   }
   function settle(v,done){ptr.classList.add('back');view.classList.add('ptr-back');paint(v);
     setTimeout(()=>{ptr.classList.remove('back');view.classList.remove('ptr-back');if(done)done();},320);}
@@ -3517,7 +3529,7 @@ if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOl
     if(navigator.vibrate)try{navigator.vibrate(8);}catch(e){}
     const t0=Date.now();
     try{await Promise.all([S.family?syncNow(true):null,fetchGold('ptr')]);}catch(e){}
-    const wait=650-(Date.now()-t0);if(wait>0)await new Promise(r=>setTimeout(r,wait));
+    const wait=1200-(Date.now()-t0);if(wait>0)await new Promise(r=>setTimeout(r,wait));
     if(blocked())return finish();
     render();if(!S.family)toast('Data diperbarui');
     finish();
