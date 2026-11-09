@@ -256,14 +256,14 @@ label.btn{display:flex;align-items:center;justify-content:center;gap:8px;cursor:
 @keyframes pinshake{20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(3px)}}
 .pinpad .err{text-align:center;margin:-4px 0 0}
 .pinkeys{display:grid;grid-template-columns:repeat(3,72px);gap:12px 24px;justify-content:center}
-.pk{width:72px;height:72px;border-radius:50%;border:0;background:var(--surface-2);color:var(--ink);font-family:var(--display);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;display:grid;place-items:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s,background .12s}
-.pk:active{transform:scale(.94);background:var(--line)}
-.pk.fn{background:transparent;color:var(--muted)}
-.pk.fn svg{width:28px;height:28px}
-.pk.bio{color:var(--accent)}
-.pk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pkey{width:72px;height:72px;border-radius:50%;border:0;background:var(--surface-2);color:var(--ink);font-family:var(--display);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;display:grid;place-items:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s,background .12s}
+.pkey:active{transform:scale(.94);background:var(--line)}
+.pkey.fn{background:transparent;color:var(--muted)}
+.pkey.fn svg{width:28px;height:28px}
+.pkey.bio{color:var(--accent)}
+.pkey:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pinpad .btn{max-width:264px}
-@media (max-height:680px){.pinkeys{grid-template-columns:repeat(3,62px);gap:10px 22px}.pk{width:62px;height:62px;font-size:24px}}
+@media (max-height:680px){.pinkeys{grid-template-columns:repeat(3,62px);gap:10px 22px}.pkey{width:62px;height:62px;font-size:24px}}
 .lockov{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));overflow:auto}
 .lockbox{width:min(340px,100%);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
 .lockbox p{margin:0 0 6px}
@@ -2909,11 +2909,11 @@ const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
    o.len: panjang PIN kalau sudah diketahui (langsung dicek begitu angkanya lengkap), 0 = pakai tombol o.go.
    o.onDone(v): false = salah (titik bergetar dan dikosongkan). o.onBio: tombol sidik jari. */
 const PADS={};let PAD_ON=null;
-function padHTML(id,o){o=o||{};const k=n=>'<button type="button" class="pk" data-pad="'+id+':'+n+'">'+n+'</button>';
+function padHTML(id,o){o=o||{};const k=n=>'<button type="button" class="pkey" data-pad="'+id+':'+n+'">'+n+'</button>';
   return '<div class="pinpad" id="'+id+'"'+(o.c?' style="--pc:'+o.c+'"':'')+'><div class="pindots" id="'+id+'-dots" role="status" aria-live="polite"></div><span class="err" id="'+id+'-err" role="alert" hidden></span>'+
     '<div class="pinkeys" role="group" aria-label="Tombol angka PIN">'+[1,2,3,4,5,6,7,8,9].map(k).join('')+
-    (o.bio?'<button type="button" class="pk fn bio" data-pad="'+id+':bio" aria-label="Buka dengan sidik jari">'+ic('finger')+'</button>':'<span aria-hidden="true"></span>')+k(0)+
-    '<button type="button" class="pk fn" data-pad="'+id+':del" aria-label="Hapus satu angka">'+ic('del')+'</button></div>'+
+    (o.bio?'<button type="button" class="pkey fn bio" data-pad="'+id+':bio" aria-label="Buka dengan sidik jari">'+ic('finger')+'</button>':'<span aria-hidden="true"></span>')+k(0)+
+    '<button type="button" class="pkey fn" data-pad="'+id+':del" aria-label="Hapus satu angka">'+ic('del')+'</button></div>'+
     '<button type="button" class="btn" id="'+id+'-go" data-pad="'+id+':go"'+(o.c?' style="background:'+o.c+'"':'')+' hidden disabled></button></div>';}
 function padMount(id,o){PADS[id]={v:'',o:o,busy:false};PAD_ON=id;padDraw(id);}
 function padSet(id,o){const P=PADS[id];if(!P)return;Object.assign(P.o,o);P.v='';padErr(id,'');padDraw(id);}
