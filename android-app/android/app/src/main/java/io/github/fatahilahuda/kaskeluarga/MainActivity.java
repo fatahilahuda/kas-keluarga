@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         // Must be registered before super.onCreate builds the bridge and loads the page.
         registerPlugin(KasShimPlugin.class);
         registerPlugin(KasNfcPlugin.class);
+        registerPlugin(KasBioPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
