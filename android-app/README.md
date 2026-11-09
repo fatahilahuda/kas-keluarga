@@ -14,6 +14,11 @@ APK hanya perlu dibangun ulang kalau isi folder `android-app/` berubah (ikon, na
 - Klik `<a download>` dengan tautan `blob:` juga diarahkan ke lembar Bagikan (WebView mengabaikannya).
 - Tombol Kembali menutup lembar/pop-up yang terbuka dulu, baru meminimalkan aplikasi.
 - `navigator.standalone` bernilai `true`, jadi kartu "Pasang di layar utama" tidak muncul.
+- `window.KasNfc` untuk undangan keluarga lewat NFC (`KasNfcPlugin.java`):
+  - **Kirim**: `NfcInviteService.java` membuat HP berperan seperti stiker NFC (NFC Forum Type 4) berisi tautan `…/kas-keluarga/#gabung=KODE`, hanya selama tombol "Kirim lewat NFC" aktif. HP Android dengan aplikasi ini langsung membuka Muarakas; iPhone menawarkan membuka tautannya; HP Android lain membukanya di browser.
+  - **Terima**: mode pembaca NFC selama lembar "Terima lewat NFC" terbuka, atau ketukan biasa saat HP tidak terkunci (filter `NDEF_DISCOVERED` di manifest).
+  - Kejadian `url` dan `shared` diteruskan ke halaman sebagai event `kasnfc`.
+- Izin kamera untuk pemindai QR undangan.
 
 ## Build
 

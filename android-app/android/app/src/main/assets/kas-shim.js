@@ -7,6 +7,8 @@
  * routes them to the native share sheet through Capacitor's Share and Filesystem plugins,
  * makes the hardware back button close an open sheet instead of quitting, and tells the
  * web app it is already installed so it hides the "Pasang di layar utama" card.
+ * It also exposes the family-invite NFC plugin as window.KasNfc, with its events as
+ * window "kasnfc" events.
  *
  * The Capacitor bridge is injected after this script, so plugins are looked up lazily.
  */
@@ -122,9 +124,41 @@
     if (app && app.addListener) app.addListener('backButton', onBackButton);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', listenForBackButton);
-  } else {
+  // NFC family invite (KasNfcPlugin). The page checks window.KasNfc to show the NFC buttons.
+  function nfcCall(method, options) {
+    var nfc = plugins().KasNfc;
+    if (!nfc) return Promise.reject(new Error('KasNfc plugin unavailable'));
+    return nfc[method](options || {});
+  }
+
+  window.KasNfc = {
+    status: function () { return nfcCall('status'); },
+    startShare: function (options) { return nfcCall('startShare', options); },
+    stopShare: function () { return nfcCall('stopShare'); },
+    startRead: function () { return nfcCall('startRead'); },
+    stopRead: function () { return nfcCall('stopRead'); },
+    openSettings: function () { return nfcCall('openSettings'); }
+  };
+
+  function fireNfcEvent(detail) {
+    window.dispatchEvent(new CustomEvent('kasnfc', { detail: detail }));
+  }
+
+  function listenForNfc() {
+    var nfc = plugins().KasNfc;
+    if (!nfc || !nfc.addListener) return;
+    nfc.addListener('url', function (data) { fireNfcEvent({ type: 'url', url: data && data.url }); });
+    nfc.addListener('shared', function () { fireNfcEvent({ type: 'shared' }); });
+  }
+
+  function onReady() {
     listenForBackButton();
+    listenForNfc();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
   }
 })();

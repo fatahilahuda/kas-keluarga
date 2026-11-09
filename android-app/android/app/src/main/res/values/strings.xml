@@ -4,4 +4,6 @@
     <string name="title_activity_main">Muarakas</string>
     <string name="package_name">io.github.fatahilahuda.muarakas</string>
     <string name="custom_url_scheme">io.github.fatahilahuda.muarakas</string>
+    <string name="nfc_invite_service">Undangan keluarga Muarakas</string>
+    <string name="nfc_invite_aid">Tautan undangan keluarga</string>
 </resources>
