@@ -82,19 +82,39 @@
 #modechip{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;min-height:44px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 12px 0 10px;color:var(--ink);font-family:var(--body);font-weight:600;font-size:14px;white-space:nowrap}
 #modechip:hover{background:var(--surface-2)}
 .modrow{border-top:1px solid var(--line);padding-top:12px}
+.onb{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;padding:max(28px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+.onb-in{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:22px}
+.onb h1{font-size:27px;line-height:1.15;letter-spacing:-.02em}
+.onb .lead{color:var(--muted);font-size:15px;line-height:1.5}
+.onb-mk svg{width:58px;height:58px;display:block}
+.onb-dots{display:flex;gap:6px}.onb-dots i{width:26px;height:4px;border-radius:2px;background:var(--line)}.onb-dots i.on{background:var(--accent)}
+.onb-foot{margin-top:auto;display:grid;gap:10px;padding-top:6px}.onb-foot .link{justify-self:center;padding:8px}
+.onb-mods{gap:14px}.onb-mods .toggle+.toggle{border-top:1px solid var(--line);padding-top:14px}
+.whocard{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;padding:16px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.whocard>span:nth-child(2){flex:1;min-width:0}.whocard b{display:block;font-size:16px;margin-bottom:3px;font-family:var(--display)}
+.whocard .tick{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;flex:none;color:transparent}
+.whocard .tick svg{width:14px;height:14px}
+.whocard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.whocard[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
 .modrow .plist{margin-top:8px}
 .modadd{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
 #modechip[hidden],.top .ctx[hidden]{display:none}
-.top .ctx{justify-content:center}
 #modechip{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
 #modechip .cls{width:16px;height:16px;flex:none;margin-left:auto;color:var(--muted)}
 #modechip .mi{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c,var(--accent)) 15%,transparent);color:var(--c,var(--accent))}
 #modechip .mi svg{width:16px;height:16px}
 #modechip .mn{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #modechip svg.chev{width:15px;height:15px;flex:none;color:var(--muted);margin-left:auto}
-.top .ctx .month{flex:none}
-.top .ctx .month .ib{width:38px;height:38px}
-.top .ctx .month span{flex:none;min-width:76px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+.top .ctx{align-items:center}
+/* Month control: no floating pill. On the home row the month name sits left like a page title with
+   the arrows grouped on the right; next to a page chip it shrinks to "‹ Nov 2026 ›". */
+.top .ctx .month{flex:none;background:none;border:0;padding:0;gap:6px;border-radius:0}
+.top .ctx .month .ib{width:36px;height:36px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.top .ctx .month .ib:hover{background:var(--surface-2)}
+.top .ctx .month .ib svg{width:18px;height:18px}
+.top .ctx .month span{flex:none;min-width:34px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;font-family:var(--display);font-weight:700;font-size:14.5px;padding:0 2px}
+.top .ctx.home .month{flex:1}
+.top .ctx.home .month span{order:-1;flex:1;text-align:left;font-size:18px;letter-spacing:-.01em;padding:0}
 .about{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0 4px;text-align:center}
 .about .mk{width:150px;height:auto}
 .mk-lock{width:170px;margin:4px auto 2px}.mk-lock svg{width:100%;height:auto;display:block}
@@ -877,7 +897,7 @@ body.noscroll{overflow:hidden}
     <button data-act="tab:hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Riwayat</button>
     <button data-act="tab:add" class="plus" aria-label="Catat transaksi"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Catat</button>
     <button data-act="tab:chart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M4 16l5-6 4 3 7-8"/></svg>Analisis</button>
-    <button data-act="tab:kita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 5.3 5.3 5.3 0 0 1 21.3 11C19 15.6 12 20 12 20z"/></svg>Kita<span class="badge" id="kitabadge" hidden></span></button>
+    <button data-act="tab:kita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 5.3 5.3 5.3 0 0 1 21.3 11C19 15.6 12 20 12 20z"/></svg><span id="kitalbl">Kita</span><span class="badge" id="kitabadge" hidden></span></button>
   </div>
 </nav>
 
@@ -1309,9 +1329,10 @@ const memName=id=>{const m=mem(id);return m?m.n:'—';};
 const ROLES={anak:['Anak','🧒'],ortu:['Orang tua','👵'],mertua:['Mertua','👴'],saudara:['Saudara','🧑'],art:['ART / pengasuh','🧹'],lain:['Lainnya','🙂']};
 const EMOS=['🧒','👧','👦','👶','🧑','👩','👨','👵','👴','🧕','🐱','🐶'];
 const people=()=>(S.people||[]).filter(p=>!p.gone);
-const famAll=()=>S.members.slice(0,2).concat(people());
+const famAll=()=>(SOLO()?[]:S.members.slice(0,2)).concat(people());
+const BERSAMA=()=>SOLO()?'Diri sendiri':'Bersama';
 const person=id=>mem(id)||(S.people||[]).find(p=>p.id===id);
-const pName=id=>{const p=person(id);return p?p.n:'Bersama';};
+const pName=id=>{const p=person(id);return p?p.n:BERSAMA();};
 const pRole=p=>p.role?(ROLES[p.role]||ROLES.lain)[0]:(p.id===S.me?'Kamu':'Pasangan');
 const av=(id,lg)=>{const m=person(id);if(!m)return '';return '<span class="av'+(lg===2?' lg xl':lg?' lg':'')+(m.e?' emo':'')+'" style="--c:var(--k'+m.k+')" title="'+esc(m.n)+'">'+(m.e?m.e:esc(m.n.charAt(0).toUpperCase()))+'</span>';};
 function guessFor(text){
@@ -1321,7 +1342,7 @@ function guessFor(text){
   const byRole=(r,re)=>{if(!re.test(s))return null;const l=people().filter(p=>p.role===r);return l.length===1?l[0].id:null;};
   return byRole('anak',/ (anak|bayi|sekolah|spp|susu|popok|saku|mainan|seragam) /)||byRole('ortu',/ (ortu|bapak|ayah|emak|mama|papa|nenek|kakek) /)||byRole('mertua',/ mertua /)||byRole('art',/ (art|pengasuh|babysitter|pembantu) /)||null;}
 function forChips(sel,act,aiOn){
-  return '<button class="chip" data-act="'+act+':_" aria-pressed="'+(!sel)+'">'+ic('home','ci')+'Bersama</button>'+famAll().map(p=>'<button class="chip" data-act="'+act+':'+p.id+'" aria-pressed="'+(sel===p.id)+'">'+av(p.id)+esc(p.n)+(aiOn&&sel===p.id?'<span class="tag">AI</span>':'')+'</button>').join('')+
+  return '<button class="chip" data-act="'+act+':_" aria-pressed="'+(!sel)+'">'+ic('home','ci')+BERSAMA()+'</button>'+famAll().map(p=>'<button class="chip" data-act="'+act+':'+p.id+'" aria-pressed="'+(sel===p.id)+'">'+av(p.id)+esc(p.n)+(aiOn&&sel===p.id?'<span class="tag">AI</span>':'')+'</button>').join('')+
     '<button class="chip" data-act="newperson" style="border-style:dashed;color:var(--accent)">'+ic('plus','ci')+'Anggota</button>';}
 function famStats(k){const r={per:{},cnt:{},cats:{},total:0};
   inMonth(k).forEach(t=>{if(t.type!=='out'||(t.biz&&isUsaha(t.biz)))return;const id=t.for&&person(t.for)?t.for:'_';r.per[id]=(r.per[id]||0)+t.amount;r.cnt[id]=(r.cnt[id]||0)+1;r.total+=t.amount;
@@ -1368,10 +1389,10 @@ function mono(t){if(t.type==='tf'||t.type==='loan')return '<span class="mono" st
 const forLine=t=>t.for&&t.type==='out'&&person(t.for)?' · <span class="forline">untuk '+av(t.for)+esc(pName(t.for))+'</span>':'';
 function txRow(t){
   if(masked(t))return giftRow(t);
-  if(t.type==='loan')return '<button class="tx" data-act="open:'+t.id+'">'+mono(t)+'<span class="d"><b>'+av(t.by)+esc(t.desc)+'</b><small>'+(t.biz?'<b style="color:'+bcolor(t.biz)+'">'+esc(bname(t.biz))+'</b> · ':'')+(t.dir>0?'masuk ke ':'dari ')+esc(pname(t.pocket))+'</small></span><span class="a tf num">'+(t.dir>0?'+':'−')+fmt(t.amount)+'</span></button>';
+  if(t.type==='loan')return '<button class="tx" data-act="open:'+t.id+'">'+mono(t)+'<span class="d"><b>'+(SOLO()?'':av(t.by))+esc(t.desc)+'</b><small>'+(t.biz?'<b style="color:'+bcolor(t.biz)+'">'+esc(bname(t.biz))+'</b> · ':'')+(t.dir>0?'masuk ke ':'dari ')+esc(pname(t.pocket))+'</small></span><span class="a tf num">'+(t.dir>0?'+':'−')+fmt(t.amount)+'</span></button>';
   if(t.type==='tf')return '<button class="tx" data-act="open:'+t.id+'">'+mono(t)+'<span class="d"><b>'+esc(t.desc||'Pindah saldo')+'</b><small>'+(t.biz&&!MODE()&&bizOf(t.biz)&&kindOn(bkind(bizOf(t.biz)))?'<b style="color:'+bcolor(t.biz)+'">'+esc(bname(t.biz))+'</b> · ':'')+esc(pname(t.pocket))+' → '+esc(pname(t.to))+(t.qty?' · '+fmtQty(t.qty)+' '+esc((bizOf(t.biz)||{}).unit||'gram'):'')+'</small></span><span class="a tf num">⇄ '+fmt(t.amount)+'</span></button>';
   const c=cat(ctype(t),t.cat);
-  return '<button class="tx" data-act="open:'+t.id+'">'+mono(t)+'<span class="d"><b>'+av(t.by)+esc(t.desc||c.n)+'</b><small>'+(t.biz&&!MODE()&&bizOf(t.biz)&&kindOn(bkind(bizOf(t.biz)))?'<b style="color:'+bcolor(t.biz)+'">'+esc(bname(t.biz))+'</b> · ':'')+esc(c.n)+' · <span class="dot" style="--c:'+pcolor(t.pocket)+'"></span>'+esc(pname(t.pocket))+forLine(t)+(t.hidden?' · <span class="lk">rahasia</span>':'')+'</small></span><span class="a num '+(t.type==='in'?'in':'')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount)+'</span></button>';
+  return '<button class="tx" data-act="open:'+t.id+'">'+mono(t)+'<span class="d"><b>'+(SOLO()?'':av(t.by))+esc(t.desc||c.n)+'</b><small>'+(t.biz&&!MODE()&&bizOf(t.biz)&&kindOn(bkind(bizOf(t.biz)))?'<b style="color:'+bcolor(t.biz)+'">'+esc(bname(t.biz))+'</b> · ':'')+esc(c.n)+' · <span class="dot" style="--c:'+pcolor(t.pocket)+'"></span>'+esc(pname(t.pocket))+forLine(t)+(t.hidden?' · <span class="lk">rahasia</span>':'')+'</small></span><span class="a num '+(t.type==='in'?'in':'')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount)+'</span></button>';
 }
 function dayLabel(s){const t=todayISO();if(s===t)return 'Hari ini';if(s===addDay(t,-1))return 'Kemarin';const d=parseISO(s);return HARI[d.getDay()]+', '+d.getDate()+' '+BLN[d.getMonth()];}
 const shortDate=s=>{const d=parseISO(s);return HR[d.getDay()]+', '+d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();};
@@ -1542,7 +1563,7 @@ function vHome(){
     '<div class="io"><div><span class="ioi" style="color:var(--in)">'+ic('down')+'</span><span>Pemasukan<b class="num">'+fmtS(t.in)+'</b></span></div><div><span class="ioi" style="color:var(--out)">'+ic('up')+'</span><span>Pengeluaran<b class="num">'+fmtS(t.out)+'</b></span></div></div>'+
     loanBox(L)+'<div class="meter"><div class="track" role="img" aria-label="Pengeluaran '+pct(t.out,t.in)+' persen dari pemasukan"><div class="fill '+st.f+'" id="herofill" style="width:'+(ANIM?0:used)+'%" data-w="'+used+'"></div></div>'+
     '<div class="meter-row"><span class="muted">'+(t.in>0?'Terpakai <b class="num">'+pct(t.out,t.in)+'%</b>':'Belum ada pemasukan')+'</span><span class="pill '+st.cls+'">'+st.t+'</span></div></div>'+(modOn('usaha')&&(Object.keys(t.bi).length||Object.keys(t.bo).length)?'<div class="infobox"><span>Laba usaha <b class="num">'+fmtS(t.bizNet)+'</b></span><button class="link" data-act="mode">Per usaha</button></div>':'')+'</section>';
-  h+='<div class="qa">'+[['qadd:out','Keluar','up','var(--out)'],['qadd:in','Masuk','down','var(--in)'],['qadd:tf','Pindah','swap','var(--accent)'],['newprop','Ajukan','inbox','var(--k3)']].map(([a,l,i,c])=>'<button data-act="'+a+'" style="--c:'+c+'"><span>'+ic(i)+'</span>'+l+'</button>').join('')+'</div>';
+  h+='<div class="qa"'+(SOLO()?' style="grid-template-columns:repeat(3,1fr)"':'')+'>'+[['qadd:out','Keluar','up','var(--out)'],['qadd:in','Masuk','down','var(--in)'],['qadd:tf','Pindah','swap','var(--accent)']].concat(SOLO()?[]:[['newprop','Ajukan','inbox','var(--k3)']]).map(([a,l,i,c])=>'<button data-act="'+a+'" style="--c:'+c+'"><span>'+ic(i)+'</span>'+l+'</button>').join('')+'</div>';
   const B=balances(),tb=Object.keys(B).reduce((a,k)=>a+B[k],0);
   h+='<section><div class="card-h" style="margin-bottom:8px">'+hh('wallet','Kantong')+'<b class="num">'+fmtS(tb)+'</b></div><div class="pockets">'+
     activePockets().map(p=>{const b=B[p.id]||0,tg=tgtOf(p.id);return '<button class="pk" style="--c:var(--k'+p.k+')" data-act="pocket:'+p.id+'"><span class="pt"><span class="ico">'+ic(pocketIc(p))+'</span>'+(p.save?'<span class="save-tag">TABUNG</span>':'')+'</span><span class="pn"><span>'+esc(p.n)+'</span></span><span class="pb'+(b<0?' neg':'')+'">'+fmtS(b)+'</span>'+spark(p.id)+(tg?'<span class="pm">Target <b>'+Math.round(tabStats(tg).pct)+'%</b> dari '+bare(fmtS(tabStats(tg).tgt))+'</span>':'<span class="pm">+'+bare(fmtS(t.ip[p.id]||0))+' · −'+bare(fmtS(t.op[p.id]||0))+'</span>')+'</button>';}).join('')+
@@ -1572,7 +1593,7 @@ function vHist(){
   const cats=CATS[co].map(c=>'<option value="out:'+c.id+'">Keluar · '+esc(c.n)+'</option>').join('')+CATS[ci].map(c=>'<option value="in:'+c.id+'">Masuk · '+esc(c.n)+'</option>').join('');
   return sampleBanner()+'<section class="filters"><div class="seg">'+
     [['all','Semua'],['out','Keluar'],['in','Masuk'],['tf','Pindah']].map(([k,l])=>'<button data-act="hf:'+k+'" aria-pressed="'+(H.type===k)+'">'+l+'</button>').join('')+'</div>'+
-    (mb?modeBanner(mb):'')+'<input class="inp" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'">'+(mb?'':'<div class="row2">'+(shownBiz().length?'<select class="inp" id="hb" aria-label="Filter bagian"><option value="">Semua bagian</option><option value="home">Rumah tangga</option>'+S.biz.filter(b=>kindOn(bkind(b))).map(b=>'<option value="'+b.id+'">'+esc(b.n)+'</option>').join('')+'</select>':'')+'<select class="inp" id="hw" aria-label="Filter orang"><option value="">Semua orang</option><option value="_">Bersama</option>'+famAll().map(p=>'<option value="'+p.id+'">Untuk '+esc(p.n)+'</option>').join('')+'</select></div>')+
+    (mb?modeBanner(mb):'')+'<input class="inp" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'">'+(mb?'':'<div class="row2">'+(shownBiz().length?'<select class="inp" id="hb" aria-label="Filter bagian"><option value="">Semua bagian</option><option value="home">'+HOMEN()+'</option>'+S.biz.filter(b=>kindOn(bkind(b))).map(b=>'<option value="'+b.id+'">'+esc(b.n)+'</option>').join('')+'</select>':'')+'<select class="inp" id="hw" aria-label="Filter orang"><option value="">Semua orang</option><option value="_">'+BERSAMA()+'</option>'+famAll().map(p=>'<option value="'+p.id+'">Untuk '+esc(p.n)+'</option>').join('')+'</select></div>')+
     '<div class="row2"><select class="inp" id="hc" aria-label="Filter kategori"><option value="">Semua kategori</option>'+cats+'</select><select class="inp" id="hp" aria-label="Filter kantong"><option value="">Semua kantong</option>'+S.pockets.map(p=>'<option value="'+p.id+'">'+esc(p.n)+'</option>').join('')+'</select></div></section>'+
     '<div id="hlist"></div>';
 }
@@ -1622,9 +1643,9 @@ function vAdd(){
   const aiLine=ai&&ai.conf>0?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg><span>AI menebak <b>'+esc(cat(cty,ai.best).n)+'</b> · '+Math.round(ai.conf*100)+'% yakin</span>'
     :'<span class="muted">Ketik keterangan, AI akan memilih kategori dan kantong. Bisa langsung tulis nominal, misal <b>bakso 15rb</b>.</span>';
   const tabHint=!F.biz&&ty==='out'&&F.cat==='tabungan'&&activePockets().some(p=>p.save)?'<div class="ai"><span>Menabung ke kantong sendiri? Pakai <b>Pindah</b> supaya saldonya tetap terhitung.</span><button class="link" data-act="ftype:tf">Jadikan pindah</button></div>':'';
-  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">Rumah tangga atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
+  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">'+HOMEN()+' atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
     '<div class="field"><span class="flabel">Kategori</span><div class="chips" id="fcats">'+list.filter(c=>cty!=='out'||c.id!=='tabungan'||F.cat==='tabungan').map(c=>'<button class="chip" data-act="fcat:'+c.id+'" aria-pressed="'+(F.cat===c.id)+'" style="--cc:'+ccolor(cty,c.id)+'">'+ic(catIc(cty,c.id),'ci')+esc(c.n)+(ai&&ai.conf>0&&ai.best===c.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'</div></div>'+
-    '<div class="field" id="fforw"'+(ty==='out'&&!F.biz?'':' hidden')+'><span class="flabel">Untuk siapa</span><div class="chips" id="ffor">'+forChips(F.forId,'ffor',!F.forManual)+'</div></div>'+
+    '<div class="field" id="fforw"'+(ty==='out'&&!F.biz&&(!SOLO()||people().length)?'':' hidden')+'><span class="flabel">Untuk siapa</span><div class="chips" id="ffor">'+forChips(F.forId,'ffor',!F.forManual)+'</div></div>'+
     '<div id="ftab">'+tabHint+'</div>'+
     '<div class="field"><span class="flabel">'+(ty==='out'?'Ambil dari kantong':'Masuk ke kantong')+'</span>'+pocketChips('fpk',F.pocket,'fpk',B,null,amount,ty==='out')+'</div>'+
     '<div id="fwarn">'+fundsWarn(B)+'</div><div id="fhide">'+hideToggle()+'</div>'+date+
@@ -1706,23 +1727,23 @@ function vChart(){
   const mb=MODE();if(mb)return bkind(mb)==='usaha'?vBizChart(mb):vBookChart(mb);
   const t=totals(CUR);let h=sampleBanner();
   h+='<section class="card" id="card-pockets">'+pocketCardInner()+'</section>';
-  h+='<section class="card"><div class="card-h" style="margin-bottom:6px"><h2>Laju pengeluaran</h2><span class="muted small">rumah tangga</span></div>'+paceChart()+'</section>'+(modOn('usaha')?bizSummaryCard(t):'');
-  h+='<section class="card"><div class="card-h"><h2>Ke mana uangnya pergi</h2><span class="muted small num">'+fmt(t.hout)+'</span></div>'+donutCard('out',t.cats,t.hout,'Rumah tangga','out')+'</section>';
+  h+='<section class="card"><div class="card-h" style="margin-bottom:6px"><h2>Laju pengeluaran</h2><span class="muted small">'+HOMEN().toLowerCase()+'</span></div>'+paceChart()+'</section>'+(modOn('usaha')?bizSummaryCard(t):'');
+  h+='<section class="card"><div class="card-h"><h2>Ke mana uangnya pergi</h2><span class="muted small num">'+fmt(t.hout)+'</span></div>'+donutCard('out',t.cats,t.hout,HOMEN(),'out')+'</section>';
   h+='<section class="card"><div class="card-h"><h2>Masuk vs keluar</h2><span class="muted small">6 bulan</span></div>'+chartMonths()+'</section>';
   h+='<section class="card"><div class="card-h"><h2>Pengeluaran harian</h2><span class="muted small">'+esc(mname(CUR))+'</span></div>'+chartDaily()+'</section>';
   if(t.in>0){const r=rules(t);
     h+='<section class="card"><div class="card-h"><h2>Aturan 50/30/20</h2><span class="muted small">dari pemasukan</span></div>'+
      ruleRow('Kebutuhan pokok',r.need,r.base,50,'max')+ruleRow('Keinginan',r.want,r.base,30,'max')+ruleRow('Ditabung & sisa',r.save,r.base,20,'min')+
-     '<p class="hint" style="margin-top:12px">Dihitung dari pemasukan rumah tangga ditambah laba usaha. Garis hitam adalah batas ideal. Kebutuhan maksimal 50%, keinginan maksimal 30%, tabungan minimal 20%.</p></section>';
+     '<p class="hint" style="margin-top:12px">Dihitung dari pemasukan '+HOMEN().toLowerCase()+' ditambah laba usaha. Garis hitam adalah batas ideal. Kebutuhan maksimal 50%, keinginan maksimal 30%, tabungan minimal 20%.</p></section>';
     h+='<section class="card"><div class="card-h"><h2>Asal pemasukan</h2><div class="seg sm" role="group" aria-label="Kelompokkan">'+[['pocket','Kantong'],['cat','Kategori']].map(([k,l])=>'<button data-act="incby:'+k+'" aria-pressed="'+(UI.incBy===k)+'">'+l+'</button>').join('')+'</div></div>'+
       (UI.incBy==='pocket'?donutCard('inp',t.ip,t.in,'Masuk','pocket'):donutCard('inc',Object.assign({},t.icats,...Object.keys(t.bi).map(b=>({['biz:'+b]:t.bi[b]}))),t.in,'Masuk','in'))+'</section>';}
   return h;
 }
 
 /* ---------- business mode ---------- */
-function modeBanner(b){if(TAB!=='add')return '';return '<div class="banner" style="background:color-mix(in srgb,var(--k'+b.k+') 14%,var(--surface))"><span>Kamu di halaman '+BKINDS[bkind(b)].w+' <b style="color:var(--k'+b.k+')">'+esc(b.n)+'</b>. Yang dicatat di sini masuk ke '+esc(b.n)+'.</span><button class="link" data-act="setmode:home">Kembali ke rumah tangga</button></div>';}
+function modeBanner(b){if(TAB!=='add')return '';return '<div class="banner" style="background:color-mix(in srgb,var(--k'+b.k+') 14%,var(--surface))"><span>Kamu di halaman '+BKINDS[bkind(b)].w+' <b style="color:var(--k'+b.k+')">'+esc(b.n)+'</b>. Yang dicatat di sini masuk ke '+esc(b.n)+'.</span><button class="link" data-act="setmode:home">Kembali ke '+HOMEN().toLowerCase()+'</button></div>';}
 function bizChips(){
-  return '<button class="chip" data-act="fbiz:home" aria-pressed="'+(!F.biz)+'">Rumah tangga</button>'+activeUsaha().map(b=>'<button class="chip" data-act="fbiz:'+b.id+'" aria-pressed="'+(F.biz===b.id)+'"><span class="dot" style="--c:var(--k'+b.k+');margin:0"></span>'+esc(b.n)+(F.bizAuto&&F.biz===b.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'<button class="chip" data-act="newbiz" style="border-style:dashed;color:var(--accent)">+ Daftarkan usaha</button>';
+  return '<button class="chip" data-act="fbiz:home" aria-pressed="'+(!F.biz)+'">'+HOMEN()+'</button>'+activeUsaha().map(b=>'<button class="chip" data-act="fbiz:'+b.id+'" aria-pressed="'+(F.biz===b.id)+'"><span class="dot" style="--c:var(--k'+b.k+');margin:0"></span>'+esc(b.n)+(F.bizAuto&&F.biz===b.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'<button class="chip" data-act="newbiz" style="border-style:dashed;color:var(--accent)">+ Daftarkan usaha</button>';
 }
 function bizSummaryCard(t){
   const ab=activeUsaha();if(!ab.length)return '<section class="card"><div class="card-h"><h2>Usaha</h2></div><p class="small muted">Belum ada usaha terdaftar.</p><button class="btn ghost" data-act="newbiz" style="margin-top:10px">Daftarkan usaha</button></section>';
@@ -1809,10 +1830,10 @@ function bizSheet(id,kind,keepName,pk0){
 function modeSheet(){
   const cur=MODE()?PG:'home';
   const row=(id,ic,col,name,sub)=>'<button class="prow" data-act="setmode:'+id+'"><span class="mono" style="--c:'+col+'">'+ic+'</span><span style="min-width:0"><b style="display:block">'+esc(name)+'</b><span class="hint">'+sub+'</span></span>'+(cur===id?'<span class="pill info">Aktif</span>':'<span></span>')+'</button>';
-  let h='<section class="card"><div class="plist">'+row('home','Rp','var(--accent)','Rumah tangga','Semua kantong, pengeluaran harian, dan ringkasan semuanya')+'</div></section>';
+  let h='<section class="card"><div class="plist">'+row('home','Rp','var(--accent)',HOMEN(),'Semua kantong, pengeluaran harian, dan ringkasan semuanya')+'</div></section>';
   Object.keys(BKINDS).filter(kindOn).forEach(k=>{const L=activeBiz().filter(b=>bkind(b)===k);if(!L.length)return;
     h+='<section class="card"><div class="eyebrow" style="margin-bottom:4px">'+BKINDS[k].n+'</div><div class="plist">'+L.map(b=>row(b.id,esc(b.n.charAt(0)),'var(--k'+b.k+')',b.n,bookSub(b))).join('')+'</div></section>';});
-  openSheet(sheetHead('Buka halaman')+'<div class="stack">'+h+'<div class="btns">'+(modOn('usaha')?'<button class="btn ghost" data-act="newbiz">+ Usaha</button>':'')+'<button class="btn ghost" data-act="newbook">+ Target</button>'+(modOn('utang')?'<button class="btn ghost" data-act="newmod:cicilan">+ Utang</button><button class="btn ghost" data-act="gadai">+ Gadai emas</button>':'')+(modOn('emas')?'<button class="btn ghost" data-act="newmod:investasi">+ Emas</button>':'')+'</div><p class="hint">Setiap usaha, target, dan utang punya halaman sendiri, lengkap dengan ringkasan dan grafiknya. Yang dicatat di halaman itu otomatis masuk ke sana. Tombol <b>‹</b> di atas membawa kembali ke rumah tangga. Modul lain bisa dinyalakan di Pengaturan.</p></div>');
+  openSheet(sheetHead('Buka halaman')+'<div class="stack">'+h+'<div class="btns">'+(modOn('usaha')?'<button class="btn ghost" data-act="newbiz">+ Usaha</button>':'')+'<button class="btn ghost" data-act="newbook">+ Target</button>'+(modOn('utang')?'<button class="btn ghost" data-act="newmod:cicilan">+ Utang</button><button class="btn ghost" data-act="gadai">+ Gadai emas</button>':'')+(modOn('emas')?'<button class="btn ghost" data-act="newmod:investasi">+ Emas</button>':'')+'</div><p class="hint">Setiap usaha, target, dan utang punya halaman sendiri, lengkap dengan ringkasan dan grafiknya. Yang dicatat di halaman itu otomatis masuk ke sana. Tombol <b>‹</b> di atas membawa kembali ke '+HOMEN().toLowerCase()+'. Modul lain bisa dinyalakan di Pengaturan.</p></div>');
 }
 
 /* ---------- online sync (Supabase, code-gated RPC) ---------- */
@@ -1861,7 +1882,7 @@ async function pushDirty(){
   Object.keys(S.deleted).forEach(id=>{const u=S.deleted[id];if(dirty('del',id,u))items.push({kind:'del',id,u,data:{ts:u}});});
   for(let i=0;i<items.length;i+=400){const ch=items.slice(i,i+400);await rpc('kas_push',{p_code:S.family.code,p_items:ch});ch.forEach(x=>{S.srvU[x.kind+':'+x.id]=x.u;});persist();}
 }
-function syncBanner(){if(S.family||!onlineOK())return '';return note({icon:'link',title:'Sambungkan dengan '+esc(partner().n),sub:'Catatan muncul di dua HP',act:'settings',btn:'Sambung'});}
+function syncBanner(){if(S.family||SOLO()||!onlineOK())return '';return note({icon:'link',title:'Sambungkan dengan '+esc(partner().n),sub:'Catatan muncul di dua HP',act:'settings',btn:'Sambung'});}
 function syncSection(){
   if(!onlineOK())return '<section class="card stack"><h2>Sinkron otomatis</h2><p class="small muted">Sinkron otomatis aktif di aplikasi yang dipasang dari <b>fatahilahuda.github.io/kas-keluarga</b>. Halaman pratinjau ini tidak bisa terhubung ke server.</p></section>';
   if(!S.family)return '<section class="card stack"><h2>Sinkron otomatis dengan '+esc(partner().n)+'</h2><p class="small muted">Catatan kalian langsung muncul di kedua HP setiap kali online. Satu orang membuat keluarga, lalu yang lain bergabung dengan kodenya. Data contoh akan dihapus saat tersambung.</p><button class="btn" data-act="fam-new">Buat keluarga baru</button>'+
@@ -2024,11 +2045,11 @@ function pinSheet(){const exists=!!me().pinCheck,intro=exists?'PIN ini membuka p
 function copyPlain(txt,msg){const done=()=>toast(msg);try{navigator.clipboard.writeText(txt).then(done,()=>toast('Salin manual: '+txt));}catch(e){toast('Salin manual: '+txt);}}
 
 /* ---------- couple: secrets & gifts ---------- */
-function meBanner(){if(S.meSet)return '';return note({icon:'phone',title:'Ini HP siapa?',sub:'Pilih sekali saja',extra:'<span class="nchoice">'+S.members.slice(0,2).map(m=>'<button data-act="setme:'+m.id+'">'+av(m.id)+esc(m.n)+'</button>').join('')+'</span>'});}
-function giftTeaser(){const r=giftsReady().length,l=giftsLocked().length;if(!r&&!l)return '';
+function meBanner(){if(S.meSet||SOLO())return '';return note({icon:'phone',title:'Ini HP siapa?',sub:'Pilih sekali saja',extra:'<span class="nchoice">'+S.members.slice(0,2).map(m=>'<button data-act="setme:'+m.id+'">'+av(m.id)+esc(m.n)+'</button>').join('')+'</span>'});}
+function giftTeaser(){if(SOLO())return '';const r=giftsReady().length,l=giftsLocked().length;if(!r&&!l)return '';
   return note({icon:'gift',c:'var(--k3)',title:r?r+' kado siap dibuka':l+' kado tertutup',sub:'dari '+esc(partner().n),act:'kita:gift',label:r?'Buka':'Lihat'});}
-function defaultHidden(){if(F.biz){const b=bizOf(F.biz);return !!(b&&b.hidden&&b.owner===S.me);}return (me().hideCats||[]).indexOf(F.cat)>=0;}
-function hideToggle(){
+function defaultHidden(){if(SOLO())return false;if(F.biz){const b=bizOf(F.biz);return !!(b&&b.hidden&&b.owner===S.me);}return (me().hideCats||[]).indexOf(F.cat)>=0;}
+function hideToggle(){if(SOLO())return '';
   if(F.type!=='in')return '';const auto=!F.hiddenManual&&F.hidden;
   return '<label class="toggle" for="fhid" style="background:'+(F.hidden?'color-mix(in srgb,var(--k3) 12%,var(--surface))':'var(--surface-2)')+';border-radius:12px;padding:10px 12px"><span>Rahasiakan dari '+esc(partner().n)+'<br><span class="hint">'+(F.hidden?'Muncul sebagai kado tertutup di HP '+esc(partner().n)+'. Kamu bisa membukanya kapan saja.'+(auto?' Otomatis karena aturan rahasiamu.':''):'Pemasukan ini terlihat oleh '+esc(partner().n)+'.')+'</span></span><input type="checkbox" id="fhid"'+(F.hidden?' checked':'')+'></label>';
 }
@@ -2036,7 +2057,7 @@ const GIFT_SVG_LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const GIFT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1s6 1 6 1zm0 0c2-4 6-4 6-1s-6 1-6 1z"/></svg>';
 function giftBox(state){return '<div class="gift '+state+'" id="giftbox" aria-hidden="true"><span class="bx"></span><span class="rv"></span><span class="ld"></span><span class="bow"></span>'+(state==='locked'?'<span class="lock">'+GIFT_SVG_LOCK+'</span>':'')+'</div>';}
 function giftRow(t){const ready=t.revealedAt&&!t.sealed&&!t.hidden;
-  return '<button class="tx giftrow" data-act="open:'+t.id+'"><span class="mono">'+GIFT_ICON+'</span><span class="d"><b>'+av(t.by)+(t.by===S.me?'Rahasiamu (terkunci PIN)':'Kado dari '+esc(memName(t.by)))+'</b><small>'+(t.biz?esc(bname(t.biz))+' · ':'')+(ready?'<span class="lk">siap dibuka</span>':'tertutup')+'</small></span><span class="a num" style="color:var(--k3)">'+(ready?'Buka':'•••')+'</span></button>';}
+  return '<button class="tx giftrow" data-act="open:'+t.id+'"><span class="mono">'+GIFT_ICON+'</span><span class="d"><b>'+(SOLO()?'':av(t.by))+(t.by===S.me?'Rahasiamu (terkunci PIN)':'Kado dari '+esc(memName(t.by)))+'</b><small>'+(t.biz?esc(bname(t.biz))+' · ':'')+(ready?'<span class="lk">siap dibuka</span>':'tertutup')+'</small></span><span class="a num" style="color:var(--k3)">'+(ready?'Buka':'•••')+'</span></button>';}
 function openGift(id){
   const t=S.tx.find(x=>x.id===id);if(!t)return;if(t.by===S.me&&t.sealed){pinSheet();return;}const from=memName(t.by),ready=t.revealedAt&&!t.sealed&&!t.hidden;
   if(!ready){openSheet(sheetHead('Kado dari '+esc(from))+'<div class="stack" style="text-align:center"><div class="giftwrap">'+giftBox('locked')+'</div><h3 style="font-size:18px">Masih tertutup</h3><p class="muted">'+(t.biz?'Pemasukan '+esc(bname(t.biz))+', ':'Pemasukan ')+dayLabel(t.date)+'. Hanya '+esc(from)+' yang bisa membukanya. Nominalnya tidak ikut terkirim ke HP ini.</p><p class="hint">Mau tahu isinya? Kirim pengajuan atau tanya langsung. Siapa tahu jadi kejutan.</p></div>');return;}
@@ -2506,6 +2527,7 @@ function wheelEditSheet(){
     '<button class="btn" data-act="wsave">Selesai</button></div>');
 }
 function vKita(){
+  if(SOLO())return famSection();
   const kt=UI.kt||'sum',pend=S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length,gr=giftsReady().length,fa=famAll();
   let h=meBanner()+'<section class="card"><div class="fam-head"><span class="avs">'+fa.slice(0,5).map(p=>av(p.id,1)).join('')+'</span><div style="min-width:0"><h2>Keluarga kita</h2><p class="hint">'+fa.length+' orang · HP '+esc(me().n)+' · <span id="kitasync">'+(S.family?syncLabel():'belum tersambung')+'</span></p></div></div></section>';
   h+='<div class="seg ic" role="group" aria-label="Bagian">'+[['sum','Keluarga','users',0],['prop','Pengajuan','inbox',pend],['gift','Kado','gift',gr],['game','Main','dice',0]].map(([k,l,i,c])=>'<button data-act="kita:'+k+'" aria-pressed="'+(kt===k)+'">'+ic(i)+l+(c?'<span class="cnt">'+c+'</span>':'')+'</button>').join('')+'</div>';
@@ -2539,7 +2561,7 @@ function famSection(){
   h+='<div class="meter-row" style="margin:0 0 8px"><span class="muted">'+esc(mname(CUR))+'</span><b class="num">'+fmt(st.total)+'</b></div>';
   h+='<div class="fstack" role="img" aria-label="Bagian pengeluaran per orang">'+rows.filter(r=>r.v>0).map(r=>'<i style="width:'+(r.v/Math.max(1,st.total)*100).toFixed(2)+'%;--c:'+(r.id==='_'?'var(--k7)':'var(--k'+person(r.id).k+')')+'"></i>').join('')+'</div>';
   h+='<div class="plist" style="margin-top:6px">'+rows.map(r=>{const p=r.id==='_'?null:person(r.id),col=p?'var(--k'+p.k+')':'var(--k7)';
-    return '<button class="prow2" data-act="person:'+r.id+'">'+(p?av(p.id,1):BERSAMA_AV)+'<span class="pm2"><b>'+esc(p?p.n:'Bersama')+'</b><small>'+(p?esc(pRole(p)):'Kebutuhan rumah')+' · '+r.n+' catatan</small><span class="track"><span class="fill" style="display:block;width:'+(r.v/mx*100).toFixed(1)+'%;background:'+col+'"></span></span></span><span class="amt2">'+fmtS(r.v)+'<small>'+pct(r.v,st.total)+'%</small></span></button>';}).join('')+'</div></section>';
+    return '<button class="prow2" data-act="person:'+r.id+'">'+(p?av(p.id,1):BERSAMA_AV)+'<span class="pm2"><b>'+esc(p?p.n:BERSAMA())+'</b><small>'+(p?esc(pRole(p)):(SOLO()?'Kebutuhanmu':'Kebutuhan rumah'))+' · '+r.n+' catatan</small><span class="track"><span class="fill" style="display:block;width:'+(r.v/mx*100).toFixed(1)+'%;background:'+col+'"></span></span></span><span class="amt2">'+fmtS(r.v)+'<small>'+pct(r.v,st.total)+'%</small></span></button>';}).join('')+'</div></section>';
   return h;
 }
 function personSheet(id){
@@ -2547,7 +2569,7 @@ function personSheet(id){
   const ms=[];for(let i=5;i>=0;i--){const k=addMonth(CUR,-i);ms.push({k,v:famStats(k).per[id]||0});}
   const cur=ms[5].v,prev=ms[4].v,mx=Math.max(1,...ms.map(m=>m.v)),st=famStats(CUR),cats=sortedCats(st.cats[id]||{}).slice(0,4);
   const list=sortTx(inMonth(CUR).filter(t=>t.type==='out'&&!(t.biz&&isUsaha(t.biz))&&(t.for&&person(t.for)?t.for:'_')===id)).slice(0,8);
-  let h='<div class="stack"><div class="fam-head">'+(p?av(p.id,2):'<span class="mono" style="--c:var(--k7);width:64px;height:64px;border-radius:50%">'+ic('home')+'</span>')+'<div style="min-width:0"><span class="eyebrow">'+(p?esc(pRole(p)):'Kebutuhan rumah')+'</span><div class="big num" style="margin:0;font-size:32px">'+fmt(cur)+'</div><span class="small muted">keluar di '+esc(mname(CUR))+'</span></div></div>';
+  let h='<div class="stack"><div class="fam-head">'+(p?av(p.id,2):'<span class="mono" style="--c:var(--k7);width:64px;height:64px;border-radius:50%">'+ic('home')+'</span>')+'<div style="min-width:0"><span class="eyebrow">'+(p?esc(pRole(p)):(SOLO()?'Kebutuhanmu':'Kebutuhan rumah'))+'</span><div class="big num" style="margin:0;font-size:32px">'+fmt(cur)+'</div><span class="small muted">keluar di '+esc(mname(CUR))+'</span></div></div>';
   h+='<div class="stat2"><div><small>'+esc(mshort(ms[4].k))+'</small><b>'+fmtS(prev)+'</b></div><div><small>Rata-rata 6 bulan</small><b>'+fmtS(ms.reduce((a,m)=>a+m.v,0)/6)+'</b></div></div>';
   h+='<div class="pbars" style="--c:'+col+'">'+ms.map(m=>'<div class="'+(m.k===CUR?'on':'')+'" title="'+esc(mname(m.k))+': '+fmt(m.v)+'"><i style="height:'+(m.v/mx*72).toFixed(1)+'px"></i><span>'+BLN[+m.k.slice(5)-1]+'</span></div>').join('')+'</div>';
   if(cats.length)h+='<div>'+cats.map(c=>'<div class="cbar" style="pointer-events:none"><span class="mono" style="--c:'+ccolor('out',c.id)+'">'+ic(catIc('out',c.id))+'</span><div style="min-width:0"><div class="lbl"><span>'+esc(cat('out',c.id).n)+'</span><span class="muted num">'+pct(c.v,cur)+'%</span></div><div class="track"><div class="fill" style="width:'+pct(c.v,cats[0].v)+'%;background:'+ccolor('out',c.id)+'"></div></div></div><span class="amt">'+fmtS(c.v)+'</span></div>').join('')+'</div>';
@@ -3074,7 +3096,7 @@ function buildTips(k){
     else out.push({level:'good',title:'Keseimbangan sehat',body:'Kamu baru memakai '+pct(t.out,t.in)+'% pemasukan. Pindahkan sebagian sisa '+fmt(t.in-t.out)+' ke kantong tabungan sebelum terpakai.'});
     const r=rules(t);
     if(!isCur&&r.base>0&&r.save/r.base<.1)out.push({level:'warn',title:'Tabungan di bawah 10%',body:'Biasakan bayar diri sendiri dulu: begitu gajian, langsung sisihkan 10–20%, misalnya '+fmt(Math.round(r.base*.1/1000)*1000)+' per bulan.'});
-    if(r.base>0&&r.want/r.base>.3)out.push({level:'warn',title:'Belanja keinginan lebih dari 30%',body:'Jajan, hiburan, dan belanja pribadi mencapai '+pct(r.want,r.base)+'% pemasukan rumah tangga. Turun ke 30% bisa menghemat sekitar '+fmt(Math.round((r.want-r.base*.3)/1000)*1000)+'.'});
+    if(r.base>0&&r.want/r.base>.3)out.push({level:'warn',title:'Belanja keinginan lebih dari 30%',body:'Jajan, hiburan, dan belanja pribadi mencapai '+pct(r.want,r.base)+'% pemasukan '+HOMEN().toLowerCase()+'. Turun ke 30% bisa menghemat sekitar '+fmt(Math.round((r.want-r.base*.3)/1000)*1000)+'.'});
     activeUsaha().forEach(b=>{const i=t.bi[b.id]||0,o=t.bo[b.id]||0;if(i||o){if(o>i)out.push({level:'warn',title:'Usaha '+esc(b.n)+' rugi '+fmtS(o-i),body:'Omzet '+fmtS(i)+', biaya '+fmtS(o)+' bulan ini. Buka halaman usaha untuk melihat biaya terbesarnya.'});}});
     const cic=t.cats.cicilan||0;if(cic/t.in>.3)out.push({level:'bad',title:'Cicilan terlalu berat',body:'Cicilan '+pct(cic,t.in)+'% dari pemasukan. Batas aman di bawah 30%. Hindari cicilan atau paylater baru dulu.'});
     activePockets().forEach(p=>{if(p.save)return;const i=t.ip[p.id]||0,o=t.op[p.id]||0;if(i>0&&o>i*1.1&&o-i>100000)out.push({level:'warn',title:'Kantong '+esc(p.n)+' lebih banyak keluar',body:'Bulan ini keluar '+fmtS(o)+' padahal masuk '+fmtS(i)+'. Selisihnya diambil dari saldo lama kantong ini.'});});
@@ -3167,26 +3189,26 @@ function modSection(){
 function settingsSheet(){
   const n=S.tx.filter(t=>!t.sample).length,standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone,B=balances();
   openSheet(sheetHead('Pengaturan')+'<div class="stack">'+
-   syncSection()+'<section class="card stack"><h2>Tampilan</h2>'+skinPicker()+'<p class="hint">Bisa juga diganti cepat lewat tombol di pojok atas: terang, gelap, lalu pink.</p></section>'+
-   '<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
+   whoSection()+(SOLO()?'':syncSection())+'<section class="card stack"><h2>Tampilan</h2>'+skinPicker()+'<p class="hint">Bisa juga diganti cepat lewat tombol di pojok atas: terang, gelap, lalu pink.</p></section>'+
+   (SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
    '<button class="btn ghost" data-act="savenames">Simpan nama</button>'+
    '<div class="field"><span class="flabel">Pemasukan yang otomatis dirahasiakan</span><div class="chips">'+CATS.in.map(c=>'<button class="chip" data-act="hidecat:'+c.id+'" aria-pressed="'+((me().hideCats||[]).indexOf(c.id)>=0)+'">'+esc(c.n)+'</button>').join('')+'</div><span class="hint">Selain ini, semua pemasukan publik. Usaha bisa diatur rahasia di pengaturan usahanya.</span></div>'+
-   '<p class="hint">Rahasia benar-benar aman kalau masing-masing memakai HP sendiri. Kalau satu HP dipakai berdua, mengganti pemilik HP hanya menyamarkan tampilan.</p></section>'+
+   '<p class="hint">Rahasia benar-benar aman kalau masing-masing memakai HP sendiri. Kalau satu HP dipakai berdua, mengganti pemilik HP hanya menyamarkan tampilan.</p></section>')+
    modSection()+
    '<section class="card"><div class="card-h"><h2>Kantong</h2><button class="link" data-act="newpocket">+ Tambah</button></div><div class="plist">'+
      S.pockets.map(p=>'<button class="prow" data-act="pocket:'+p.id+'"><span class="dot" style="--c:var(--k'+p.k+');width:10px;height:10px"></span><span>'+esc(p.n)+(p.save?'<span class="save-tag">TABUNG</span>':'')+(tgtOf(p.id)?' <span class="hint">· target '+Math.round(tabStats(tgtOf(p.id)).pct)+'%</span>':'')+(p.archived?' <span class="hint">· diarsipkan</span>':'')+'</span><b>'+fmtS(B[p.id]||0)+'</b></button>').join('')+'</div></section>'+
-   '<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
+   (SOLO()?'<section class="card stack"><h2>Cadangan</h2><p class="small muted">Simpan file berisi semua catatanmu, misalnya ke Google Drive. Di HP baru, buka Muarakas lalu ketuk <b>Pulihkan</b>.</p><div class="btns"><button class="btn" data-act="sharefull">Buat cadangan</button><button class="btn ghost" data-act="import">Pulihkan</button></div></section>':'<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
    '<div class="btns"><button class="btn" data-act="share">Kirim ke '+esc(partner().n)+'</button><button class="btn ghost" data-act="import">Terima data</button></div>'+
    '<button class="btn ghost" data-act="sharefull">Cadangan lengkap untuk diri sendiri</button><p class="hint">Cadangan lengkap berisi semua rahasiamu. Simpan sendiri, jangan dikirim ke pasangan.</p>'+
-   '<details><summary class="small muted" style="cursor:pointer">Tidak bisa pilih file? Salin–tempel teks</summary><div class="stack" style="margin-top:10px"><button class="btn ghost" data-act="copyexport">Salin data sebagai teks</button><textarea class="inp" id="pastebox" placeholder="Tempel teks data dari HP lain di sini" aria-label="Tempel teks data"></textarea><button class="btn ghost" data-act="pasteimport">Gabungkan teks ini</button></div></details></section>'+
+   '<details><summary class="small muted" style="cursor:pointer">Tidak bisa pilih file? Salin–tempel teks</summary><div class="stack" style="margin-top:10px"><button class="btn ghost" data-act="copyexport">Salin data sebagai teks</button><textarea class="inp" id="pastebox" placeholder="Tempel teks data dari HP lain di sini" aria-label="Tempel teks data"></textarea><button class="btn ghost" data-act="pasteimport">Gabungkan teks ini</button></div></details></section>')+
    '<section class="card stack"><h2>Anggaran bulanan</h2><div class="field"><label for="budget">Batas pengeluaran per bulan</label><input class="inp" id="budget" inputmode="numeric" placeholder="contoh: 5.000.000" value="'+(S.settings.budget?NF.format(S.settings.budget):'')+'"><span class="hint">Dipakai untuk jatah harian dan garis anggaran di grafik laju. Kosongkan untuk mematikan.</span></div><button class="btn ghost" data-act="savebudget">Simpan anggaran</button></section>'+
    extraSettings()+'<section class="card stack"><h2>AI kategori</h2><p class="small muted">Berjalan di HP ini, tanpa internet. Sudah belajar dari <b class="num">'+(S.learnN||0)+'</b> catatanmu, termasuk kantong yang biasa dipakai untuk tiap kategori.</p><button class="btn ghost" data-act="resetai">Lupakan hasil belajar AI</button></section>'+
    (standalone?'':'<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
    '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
    '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>')+
    '<section class="card stack"><h2>Data</h2><p class="small muted">Semua data tersimpan di HP ini saja: <b class="num">'+n+'</b> catatan milikmu'+(S.tx.length>n?' dan '+(S.tx.length-n)+' data contoh':'')+'.</p>'+
-   (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section><div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan keluarga · versi '+APPVER+'</span></div></div>');
+   (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section><div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div></div>');
 }
 
 /* ---------- sync ---------- */
@@ -3250,18 +3272,67 @@ function setSkin(v){SKIN=v;try{localStorage.setItem('kas.skin',v);}catch(e){}app
 const skinPicker=()=>'<div class="skin-pick" role="group" aria-label="Tampilan">'+SKINS.map(([k,l,c])=>'<button data-act="setskin:'+k+'" aria-pressed="'+(SKIN===k)+'"><i style="background:'+c+'"></i>'+l+'</button>').join('')+'</div>';
 applySkin();
 
+/* ---------- sendiri / berdua ---------- */
+/* S.settings.who: 'solo' for one person (pribadi + usaha), anything else is the couple setup. It rides
+   on the synced settings record, and switching to solo is refused while a family link exists, so a
+   partner's phone can never be flipped to solo by accident. */
+const SOLO=()=>!!(S.settings&&S.settings.who==='solo');
+const HOMEN=()=>SOLO()?'Pribadi':'Rumah tangga';
+const needOnb=()=>!S.settings.who&&!S.meSet&&!realData()&&!/gabung=/.test(location.hash);
+function whoSection(){return '<section class="card stack"><h2>Dipakai oleh</h2><div class="seg"><button data-act="who:solo" aria-pressed="'+SOLO()+'">Sendiri</button><button data-act="who:duo" aria-pressed="'+!SOLO()+'">Berdua</button></div><p class="hint">'+(SOLO()?'Fitur pasangan (sinkron dua HP, pengajuan, kado rahasia, main berdua) disembunyikan. Kalau nanti berkeluarga, pilih Berdua; semua catatan tetap ada.':'Untuk suami istri di dua HP. Pilih Sendiri kalau aplikasi ini hanya untukmu.')+'</p></section>';}
+function soloProfile(){return '<section class="card stack"><h2>Profil</h2><div class="field"><label for="mn-'+S.me+'">Nama panggilan</label><input class="inp" id="mn-'+S.me+'" maxlength="20" value="'+esc(me().n)+'"></div><button class="btn ghost" data-act="savenames">Simpan nama</button></section>';}
+function onbPockets(m){const now=Date.now(),P=(id,n,k,sv)=>({id,n,k,start:0,save:!!sv,owner:'shared',u:now});
+  return [P('tunai','Tunai',0),P('bank','Rekening bank',1),P('ewallet','E-wallet',2),P('tabungan','Tabungan',4,1)].concat(m.usaha?[P('usaha','Kas usaha',3)]:[],m.emas?[P('emas','Tabungan Emas',5,1)]:[]);}
+let ONB=null;
+function openOnb(){ONB={step:0,who:null,n1:'',n2:'',mods:{usaha:false,utang:false,emas:false,zakat:false},err:''};
+  let o=document.getElementById('onb');if(!o){o=document.createElement('div');o.id='onb';o.className='onb';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-labelledby','onb-t');document.body.appendChild(o);}
+  paintOnb();}
+const whoCard=(k,i,t,sub)=>'<button class="whocard" data-act="onb:who:'+k+'" aria-pressed="'+(ONB.who===k)+'"><span class="mono" style="--c:var(--accent)">'+ic(i)+'</span><span><b>'+t+'</b><span class="small muted">'+sub+'</span></span><span class="tick" aria-hidden="true">'+ic('check')+'</span></button>';
+function onbKeep(){const a=document.getElementById('onb-n1'),b=document.getElementById('onb-n2');if(a)ONB.n1=a.value.trim().slice(0,20);if(b)ONB.n2=b.value.trim().slice(0,20);}
+function paintOnb(){const o=document.getElementById('onb');if(!o||!ONB)return;const st=ONB.step,solo=ONB.who==='solo';
+  const dots='<div class="onb-dots" aria-label="Langkah '+(st+1)+' dari 3">'+[0,1,2].map(i=>'<i'+(i<=st?' class="on"':'')+'></i>').join('')+'</div>';
+  let h;
+  if(st===0)h='<div class="onb-mk">'+mkSvg('mark','mk-onb')+'</div><div class="stack" style="gap:8px"><h1 id="onb-t">Selamat datang di Muarakas</h1><p class="lead">Catat uang masuk dan keluar dalam hitungan detik. Kategorinya terisi sendiri, grafiknya jadi sendiri.</p></div>'+
+    '<div class="stack" style="gap:10px"><span class="flabel">Siapa yang akan memakai?</span>'+whoCard('solo','user','Sendiri','Keuangan pribadi, bisa sekalian usaha.')+whoCard('duo','users','Berdua','Suami istri di dua HP, saling tersambung. Ada pengajuan belanja dan kado rahasia.')+'</div>'+
+    '<div class="onb-foot"><button class="btn" data-act="onb:next"'+(ONB.who?'':' disabled')+'>Lanjut</button><button class="link" data-act="onb:join">Punya kode undangan dari pasangan? Gabung</button></div>';
+  else if(st===1)h=dots+'<div class="stack" style="gap:8px"><h1 id="onb-t">'+(solo?'Kenalan dulu':'Siapa saja kalian?')+'</h1><p class="lead">'+(solo?'Nama ini dipakai di sapaan dan laporan.':'Pasanganmu nanti memasang Muarakas di HP-nya sendiri, lalu kalian sambungkan dari Pengaturan.')+'</p></div>'+
+    '<div class="stack"><div class="field"><label for="onb-n1">'+(solo?'Nama panggilanmu':'Namamu')+'</label><input class="inp" id="onb-n1" autocomplete="given-name" maxlength="20" enterkeyhint="next" value="'+esc(ONB.n1)+'" placeholder="contoh: Huda"></div>'+
+    (solo?'':'<div class="field"><label for="onb-n2">Nama pasangan</label><input class="inp" id="onb-n2" maxlength="20" enterkeyhint="next" value="'+esc(ONB.n2)+'" placeholder="contoh: Nisa"></div>')+
+    '<span class="err" id="onb-err"'+(ONB.err?'':' hidden')+'>'+esc(ONB.err)+'</span></div>'+
+    '<div class="onb-foot"><button class="btn" data-act="onb:next">Lanjut</button><button class="btn ghost" data-act="onb:back">Kembali</button></div>';
+  else h=dots+'<div class="stack" style="gap:8px"><h1 id="onb-t">Dipakai untuk apa saja?</h1><p class="lead">Kantong, kategori otomatis, dan target tabungan selalu ada. Nyalakan yang lain kalau perlu; bisa diubah kapan saja di Pengaturan.</p></div>'+
+    '<div class="card stack onb-mods">'+MODS.map(([k,n,sub])=>'<label class="toggle" for="onb-m-'+k+'"><span>'+n+'<br><span class="hint">'+sub+'</span></span><input type="checkbox" id="onb-m-'+k+'" data-act="onb:mod:'+k+'"'+(ONB.mods[k]?' checked':'')+'></label>').join('')+'</div>'+
+    '<div class="onb-foot"><button class="btn" data-act="onb:go:empty">Mulai mencatat</button><button class="btn ghost" data-act="onb:go:sample">Lihat dulu dengan data contoh</button><button class="link" data-act="onb:back">Kembali</button></div>';
+  o.innerHTML='<div class="onb-in">'+h+'</div>';o.scrollTop=0;
+  if(st===1)setTimeout(()=>{const f=document.getElementById(ONB&&ONB.err&&ONB.n1?'onb-n2':'onb-n1');if(f)f.focus();},60);}
+function onbAct(p,el){const k=p[0],v=p[1];if(!ONB)return;
+  if(k==='who'){ONB.who=v;paintOnb();return;}
+  if(k==='back'){onbKeep();ONB.err='';ONB.step=Math.max(0,ONB.step-1);paintOnb();return;}
+  if(k==='next'){if(!ONB.who)return;if(ONB.step===1){onbKeep();if(!ONB.n1){ONB.err='Isi namamu dulu.';paintOnb();return;}if(ONB.who==='duo'&&!ONB.n2){ONB.err='Isi nama pasanganmu juga.';paintOnb();return;}}
+    ONB.err='';ONB.step=Math.min(2,ONB.step+1);paintOnb();return;}
+  if(k==='mod'){ONB.mods[v]=!!(el&&el.checked);return;}
+  if(k==='join'){S.settings.who='duo';ONB=null;const o=document.getElementById('onb');if(o)o.remove();persist();render(true);settingsSheet();return;}
+  if(k==='go')finishOnb(v==='sample');}
+function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('m2');
+  S.settings.who=o.who;S.settings.mods=Object.assign({},o.mods);S.settings.u=now;
+  m1.n=o.n1;m1.u=now;m2.n=o.who==='duo'?o.n2:'Pasangan';m2.u=now;S.me='m1';S.meSet=true;
+  if(!keepSamples){S.biz=S.biz.filter(b=>(b.u||1)>1&&!b.sample&&!b.sample0);clearSamplesData();S.bizWords={};if(!S.tx.length){S.pockets=onbPockets(o.mods);S.catPocket={out:{},in:{}};}}
+  ONB=null;save();const el=document.getElementById('onb');if(el)el.remove();TAB='home';PG='home';F=newForm('out');render(true);window.scrollTo(0,0);
+  toast(keepSamples?'Ini data contoh. Hapus kapan saja lewat kartu di atas.':'Siap! Isi saldo awal tiap kantong, lalu mulai catat.');}
+
 /* ---------- render ---------- */
 const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
 function render(anim){
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
-  const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke rumah tangga');}}
-  const cx=document.querySelector('.top .ctx');if(cx)cx.hidden=!mb&&TAB==='add';
+  const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
+  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&TAB==='add';cx.classList.toggle('home',!mb);}
   const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
-  const ml=document.getElementById('mlabel');ml.textContent=BLN[+CUR.slice(5,7)-1]+' '+CUR.slice(0,4);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
+  const ml=document.getElementById('mlabel');ml.textContent=mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
   document.getElementById('monthbar').hidden=TAB==='add';
-  const kc=kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
+  const kl=document.getElementById('kitalbl');if(kl)kl.textContent=SOLO()?'Keluarga':'Kita';
+  const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   document.getElementById('view').innerHTML=(TAB==='chart'||TAB==='tips'||TAB==='zakat'?chartSeg(TAB):'')+VIEWS[TAB]();
   if(TAB==='hist'){document.getElementById('hc').value=H.cat;document.getElementById('hp').value=H.pocket;const hbs=document.getElementById('hb');if(hbs)hbs.value=H.biz;const hws=document.getElementById('hw');if(hws)hws.value=H.who;renderHistList();}
@@ -3280,8 +3351,10 @@ let toastT,toastFn=null;
 function toast(m,label,fn){const t=document.getElementById('toast');t.innerHTML='<span></span>'+(label?'<button data-act="undo">'+esc(label)+'</button>':'');t.firstChild.textContent=m;toastFn=fn||null;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;toastFn=null;},label?5000:2800);}
 function rerenderChart(id){const w=document.getElementById(id);if(!w||!CH[id])return;const tmp=document.createElement('div');tmp.innerHTML=lineSVG(id);w.querySelector('svg').replaceWith(tmp.firstChild);}
 
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&ONB&&e.target&&/^onb-n/.test(e.target.id)){e.preventDefault();onbAct(['next']);}});
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;const a=el.getAttribute('data-act'),parts=a.split(':'),v=parts[1];
+  if(a.indexOf('onb:')===0){onbAct(parts.slice(1),el);return;}
   if(el.closest('.celeb')){closeCeleb(a!=='celebclose');if(a==='celebclose')return;}
   if(a.indexOf('tab:')===0){TAB=v;if(v==='add')F=newForm(defaultAddType());UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);if(v==='add')softFocus(document.getElementById('fdesc'));return;}
   if(a.indexOf('qadd:')===0){TAB='add';F=newForm(v,{typeManual:true});UI.bd=null;render(true);window.scrollTo(0,0);softFocus(document.getElementById('fdesc'));return;}
@@ -3429,6 +3502,8 @@ document.addEventListener('click',e=>{
   if(a==='mode'){modeSheet();return;}
   if(a.indexOf('setmode:')===0){PG=v;closeSheet();H.biz='';H.cat='';UI.donutSel=-1;UI.bm=null;UI.bd=null;if(TAB==='add')F=newForm(defaultAddType());render(true);window.scrollTo(0,0);return;}
   if(a==='newbiz'){bizSheet(null);return;}
+  if(a.indexOf('who:')===0){if(v==='solo'&&S.family){toast('Putuskan sambungan dengan '+partner().n+' dulu sebelum beralih ke Sendiri.');return;}
+    if((v==='solo')===SOLO())return;S.settings.who=v;S.settings.u=Date.now();if(v==='solo'&&TAB==='kita')UI.kt='sum';save();settingsSheet();render();toast(v==='solo'?'Dipakai sendiri':'Dipakai berdua. Isi nama pasangan, lalu sambungkan HP-nya.');return;}
   if(a.indexOf('mod:')===0){const m={};MODS.forEach(x=>{m[x[0]]=modOn(x[0]);});m[v]=!!el.checked;S.settings.mods=m;S.settings.u=Date.now();if(PG!=='home'&&!MODE())PG='home';save();
     const sec=document.getElementById('modsec');if(sec)sec.outerHTML=modSection();render();toast(MODS.find(x=>x[0]===v)[1]+(m[v]?' dinyalakan':' dimatikan'));return;}
   if(a.indexOf('newmod:')===0){UI.gadaiNext=0;bizSheet(null,v);return;}
@@ -3506,6 +3581,7 @@ document.addEventListener('keydown',e=>{
 const EXIT_WINDOW=2800;let exitArmedUntil=0;
 const IS_APK=/KasKeluargaAndroid/.test(navigator.userAgent)||!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 function backStep(){
+  if(document.getElementById('onb')){if(ONB&&ONB.step>0){onbAct(['back']);return true;}return false;}
   if(document.getElementById('lockov'))return false;
   if(document.getElementById('celeb')){closeCeleb();return true;}
   if(!document.getElementById('sheet').hidden){closeSheet();return true;}
@@ -3554,7 +3630,7 @@ if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOl
   const dot=ptr.firstChild,wave=dot.querySelector('.ptr-wave');
   const TH=64,HOLD=64,MAX=116;
   let y0=0,x0=0,d=0,track=false,pulling=false,busy=false;
-  const blocked=t=>TAB==='add'||UI.gfs||document.getElementById('lockov')||document.getElementById('celeb')||!document.getElementById('sheet').hidden||(t&&t.closest&&t.closest('canvas,input,textarea,select,[contenteditable],[data-noptr]'));
+  const blocked=t=>TAB==='add'||UI.gfs||document.getElementById('lockov')||document.getElementById('onb')||document.getElementById('celeb')||!document.getElementById('sheet').hidden||(t&&t.closest&&t.closest('canvas,input,textarea,select,[contenteditable],[data-noptr]'));
   function paint(v){
     d=v;view.style.transform=v>0.5?'translateY('+v.toFixed(1)+'px)':'';
     const p=Math.min(1,v/TH);ptr.classList.toggle('on',v>0.5||busy);
@@ -3602,6 +3678,7 @@ if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOl
 })();
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
 render(true);
+if(needOnb())openOnb();
 showLock();bioProbe().then(v=>{BIO_OK=v;});
 loadKey().then(()=>{unlockOwnSealed();syncNow();});
 checkInviteHash();window.addEventListener('hashchange',checkInviteHash);
