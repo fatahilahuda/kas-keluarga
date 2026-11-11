@@ -995,7 +995,46 @@ const DEFAULT_BIZ=[
 
 const cat=(type,id)=>{const l=CATS[type]||CATS.out;return l.find(c=>c.id===id)||l[l.length-1];};
 const cidx=(type,id)=>{const l=CATS[type];const i=l.findIndex(c=>c.id===id);return i<0?l.length-1:i;};
-const ccolor=(type,id)=>id==='lain'?'var(--k7)':'var(--k'+(cidx(type,id)%7)+')';
+const ccolor=(type,id)=>{if(id==='lain')return 'var(--k7)';const c=(CATS[type]||[]).find(x=>x.id===id);return 'var(--k'+((c&&c.k!=null?c.k:cidx(type,id))%7)+')';};
+
+/* ---------- kategori per keluarga ----------
+   The built-in lists above are only the starting point. Each family keeps its own changes in
+   S.settings.cats, one entry per category {t,c,n,g,ic,w,k,custom,del,to,at,u}, so they sync with
+   the settings doc. Entries merge one by one on the newer u, so two phones editing different
+   categories don't overwrite each other. A deleted category keeps its entry (del + to) so any
+   phone that still holds old catatan in it moves them to the chosen category. */
+const DEF_CATS=JSON.parse(JSON.stringify(CATS));
+const CTYPES=['out','in','bout','bin'];
+const CT_LBL={out:'Keluar',in:'Masuk',bout:'Biaya usaha',bin:'Masuk usaha'};
+const CT_LONG={out:'Pengeluaran',in:'Pemasukan',bout:'Biaya usaha',bin:'Pemasukan usaha'};
+const catDefs=()=>(S.settings&&S.settings.cats)||[];
+const catKey=d=>d.t+':'+d.c;
+const pickDef=d=>{const o={};['n','g','ic','w','k'].forEach(f=>{if(d[f]!=null&&d[f]!=='')o[f]=d[f];});return o;};
+function applyCats(){
+  const by={};catDefs().forEach(d=>{by[catKey(d)]=d;});
+  CTYPES.forEach(t=>{
+    const list=[];
+    DEF_CATS[t].forEach((c0,i)=>{const c=Object.assign({},c0,{k:i%7}),d=by[t+':'+c.id];
+      if(d&&d.del&&c.id!=='lain')return;list.push(d?Object.assign(c,pickDef(d)):c);});
+    catDefs().filter(d=>d.t===t&&d.custom&&!d.del).sort((a,b)=>(a.at||0)-(b.at||0))
+      .forEach(d=>list.push(Object.assign({id:d.c,custom:true,g:'want'},pickDef(d))));
+    const li=list.findIndex(c=>c.id==='lain');if(li>=0&&li!==list.length-1)list.push(list.splice(li,1)[0]);
+    CATS[t]=list;});
+}
+/* Newer entry wins per category. `ahead` says the local list holds something the incoming one lacks. */
+function mergeCats(a,b){
+  const m={};let ahead=false;(b||[]).forEach(d=>{if(d&&d.t&&d.c)m[catKey(d)]=d;});
+  (a||[]).forEach(d=>{if(!d||!d.t||!d.c)return;const k=catKey(d),o=m[k];if(!o||(d.u||0)>(o.u||0)){m[k]=d;ahead=true;}});
+  return {list:Object.keys(m).map(k=>m[k]),ahead};
+}
+/* Move catatan out of deleted categories. Every phone does this itself after a delete, a merge,
+   and at start, so the catatan don't need re-pushing (and don't show up as fresh activity). */
+function remapCats(){
+  let n=0;
+  catDefs().forEach(d=>{if(!d.del||d.c==='lain')return;const to=CATS[d.t].some(c=>c.id===d.to)?d.to:'lain';
+    S.tx.forEach(t=>{if(t.cat!==d.c||ctype(t)!==d.t)return;t.cat=to;n++;});});
+  return n;
+}
 
 /* ---------- icon set (24px stroke icons, drawn in-house so the app stays offline) ---------- */
 /* Muarakas logo, vector. Colours come from --mk-* so it follows the app theme on a transparent background. */
@@ -1066,7 +1105,7 @@ const CAT_IC={
  in:{gaji:'wallet',usaha:'store',freelance:'laptop',bonus:'spark',hadiah:'gift',invest:'trend',lain:'dots'},
  bout:{bahan:'box',produksi:'printer',kemasan:'bag',ongkir:'truck',iklan:'mega',alat:'monitor',platform:'store',tenaga:'users',aset:'brief',lain:'dots'},
  bin:{jual:'tag',dp:'coins',jasa:'pen',lain:'dots'}};
-const catIc=(type,id)=>((CAT_IC[type]||CAT_IC.out)[id])||'dots';
+const catIc=(type,id)=>{const c=(CATS[type]||CATS.out).find(x=>x.id===id);return (c&&c.ic)||((CAT_IC[type]||CAT_IC.out)[id])||'dots';};
 function pocketIc(p){if(!p)return 'wallet';const n=(p.n||'').toLowerCase();
   if(/emas|gold|logam/.test(n))return 'gem';if(/haji|umroh|tabung|nabung|darurat|dana/.test(n)||p.save)return 'piggy';if(/usaha|toko|jualan|bisnis/.test(n))return 'store';
   if(/side|freelance|proyek|kerja/.test(n))return 'laptop';if(/bank|rekening|atm|bca|bri|bni|mandiri/.test(n))return 'card';if(/tunai|cash|dompet/.test(n))return 'coins';return 'wallet';}
@@ -1286,6 +1325,10 @@ function buildModel(){
     CATS[type].forEach(c=>{counts[c.id]={};totals[c.id]=0;});
     const add=(c,fs,w)=>{if(!counts[c])return;fs.forEach(f=>{counts[c][f]=(counts[c][f]||0)+w;totals[c]+=w;if(!vocab[f]){vocab[f]=1;V++;}});};
     Object.keys(SEED[type]).forEach(c=>SEED[type][c].split(' ').forEach(w=>add(c,feats(w),1)));
+    /* a deleted built-in category hands its seed words to the category its catatan moved to */
+    catDefs().forEach(d=>{if(d.t===type&&d.del&&d.to&&SEED[type][d.c]&&counts[d.to])SEED[type][d.c].split(' ').forEach(w=>add(d.to,feats(w),1));});
+    /* the family's own keywords count more than the built-in ones */
+    CATS[type].forEach(c=>{if(c.w)String(c.w).toLowerCase().split(/[\s,;]+/).forEach(w=>{if(w)add(c.id,feats(w),3);});});
     const L=S.learned[type]||{};Object.keys(L).forEach(c=>Object.keys(L[c]).forEach(f=>add(c,[f],L[c][f]*3)));
     MODEL[type]={counts,totals,vocab,V};
   });
@@ -1381,7 +1424,7 @@ const UI={prange:3,incBy:'pocket',donutKey:null,donutSel:-1,bm:null,bd:null};
 let F=null;F=newForm('out');
 let deferredInstall=null;
 function newForm(type,extra){return Object.assign({type,forId:null,forManual:false,hidden:false,hiddenManual:false,biz:MODE()?MODE().id:null,bizManual:!!MODE(),bizAuto:false,cat:null,catManual:false,typeManual:false,amtManual:false,pocket:null,pocketManual:false,to:null,ai:null,_amt:0,date:F&&F.date||null},extra||{});}
-buildModel();
+applyCats();remapCats();buildModel();
 
 /* ---------- shared bits ---------- */
 const TF_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>';
@@ -3133,7 +3176,7 @@ function vTips(){
 
 /* ---------- sheets ---------- */
 let lastFocus=null,OPEN=null,EDITP=null;
-function openSheet(html){stopCam();stopNfc();lastFocus=document.activeElement;const p=document.getElementById('panel');p.innerHTML='<div class="grab"></div>'+html;document.getElementById('sheet').hidden=false;p.scrollTop=0;setTimeout(()=>{const h=p.querySelector('h2');if(h)h.focus();},30);}
+function openSheet(html){SHEET_BACK=null;stopCam();stopNfc();lastFocus=document.activeElement;const p=document.getElementById('panel');p.innerHTML='<div class="grab"></div>'+html;document.getElementById('sheet').hidden=false;p.scrollTop=0;setTimeout(()=>{const h=p.querySelector('h2');if(h)h.focus();},30);}
 function closeSheet(){stopCam();stopNfc();document.getElementById('sheet').hidden=true;if(lastFocus&&lastFocus.focus&&document.contains(lastFocus))lastFocus.focus();}
 const sheetHead=t=>'<div class="panel-h"><h2 id="sheet-title" tabindex="-1">'+t+'</h2><button class="ib" data-act="close" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
 function openTx(id){
@@ -3186,6 +3229,71 @@ function modSection(){
       (on&&MOD_ADD[k]?(L.length?'<div class="plist">'+L.map(bizRowS).join('')+'</div>':'')+'<div class="modadd">'+MOD_ADD[k]+'</div>':'')+'</div>';});
   h+='<div class="modrow"><b>Target tabungan</b> <span class="hint">· selalu ada, dipasang di kantong</span>'+(tg.length?'<div class="plist">'+tg.map(bizRowS).join('')+'</div>':'<p class="hint" style="margin-top:4px">Buka sebuah kantong lalu ketuk <b>Pasang target</b>, misal untuk haji atau DP rumah.</p>')+'</div>';
   return h+'</section>';}
+/* ---------- kelola kategori ---------- */
+let CTAB='out',EDC=null,SHEET_BACK=null;
+const CAT_ICONS=['utensils','coffee','basket','car','receipt','home','card','pulse','cap','users','heart','film','bag','box','piggy','wallet','store','laptop','spark','gift','trend','printer','truck','mega','monitor','brief','tag','coins','pen','gem','phone','target','user','dots'];
+const CAT_G=[['need','Kebutuhan'],['want','Keinginan'],['save','Tabungan']];
+const catTypes=()=>modOn('usaha')?CTYPES:['out','in'];
+const catCount=(t,id)=>S.tx.filter(x=>!x.sample&&x.cat===id&&ctype(x)===t).length;
+const catScope=()=>SOLO()?'Berlaku untuk akunmu.':'Berlaku untuk seluruh keluarga dan ikut tersinkron ke HP '+esc(partner().n)+'.';
+function catSection(){
+  const n=t=>CATS[t].length;
+  return '<section class="card"><div class="card-h"><h2>Kategori</h2><button class="link" data-act="cats">Kelola</button></div><p class="small muted"><b class="num">'+n('out')+'</b> pengeluaran · <b class="num">'+n('in')+'</b> pemasukan'+(modOn('usaha')?' · <b class="num">'+(n('bout')+n('bin'))+'</b> usaha':'')+'. Tambah, ganti nama, atau hapus kategori. '+catScope()+'</p></section>';}
+function catsSheet(t){
+  if(t)CTAB=t;if(catTypes().indexOf(CTAB)<0)CTAB='out';
+  const L=CATS[CTAB],gone=DEF_CATS[CTAB].filter(c=>!L.some(x=>x.id===c.id));
+  openSheet(sheetHead('Kategori')+'<div class="stack">'+
+   '<div class="seg'+(catTypes().length>2?' sm':'')+'">'+catTypes().map(k=>'<button data-act="ctab:'+k+'" aria-pressed="'+(k===CTAB)+'">'+CT_LBL[k]+'</button>').join('')+'</div>'+
+   '<section class="card"><div class="card-h"><h2>'+CT_LONG[CTAB]+'</h2><button class="link" data-act="catnew">+ Tambah</button></div><div class="plist">'+
+   L.map(c=>{const n=catCount(CTAB,c.id);return '<button class="prow" data-act="catedit:'+CTAB+':'+c.id+'"><span class="mono" style="--c:'+ccolor(CTAB,c.id)+'">'+ic(catIc(CTAB,c.id))+'</span><span>'+esc(c.n)+(c.custom?' <span class="hint">· buatan sendiri</span>':'')+'</span><span class="hint num">'+(n?n+' catatan':'')+'</span></button>';}).join('')+'</div></section>'+
+   (gone.length?'<section class="card stack"><h2>Bawaan yang dihapus</h2>'+gone.map(c=>'<div class="meter-row" style="margin:0"><span>'+esc(c.n)+'</span><button class="link" data-act="catrestore:'+CTAB+':'+c.id+'">Kembalikan</button></div>').join('')+'</section>':'')+
+   '<p class="hint">'+catScope()+' AI kategori langsung memakai daftar ini.</p></div>');
+  SHEET_BACK=settingsSheet;}
+function catForm(t,id){
+  const c=id?CATS[t].find(x=>x.id===id):null;if(id&&!c){catsSheet(t);return;}
+  EDC={t,id:id||null,ic:c?catIc(t,c.id):'tag',g:(c&&c.g)||'want'};
+  const n=c?catCount(t,c.id):0,others=CATS[t].filter(x=>!c||x.id!==c.id);
+  openSheet(sheetHead(c?'Ubah kategori':'Tambah kategori')+'<div class="stack"><section class="card stack">'+
+   '<p class="small muted">'+CT_LONG[t]+'</p>'+
+   '<div class="field"><label for="ct-name">Nama kategori</label><input class="inp" id="ct-name" maxlength="32" value="'+esc(c?c.n:'')+'" placeholder="contoh: Hewan peliharaan"></div>'+
+   '<div class="field"><span class="flabel">Ikon</span><div class="chips" id="ct-ic">'+CAT_ICONS.map(k=>'<button class="chip" data-act="ctic:'+k+'" aria-pressed="'+(EDC.ic===k)+'" aria-label="Ikon '+k+'">'+ic(k,'ci')+'</button>').join('')+'</div></div>'+
+   (t==='out'?'<div class="field"><span class="flabel">Termasuk</span><div class="seg" id="ct-g">'+CAT_G.map(([k,l])=>'<button data-act="ctg:'+k+'" aria-pressed="'+(EDC.g===k)+'">'+l+'</button>').join('')+'</div><span class="hint">Dipakai untuk pembagian kebutuhan, keinginan, dan tabungan di Ringkasan.</span></div>':'')+
+   '<div class="field"><label for="ct-words">Kata kunci</label><input class="inp" id="ct-words" value="'+esc((c&&c.w)||'')+'" placeholder="contoh: kucing whiskas pasir vet"><span class="hint">Pisahkan dengan spasi. Catatan yang memuat kata ini otomatis masuk ke kategori ini.</span></div>'+
+   '<span class="err" id="ct-err" hidden></span><button class="btn" data-act="ctsave">'+(c?'Simpan kategori':'Buat kategori')+'</button></section>'+
+   (c&&c.id!=='lain'?'<section class="card stack"><h2>Hapus kategori</h2>'+
+     (n?'<div class="field"><label for="ct-to">'+n+' catatan di kategori ini dipindah ke</label><select class="inp" id="ct-to">'+others.map(x=>'<option value="'+x.id+'"'+(x.id==='lain'?' selected':'')+'>'+esc(x.n)+'</option>').join('')+'</select></div>':'<p class="small muted">Belum ada catatan di kategori ini.</p>')+
+     '<button class="btn danger" data-act="ctdel">Hapus kategori</button>'+(c.custom?'':'<p class="hint">Kategori bawaan bisa dikembalikan lagi dari daftar kategori.</p>')+'</section>':
+    (c?'<p class="hint">Kategori Lainnya tidak bisa dihapus karena jadi tempat catatan yang tidak cocok ke kategori mana pun. Namanya tetap bisa diganti.</p>':''))+
+   '<button class="link" data-act="ctab:'+t+'">‹ Semua kategori</button></div>');
+  SHEET_BACK=()=>catsSheet(t);
+  if(!c)setTimeout(()=>softFocus(document.getElementById('ct-name')),60);}
+/* Write one category entry, keeping fields not passed in. */
+function putCat(t,c,fields){
+  S.settings.cats=S.settings.cats||[];const L=S.settings.cats;let d=L.find(x=>x.t===t&&x.c===c);
+  if(!d){d={t,c};L.push(d);}Object.assign(d,fields,{u:Date.now()});touchSet();applyCats();return d;}
+function saveCat(){
+  const t=EDC.t,name=document.getElementById('ct-name').value.trim().replace(/\s+/g,' '),words=document.getElementById('ct-words').value.trim().toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  const er=document.getElementById('ct-err'),bad=m=>{er.textContent=m;er.hidden=false;document.getElementById('ct-name').focus();};
+  if(!name)return bad('Beri nama kategorinya dulu.');
+  if(CATS[t].some(x=>x.id!==EDC.id&&x.n.toLowerCase()===name.toLowerCase()))return bad('Sudah ada kategori bernama '+name+'.');
+  const f={n:name,ic:EDC.ic,w:words};if(t==='out')f.g=EDC.g;
+  if(EDC.id){putCat(t,EDC.id,f);toast('Kategori '+name+' disimpan');}
+  else{const used=CATS[t].map(x=>x.k);let k=0;for(let i=0;i<7;i++)if(used.filter(u=>u===i).length<used.filter(u=>u===k).length)k=i;
+    putCat(t,'c'+uid(),Object.assign(f,{custom:true,at:Date.now(),k}));toast('Kategori '+name+' dibuat');}
+  buildModel();render();catsSheet(t);}
+function deleteCat(){
+  const t=EDC.t,id=EDC.id,c=CATS[t].find(x=>x.id===id);if(!c||id==='lain')return;
+  const sel=document.getElementById('ct-to'),to=sel?sel.value:'lain',toN=cat(t,to).n;
+  const moved=S.tx.filter(x=>x.cat===id&&ctype(x)===t).map(x=>x.id);
+  const prev=Object.assign({},(S.settings.cats||[]).find(x=>x.t===t&&x.c===id)||{}),bud=t==='out'?SET().cbud[id]:null;
+  const L=(S.learned[t]||{})[id];if(L){const T=S.learned[t][to]=S.learned[t][to]||{};Object.keys(L).forEach(f=>{T[f]=(T[f]||0)+L[f];});delete S.learned[t][id];}
+  if(S.catPocket[t])delete S.catPocket[t][id];if(bud!=null)delete SET().cbud[id];
+  putCat(t,id,{del:true,to});remapCats();buildModel();save();render();catsSheet(t);
+  const nReal=S.tx.filter(x=>!x.sample&&moved.indexOf(x.id)>=0).length;
+  toast('Kategori '+c.n+' dihapus'+(nReal?', '+nReal+' catatan pindah ke '+toN:''),'Urungkan',()=>{
+    const d=(S.settings.cats||[]).find(x=>x.t===t&&x.c===id);if(d){Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,prev,{t,c:id,del:false,u:Date.now()});delete d.to;}
+    if(bud!=null)SET().cbud[id]=bud;touchSet();applyCats();
+    S.tx.forEach(x=>{if(moved.indexOf(x.id)>=0)x.cat=id;});buildModel();save();render();if(!document.getElementById('sheet').hidden)catsSheet(t);toast('Kategori '+c.n+' dikembalikan');});}
 function settingsSheet(){
   const n=S.tx.filter(t=>!t.sample).length,standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone,B=balances();
   openSheet(sheetHead('Pengaturan')+'<div class="stack">'+
@@ -3195,7 +3303,7 @@ function settingsSheet(){
    '<button class="btn ghost" data-act="savenames">Simpan nama</button>'+
    '<div class="field"><span class="flabel">Pemasukan yang otomatis dirahasiakan</span><div class="chips">'+CATS.in.map(c=>'<button class="chip" data-act="hidecat:'+c.id+'" aria-pressed="'+((me().hideCats||[]).indexOf(c.id)>=0)+'">'+esc(c.n)+'</button>').join('')+'</div><span class="hint">Selain ini, semua pemasukan publik. Usaha bisa diatur rahasia di pengaturan usahanya.</span></div>'+
    '<p class="hint">Rahasia benar-benar aman kalau masing-masing memakai HP sendiri. Kalau satu HP dipakai berdua, mengganti pemilik HP hanya menyamarkan tampilan.</p></section>')+
-   modSection()+
+   modSection()+catSection()+
    '<section class="card"><div class="card-h"><h2>Kantong</h2><button class="link" data-act="newpocket">+ Tambah</button></div><div class="plist">'+
      S.pockets.map(p=>'<button class="prow" data-act="pocket:'+p.id+'"><span class="dot" style="--c:var(--k'+p.k+');width:10px;height:10px"></span><span>'+esc(p.n)+(p.save?'<span class="save-tag">TABUNG</span>':'')+(tgtOf(p.id)?' <span class="hint">· target '+Math.round(tabStats(tgtOf(p.id)).pct)+'%</span>':'')+(p.archived?' <span class="hint">· diarsipkan</span>':'')+'</span><b>'+fmtS(B[p.id]||0)+'</b></button>').join('')+'</div></section>'+
    (SOLO()?'<section class="card stack"><h2>Cadangan</h2><p class="small muted">Simpan file berisi semua catatanmu, misalnya ke Google Drive. Di HP baru, buka Muarakas lalu ketuk <b>Pulihkan</b>.</p><div class="btns"><button class="btn" data-act="sharefull">Buat cadangan</button><button class="btn ghost" data-act="import">Pulihkan</button></div></section>':'<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
@@ -3235,9 +3343,11 @@ function merge(o){
   const before=S.tx.length;S.tx=S.tx.filter(t=>!(S.deleted[t.id]&&S.deleted[t.id]>=(t.u||t.ts)));const removed=before-S.tx.length;
   ['out','in','bout','bin'].forEach(ty=>{S.learned[ty]=S.learned[ty]||{};const L=(o.learned||{})[ty]||{};Object.keys(L).forEach(c=>{S.learned[ty][c]=S.learned[ty][c]||{};Object.keys(L[c]).forEach(f=>{S.learned[ty][c][f]=Math.max(S.learned[ty][c][f]||0,L[c][f]);});});
     const cp=(o.catPocket||{})[ty]||{};S.catPocket[ty]=S.catPocket[ty]||{};Object.keys(cp).forEach(c=>{if(!S.catPocket[ty][c])S.catPocket[ty][c]=cp[c];});});
-  if(o.settings&&(((o.settings.u||0)>(S.settings.u||0))||(!S.settings.budget&&o.settings.budget)))Object.assign(S.settings,o.settings);
+  const mc=mergeCats(S.settings.cats,o.settings&&o.settings.cats);
+  if(o.settings&&(((o.settings.u||0)>(S.settings.u||0))||(!S.settings.budget&&o.settings.budget))){Object.assign(S.settings,o.settings);if(mc.ahead)S.settings.u=Math.max(S.settings.u||0,Date.now());}
+  if(mc.list.length)S.settings.cats=mc.list;
   ['pockets','biz','props','people'].forEach(k=>{S[k]=S[k].filter(x=>!(S.deleted[x.id]&&S.deleted[x.id]>=(x.u||0)));});
-  buildModel();save();return {added,updated,removed,gifts};
+  applyCats();remapCats();buildModel();save();return {added,updated,removed,gifts};
 }
 const mergeReport=r=>{if(r.gifts)toast('Ada '+r.gifts+' kado baru dari '+partner().n+'!','Buka',()=>{TAB='kita';UI.kt='gift';render(true);});else toast(r.added||r.updated||r.removed?'Tergabung: '+r.added+' baru, '+r.updated+' diperbarui'+(r.removed?', '+r.removed+' dihapus':''):'Data sudah sama, tidak ada yang baru');};
 function shareData(full){
@@ -3488,6 +3598,15 @@ document.addEventListener('click',e=>{
     if(a.indexOf('recdo:')===0){const td=new Date().getDate(),d=cm+'-'+pad(Math.min(r.day,td)),now=Date.now(),t={id:uid(),type:r.type,amount:r.amount,desc:r.desc,cat:r.cat,pocket:r.pocket,date:d,ts:now,u:now,by:S.me};if(r.biz)t.biz=r.biz;S.tx.push(t);toast(r.desc+' tercatat');}
     r.last=cm;touchSet();render();return;}
   if(a==='cbadd'){const c=document.getElementById('cb-cat').value,am=amountFromField(document.getElementById('cb-amt').value);if(!am){toast('Isi batasnya dulu, misal 300rb');return;}SET().cbud[c]=am;touchSet();settingsSheet();render();toast('Anggaran '+cat('out',c).n+' '+fmtS(am)+'/bulan');return;}
+  if(a==='cats'){catsSheet();return;}
+  if(a.indexOf('ctab:')===0){catsSheet(v);return;}
+  if(a==='catnew'){catForm(CTAB,null);return;}
+  if(a.indexOf('catedit:')===0){catForm(parts[1],parts[2]);return;}
+  if(a.indexOf('catrestore:')===0){const d=putCat(parts[1],parts[2],{del:false});delete d.to;buildModel();render();catsSheet(parts[1]);toast('Kategori '+cat(parts[1],parts[2]).n+' dikembalikan');return;}
+  if(a.indexOf('ctic:')===0&&EDC){EDC.ic=v;pickIn('ct-ic','ctic',el);return;}
+  if(a.indexOf('ctg:')===0&&EDC){EDC.g=v;pickIn('ct-g','ctg',el);return;}
+  if(a==='ctsave'&&EDC){saveCat();return;}
+  if(a==='ctdel'&&EDC){if(el.dataset.armed!=='1'){el.dataset.armed='1';el.textContent='Ketuk lagi untuk menghapus';return;}deleteCat();return;}
   if(a.indexOf('cbdel:')===0){delete SET().cbud[v];touchSet();settingsSheet();render();return;}
   if(a==='phdel'&&OPEN){try{localStorage.removeItem('kas.ph.'+OPEN.id);}catch(e){}openTx(OPEN.id);return;}
   if(a.indexOf('zpay:')===0){const now=Date.now();S.tx.push({id:uid(),type:'out',amount:+v,desc:'Zakat',cat:'sosial',pocket:defaultPocket('out','sosial'),date:todayISO(),ts:now,u:now,by:S.me});save();render();toast('Zakat '+fmtS(+v)+' tercatat. Semoga berkah.');return;}
@@ -3584,7 +3703,7 @@ function backStep(){
   if(document.getElementById('onb')){if(ONB&&ONB.step>0){onbAct(['back']);return true;}return false;}
   if(document.getElementById('lockov'))return false;
   if(document.getElementById('celeb')){closeCeleb();return true;}
-  if(!document.getElementById('sheet').hidden){closeSheet();return true;}
+  if(!document.getElementById('sheet').hidden){if(SHEET_BACK){SHEET_BACK();return true;}closeSheet();return true;}
   if(UI.gfs){closeGame();return true;}
   if(TAB!=='home'){TAB='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
   if(MODE()){PG='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
