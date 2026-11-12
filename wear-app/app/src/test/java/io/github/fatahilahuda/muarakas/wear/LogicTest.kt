@@ -91,7 +91,7 @@ class LogicTest {
         val mine = sample("m1")
         assertFalse(mine.visible.any { it.id == "f" || it.id == "g" })
         val b = mine.balances()
-        assertEquals(100_000L - 25_000 - 50_000, b["dompet"])
+        assertEquals(100_000L - 25_000 - 50_000 - 40_000, b["dompet"]) // saldo mencakup semua bulan
         assertEquals(1_000_000L + 5_000_000 - 250_000 + 700_000, b["bank"])
         assertEquals(250_000L, b["haji"])
         assertEquals(25.0, mine.targetFor("haji")!!.pct, 0.01)
