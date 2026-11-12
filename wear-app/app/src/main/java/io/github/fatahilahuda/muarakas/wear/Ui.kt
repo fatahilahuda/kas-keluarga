@@ -1,7 +1,9 @@
 package io.github.fatahilahuda.muarakas.wear
 
 import android.app.RemoteInput
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -203,6 +205,33 @@ fun rememberTextInput(label: String, onText: (String) -> Unit): () -> Unit {
             val intent: Intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
             RemoteInputIntentHelper.putRemoteInputsExtra(intent, listOf(RemoteInput.Builder("t").setLabel(label).build()))
             launcher.launch(intent)
+        }
+    }
+}
+
+/**
+ * Speech recognition forced to Indonesian. The system input (RemoteInput) follows the watch's
+ * own voice language, which is often English; this asks the recognizer for id-ID directly and
+ * returns every alternative so the caller can pick the one with an amount in it.
+ */
+@Composable
+fun rememberVoiceInput(prompt: String, fallback: () -> Unit, onResults: (List<String>) -> Unit): () -> Unit {
+    val cb by rememberUpdatedState(onResults)
+    val fb by rememberUpdatedState(fallback)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val list = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.filter { it.isNotBlank() }
+        if (!list.isNullOrEmpty()) cb(list)
+    }
+    return remember(prompt) {
+        {
+            val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "id-ID")
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "id-ID")
+                .putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true)
+                .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
+                .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+            try { launcher.launch(i) } catch (_: ActivityNotFoundException) { fb() }
         }
     }
 }

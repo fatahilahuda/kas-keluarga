@@ -86,9 +86,15 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
         }
     }
 
-    val voice = rememberTextInput("Ucapkan, misal: bakso 15 ribu") { t ->
+    fun fromSpeech(t: String) {
         draft = draftFromText(k, t, Store.Draft(type = if (draft.type == "in") "in" else "out"))
         next()
+    }
+    // Fallback when the watch has no speech recognizer app: the system voice/keyboard input.
+    val systemInput = rememberTextInput("Ucapkan atau ketik, misal: bakso 15 ribu") { fromSpeech(it) }
+    val voice = rememberVoiceInput("Sebutkan, misal: bakso 15 ribu", systemInput) { results ->
+        // Prefer the alternative that actually contains an amount.
+        fromSpeech(results.firstOrNull { Amount.parse(Amount.normalizeSpeech(it)) != null } ?: results[0])
     }
     val noteInput = rememberTextInput("Catatan") { t ->
         draft = draft.copy(desc = t.trim())
@@ -110,6 +116,7 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
                 k,
                 onVoice = { draft = Store.Draft(); voice() },
                 onKeypad = { draft = Store.Draft(); nav.navigate("keypad") },
+                onTypeText = { draft = Store.Draft(); systemInput() },
                 onOpen = { nav.navigate(it) },
                 onSync = { scope.launch { Store.syncNow() } },
             )

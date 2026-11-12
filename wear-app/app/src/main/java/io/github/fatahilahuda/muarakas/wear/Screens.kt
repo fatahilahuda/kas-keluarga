@@ -125,7 +125,7 @@ fun PairScreen() {
 // ---------------------------------------------------------------- home
 
 @Composable
-fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onOpen: (String) -> Unit, onSync: () -> Unit) {
+fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onTypeText: () -> Unit, onOpen: (String) -> Unit, onSync: () -> Unit) {
     val sync by Store.sync.collectAsState()
     val mk = Kas.monthKey()
     val t = k.totals(mk)
@@ -146,6 +146,7 @@ fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onOpen: (Strin
             }
         }
         item { TwoButtons("Suara", Ic.mic, onVoice, "Nominal", Ic.keypad, onKeypad) }
+        item { RowChip("Ketik", onTypeText, secondary = "misal: bakso 15rb", icon = Ic.note, bg = Color.Black) }
         item { RowChip("Ringkasan", { onOpen("summary") }, icon = Ic.chart, secondary = "Bulan ini & kategori") }
         item { RowChip("Riwayat", { onOpen("history") }, icon = Ic.list, secondary = k.recent(1).firstOrNull()?.let { (it.desc.ifBlank { k.cat(k.ctype(it), it.cat).n }) + " · " + Fmt.short(it.amount) }) }
         item { RowChip("Kantong", { onOpen("pockets") }, icon = Ic.wallet, secondary = "Total " + Fmt.short(k.balances().let { b -> k.activePockets.sumOf { b[it.id] ?: 0L } })) }
