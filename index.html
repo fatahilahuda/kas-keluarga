@@ -713,15 +713,74 @@ button.note{cursor:pointer}
 .btn svg{width:18px;height:18px}
 
 /* games: tile picker + full-screen stage */
-.gtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.gtile{position:relative;overflow:hidden;border:0;border-radius:18px;padding:14px;min-height:118px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:#fff;
-  background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 62%,#000));transition:transform .12s}
-.gtile:active{transform:scale(.97)}
-.gtile .gi{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.22);display:grid;place-items:center}
-.gtile .gi svg{width:24px;height:24px}
-.gtile b{font-family:var(--display);font-size:17px;line-height:1.15;display:block}
-.gtile small{font-size:12px;opacity:.85;display:block;line-height:1.3}
-.gtile::after{content:"";position:absolute;right:-26px;top:-26px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.1)}
+.gtiles{display:grid;grid-template-columns:1fr 1fr;gap:20px 12px}
+.gtile{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--ink);font:inherit;transition:transform .12s}
+.gtile:active{transform:scale(.96)}
+.gtile .gi{width:56px;height:56px;border-radius:16px;background:var(--c);color:#fff;display:grid;place-items:center;margin:24px 0}
+.gtile .gi svg{width:28px;height:28px}
+.gtx{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 2px}
+.gtile b{font-family:var(--display);font-size:16.5px;line-height:1.15}
+.gtile small{font-size:12px;color:var(--muted);line-height:1.3}
+/* previews */
+.gpv{position:relative;width:100%;height:104px;overflow:hidden;display:grid;place-items:end center;pointer-events:none}
+.gpv.sunk{-webkit-mask-image:linear-gradient(#000 74%,transparent);mask-image:linear-gradient(#000 74%,transparent)}
+.pv-wheel{position:absolute;left:50%;top:12px;width:150px;margin-left:-75px}
+.pv-wheel svg{display:block;width:100%;height:auto}
+.pv-spin{transform-origin:150px 150px;animation:pvspin 9s linear infinite}
+@keyframes pvspin{to{transform:rotate(360deg)}}
+.pv-pin{position:absolute;top:2px;left:50%;width:15px;margin-left:-7.5px;z-index:1;transform-origin:50% 30%;animation:pvtick .45s ease-in-out infinite alternate;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+@keyframes pvtick{from{transform:rotate(-9deg)}to{transform:rotate(6deg)}}
+.pv-dice{display:flex;gap:18px;align-items:flex-end;padding-bottom:18px}
+.pv-dice .d3{--s:42px}
+.pv-dice .d3 .dsh{bottom:-11px;height:10px}
+.pv-hop .dtilt{animation:pvhop 2.6s var(--dl) cubic-bezier(.3,0,.3,1) infinite}
+.pv-hop .cube{transition:none;transform:rotateX(var(--rx)) rotateY(var(--ry));animation:pvtumble 2.6s var(--dl) cubic-bezier(.2,.6,.3,1) infinite}
+.pv-hop .dsh{animation:pvshadow 2.6s var(--dl) cubic-bezier(.3,0,.3,1) infinite}
+@keyframes pvhop{0%,60%,100%{transform:rotateX(-17deg) rotateY(21deg) translateY(0)}22%{transform:rotateX(-17deg) rotateY(21deg) translateY(-34px)}44%{transform:rotateX(-17deg) rotateY(21deg) translateY(0)}52%{transform:rotateX(-17deg) rotateY(21deg) translateY(-5px)}}
+@keyframes pvtumble{0%{transform:rotateX(var(--rx)) rotateY(var(--ry))}46%,100%{transform:rotateX(calc(var(--rx) + 360deg)) rotateY(calc(var(--ry) + 360deg))}}
+@keyframes pvshadow{0%,60%,100%{transform:scale(1);opacity:1}22%{transform:scale(.55);opacity:.45}44%{transform:scale(1);opacity:1}}
+.pv-coin{position:relative;width:124px;height:150px;zoom:.62;perspective:700px;display:grid;place-items:end center;padding-bottom:22px;box-sizing:border-box}
+.pv-coin .coin{transition:none;animation:pvflip 3.2s cubic-bezier(.25,.6,.3,1) infinite alternate}
+.pv-toss{animation:pvtoss 3.2s cubic-bezier(.3,0,.4,1) infinite alternate}
+.pv-csh{position:absolute;bottom:6px;left:12px;right:12px;height:18px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.3),transparent);animation:pvcsh 3.2s cubic-bezier(.3,0,.4,1) infinite alternate}
+@keyframes pvflip{0%,12%{transform:rotateX(0)}70%,100%{transform:rotateX(900deg)}}
+@keyframes pvtoss{0%,12%{transform:translateY(0)}40%{transform:translateY(-34px)}70%,100%{transform:translateY(0)}}
+@keyframes pvcsh{0%,12%{transform:scale(1);opacity:1}40%{transform:scale(.6);opacity:.4}70%,100%{transform:scale(1);opacity:1}}
+.pv-suit{display:flex;gap:12px;align-items:flex-end;padding-bottom:14px;font-size:36px;line-height:1}
+.pv-suit span{display:block;transform-origin:50% 100%;animation:pvpop 2.7s var(--dl) cubic-bezier(.3,1.6,.5,1) infinite;filter:drop-shadow(0 4px 3px rgba(0,0,0,.18))}
+@keyframes pvpop{0%,34%,100%{transform:none}10%{transform:translateY(-20px) scale(1.22) rotate(-8deg)}22%{transform:translateY(0) scale(.96)}28%{transform:scale(1.03)}}
+.pv-scr{position:relative;width:136px;height:70px;margin-bottom:14px;border-radius:12px;overflow:hidden;box-shadow:0 4px 0 color-mix(in srgb,var(--k4) 50%,#000),0 8px 14px rgba(0,0,0,.14)}
+.pv-prize{position:absolute;inset:0;background:linear-gradient(135deg,var(--k3),var(--k4));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.pv-prize small{font-size:8.5px;font-weight:800;letter-spacing:.12em;color:#fff;opacity:.92}
+.gtile:last-child:nth-child(odd){grid-column:1/-1}
+.pv-prize b{font-family:var(--display);font-size:15px}
+.pv-foil{position:absolute;inset:0;background:linear-gradient(135deg,#ECEEF2,#B4B9C2 40%,#E9EBEF 60%,#A3A8B1);display:grid;place-items:center;animation:pvscratch 4.2s ease-in-out infinite}
+.pv-foil span{font-size:10px;font-weight:800;letter-spacing:.14em;color:#6B717B}
+@keyframes pvscratch{0%,14%{clip-path:inset(0 0 0 0);opacity:1}64%,84%{clip-path:inset(0 0 0 100%);opacity:1}85%{clip-path:inset(0 0 0 100%);opacity:0}86%{clip-path:inset(0 0 0 0);opacity:0}100%{clip-path:inset(0 0 0 0);opacity:1}}
+.pv-scraper{position:absolute;top:50%;left:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#FFF4C4,#E9B840 52%,#A8770E);box-shadow:0 2px 3px rgba(0,0,0,.3);animation:pvscraper 4.2s ease-in-out infinite}
+@keyframes pvscraper{0%,12%{transform:translate(-6px,8px);opacity:0}16%{opacity:1}24%{transform:translate(30px,-14px)}34%{transform:translate(54px,12px)}44%{transform:translate(80px,-12px)}54%{transform:translate(106px,10px)}64%{transform:translate(140px,-4px);opacity:1}70%,100%{transform:translate(150px,-4px);opacity:0}}
+.pv-tag{position:relative;height:96px;width:120px}
+.pv-str{position:absolute;left:60px;top:0;width:2px;height:30px;background:color-mix(in srgb,var(--ink) 35%,transparent);border-radius:1px}
+.pv-tagb{position:absolute;left:24px;top:28px;width:74px;height:58px;display:grid;place-items:end center;padding-bottom:10px;box-sizing:border-box;color:#fff;background:var(--k4);clip-path:polygon(50% 0,100% 26%,100% 100%,0 100%,0 26%);border-radius:0 0 10px 10px;transform-origin:50% 0;animation:pvswing 2.4s ease-in-out infinite alternate;box-shadow:inset 0 -4px 0 rgba(0,0,0,.15)}
+.pv-hole{position:absolute;top:13px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--bg);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+@keyframes pvswing{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+.pv-roll{display:block;height:18px;overflow:hidden;font-weight:800;font-size:13px;line-height:18px;white-space:nowrap}
+.pv-roll span{display:block;animation:pvroll 4.8s cubic-bezier(.5,0,.2,1) infinite}
+@keyframes pvroll{0%,22%{transform:translateY(0)}30%,55%{transform:translateY(-18px)}63%,88%{transform:translateY(-36px)}96%,100%{transform:translateY(-54px)}}
+.pv-stack{position:relative;width:80px;height:100px}
+.pv-ssh{position:absolute;bottom:4px;left:4px;right:4px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.28),transparent)}
+.pv-sc{position:absolute;left:8px;width:64px;height:16px;bottom:calc(10px + var(--i) * 11px);margin-left:calc((var(--i) - 2) * 2.5px);border-radius:50%;background:radial-gradient(ellipse at 40% 30%,#FFF4C4,#E9B840 55%,#C38D1A);box-shadow:0 4px 0 #A8770E,0 5px 3px rgba(0,0,0,.2);opacity:0}
+.pv-sc[style*="--i:0"]{animation:pvdrop0 6s cubic-bezier(.4,0,.6,1) infinite}
+.pv-sc[style*="--i:1"]{animation:pvdrop1 6s cubic-bezier(.4,0,.6,1) infinite}
+.pv-sc[style*="--i:2"]{animation:pvdrop2 6s cubic-bezier(.4,0,.6,1) infinite}
+.pv-sc[style*="--i:3"]{animation:pvdrop3 6s cubic-bezier(.4,0,.6,1) infinite}
+.pv-sc[style*="--i:4"]{animation:pvdrop4 6s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes pvdrop0{0%,8%{transform:translateY(-90px);opacity:0}9%{opacity:1}14%{transform:translateY(0)}16%{transform:translateY(-3px)}18%,86%{transform:translateY(0);opacity:1}96%,100%{transform:translateY(0);opacity:0}}
+@keyframes pvdrop1{0%,20%{transform:translateY(-90px);opacity:0}21%{opacity:1}26%{transform:translateY(0)}28%{transform:translateY(-3px)}30%,86%{transform:translateY(0);opacity:1}96%,100%{transform:translateY(0);opacity:0}}
+@keyframes pvdrop2{0%,32%{transform:translateY(-90px);opacity:0}33%{opacity:1}38%{transform:translateY(0)}40%{transform:translateY(-3px)}42%,86%{transform:translateY(0);opacity:1}96%,100%{transform:translateY(0);opacity:0}}
+@keyframes pvdrop3{0%,44%{transform:translateY(-90px);opacity:0}45%{opacity:1}50%{transform:translateY(0)}52%{transform:translateY(-3px)}54%,86%{transform:translateY(0);opacity:1}96%,100%{transform:translateY(0);opacity:0}}
+@keyframes pvdrop4{0%,56%{transform:translateY(-90px);opacity:0}57%{opacity:1}62%{transform:translateY(0)}64%{transform:translateY(-3px)}66%,86%{transform:translateY(0);opacity:1}96%,100%{transform:translateY(0);opacity:0}}
+@media (prefers-reduced-motion:reduce){.gpv *{animation:none!important}.pv-sc{opacity:1}.pv-foil{clip-path:inset(0 0 0 55%)}.pv-scraper{display:none}}
 .gfs{position:fixed;inset:0;z-index:15;background:var(--bg);display:flex;flex-direction:column;animation:gfsIn .26s cubic-bezier(.2,.8,.2,1)}
 @keyframes gfsIn{from{opacity:0;transform:translateY(24px)}}
 .gfs-top{display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 8px max(10px,env(safe-area-inset-left,0px))}
@@ -763,8 +822,6 @@ body.noscroll{overflow:hidden}
 .gconf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 
 /* ===== games in 3D: real objects with thickness, light from the top-left ===== */
-.gtile{box-shadow:0 5px 0 color-mix(in srgb,var(--c) 58%,#000),0 12px 22px color-mix(in srgb,var(--c) 28%,transparent),inset 0 1px 0 rgba(255,255,255,.28);margin-bottom:5px;transition:transform .12s,box-shadow .12s}
-.gtile:active{transform:translateY(4px);box-shadow:0 1px 0 color-mix(in srgb,var(--c) 58%,#000),0 4px 10px color-mix(in srgb,var(--c) 22%,transparent)}
 .gtile .gi{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 6px rgba(0,0,0,.18)}
 .gfs-in{gap:16px}
 
@@ -2699,8 +2756,22 @@ function gameBody(k){
   return '<button class="wq" data-act="wedit">'+ic('edit')+'<span>'+esc(WHEEL_PRESETS[S.wheel.preset][0])+'</span></button>'+
     '<div class="wheel-wrap"><svg class="wheel-pin" viewBox="0 0 30 38" aria-hidden="true"><defs><linearGradient id="wg-pin" x1="0" x2="1"><stop offset="0" stop-color="#F0565B"/><stop offset=".45" stop-color="#FF8A8D"/><stop offset="1" stop-color="#A3232A"/></linearGradient></defs><path d="M15 37 3.4 10.5a12 12 0 1 1 23.2 0z" fill="url(#wg-pin)" stroke="#7A1A1F" stroke-width="1.2"/><circle cx="15" cy="11" r="5" fill="#FFE9A8" stroke="#8A580C" stroke-width="1.2"/></svg>'+wheelSVG(opts)+'</div><div class="result" id="wheel-res" aria-live="polite">'+esc(UI.wres||'')+'</div><div id="wheel-act"></div><button class="btn big" data-act="spin">Putar roda</button>';
 }
+/* Game picker: each tile shows a small moving preview of the game itself (no tile background).
+   Previews reuse the real game parts (wheel, 3D dice, 3D coin) with their own ids so they never
+   clash with the game stage. Motion is CSS only and stops under reduced motion. */
+const GPV={
+  wheel:()=>'<div class="gpv sunk"><svg class="pv-pin" viewBox="0 0 30 38" aria-hidden="true"><defs><linearGradient id="pv-pin" x1="0" x2="1"><stop offset="0" stop-color="#F0565B"/><stop offset=".45" stop-color="#FF8A8D"/><stop offset="1" stop-color="#A3232A"/></linearGradient></defs><path d="M15 37 3.4 10.5a12 12 0 1 1 23.2 0z" fill="url(#pv-pin)" stroke="#7A1A1F" stroke-width="1.2"/><circle cx="15" cy="11" r="5" fill="#FFE9A8" stroke="#8A580C" stroke-width="1.2"/></svg>'+
+    '<div class="pv-wheel">'+wheelSVG(wheelOptions()).replace(/wg-/g,'pv-wg-').replace(/ id="wheel-g" style="[^"]*"/,' class="pv-spin"').replace(' id="bulbs"','').replace('role="img" aria-label="Roda putar"','aria-hidden="true"')+'</div></div>',
+  dice:()=>{const d=(cls,f,dl)=>'<div class="'+cls+'"><div class="d3 pv-hop" style="--dl:'+dl+'s;--rx:'+DFACE[f][0]+'deg;--ry:'+DFACE[f][1]+'deg"><span class="dsh"></span><div class="dtilt"><div class="cube">'+dieFaces()+'</div></div></div></div>';
+    return '<div class="gpv"><div class="pv-dice" aria-hidden="true">'+d('',6,0)+d('ruby',5,.35)+'</div></div>';},
+  coin:()=>'<div class="gpv"><div class="pv-coin" aria-hidden="true"><span class="pv-csh"></span><div class="pv-toss"><div class="ctilt"><div class="coin">'+coinBody()+'</div></div></div></div></div>',
+  suit:()=>'<div class="gpv"><div class="pv-suit" aria-hidden="true">'+['g','o','s'].map((k,i)=>'<span style="--dl:'+(i*.9)+'s">'+SUIT[k][1]+'</span>').join('')+'</div></div>',
+  scratch:()=>'<div class="gpv"><div class="pv-scr" aria-hidden="true"><div class="pv-prize"><small>KAMU DAPAT</small><b>Peluk 1 menit</b></div><div class="pv-foil"><span>GOSOK</span></div><span class="pv-scraper"></span></div></div>',
+  guess:()=>'<div class="gpv"><div class="pv-tag" aria-hidden="true"><span class="pv-str"></span><div class="pv-tagb"><i class="pv-hole"></i><span class="pv-roll"><span>Rp 25rb?</span><span>Rp 40rb?</span><span>Rp 18rb?</span><span>Rp 25rb?</span></span></div></div></div>',
+  stack:()=>{let c='';for(let i=0;i<5;i++)c+='<i class="pv-sc" style="--i:'+i+'"></i>';return '<div class="gpv"><div class="pv-stack" aria-hidden="true"><span class="pv-ssh"></span>'+c+'</div></div>';}
+};
 function vGames(){
-  return '<div class="gtiles">'+Object.keys(GDEF).map(id=>{const g=GDEF[id];return '<button class="gtile" style="--c:var(--k'+g.k+')" data-act="game:'+id+'"><span class="gi">'+GICON[g.ic]+'</span><span><b>'+g.n+'</b><small>'+g.tag+'</small></span></button>';}).join('')+'</div>';
+  return '<div class="gtiles">'+Object.keys(GDEF).map(id=>{const g=GDEF[id];return '<button class="gtile" style="--c:var(--k'+g.k+')" data-act="game:'+id+'">'+(GPV[id]?GPV[id]():'<span class="gi">'+GICON[g.ic]+'</span>')+'<span class="gtx"><b>'+g.n+'</b><small>'+g.tag+'</small></span></button>';}).join('')+'</div>';
 }
 const gameBusy=()=>!!(UI.spinning||UI.flipping||UI.rolling||UI.stacking);
 function paintGame(){
