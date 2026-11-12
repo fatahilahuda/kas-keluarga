@@ -89,6 +89,15 @@ class ScreenshotTest {
         ConfirmScreen(kas, Store.Draft(amount = 45000, desc = "bakso", cat = "makan"), {}, {}, {}, {}, {}, {}, {})
     }
 
+    @Test fun confirmSmall() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.WEAR_OS_SMALL_ROUND)
+        shot("confirm_small") { ConfirmScreen(kas, Store.Draft(amount = 1_250_000, desc = "belanja bulanan superindo", cat = "harian"), {}, {}, {}, {}, {}, {}, {}) }
+    }
+
+    @Test fun confirmTransfer() = shot("confirm_tf") {
+        ConfirmScreen(kas, Store.Draft(type = "tf", amount = 500000, pocket = "bank", to = "haji"), {}, {}, {}, {}, {}, {}, {})
+    }
+
     @Test fun summary() = shot("summary") { SummaryScreen(kas) }
     @Test fun history() = shot("history") { HistoryScreen(kas) {} }
     @Test fun pockets() = shot("pockets") { PocketsScreen(kas) }

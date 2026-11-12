@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.CircularProgressIndicator
@@ -259,6 +260,10 @@ fun PocketPickScreen(k: Kas, title: String, selected: String?, exclude: String?,
     }
 }
 
+/**
+ * One screen, no scrolling: amount, category, pocket and a big Simpan in the middle of the
+ * bottom edge, so a voice or typed catatan is saved with a single tap. Everything is tappable to change.
+ */
 @Composable
 fun ConfirmScreen(
     k: Kas, d: Store.Draft,
@@ -267,30 +272,67 @@ fun ConfirmScreen(
 ) {
     var saving by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
+    val small = LocalConfiguration.current.screenWidthDp < 210
     val pocket = if (d.type == "tf") d.pocket else d.pocket ?: k.defaultPocket(d.type, d.cat ?: "lain", Store.learnedPocket(d.type, d.cat ?: "lain"))
     val dateLbl = listOf("Hari ini", "Kemarin", "2 hari lalu")[d.daysAgo]
-    Page {
-        item { Heading(TYPE_LBL[d.type] ?: "") }
-        item {
-            Text(Fmt.full(d.amount), color = if (d.type == "in") Accent else Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onAmount() })
+    val ok = !saving && d.amount > 0 && (d.type != "tf" || (d.pocket != null && d.to != null))
+    val typeColor = when (d.type) { "in" -> Accent; "tf" -> kColor(4); else -> Warn }
+    val secret = d.type == "in" && (d.cat ?: "") in k.hideCats
+
+    Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = if (small) 22.dp else 28.dp),
+        ) {
+            Text(
+                (TYPE_LBL[d.type] ?: "") + " · " + dateLbl, color = typeColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onDate).padding(horizontal = 8.dp, vertical = 2.dp),
+            )
+            Text(
+                Fmt.full(d.amount), color = Ink, fontSize = if (small) 24.sp else 28.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1,
+                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onAmount).padding(horizontal = 6.dp),
+            )
+            if (d.type == "tf") {
+                Text(k.pocketName(pocket) + " → " + k.pocketName(d.to), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                    modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = if (d.pocket == null) onPocket else onTo).padding(horizontal = 6.dp, vertical = 3.dp))
+            } else {
+                val c = k.cat(d.type, d.cat ?: "lain")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Surface1).clickable(onClick = onCat).padding(horizontal = 12.dp, vertical = 5.dp),
+                ) {
+                    Dot(kColor(k.catColorIndex(d.type, c.id)), 9.dp)
+                    Text(" " + c.n, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(
+                    (if (pocket != null) k.pocketName(pocket) else "Pilih kantong") + if (d.desc.isNotBlank()) " · " + d.desc else "",
+                    color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 3.dp).clip(RoundedCornerShape(10.dp)).clickable(onClick = onPocket).padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            if (secret) Text("dirahasiakan dari pasangan", color = Muted, fontSize = 10.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(if (small) 10.dp else 14.dp),
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                SmallRound(Ic.cal, "Ganti tanggal", onDate)
+                Box(
+                    Modifier.size(if (small) 54.dp else 60.dp).clip(CircleShape).background(if (ok) Accent else Surface2)
+                        .clickable(enabled = ok) { saving = true; haptic.performHapticFeedback(HapticFeedbackType.LongPress); onSave() },
+                    contentAlignment = Alignment.Center,
+                ) { Icon(Ic.check, contentDescription = "Simpan", tint = if (ok) Color.Black else Muted, modifier = Modifier.size(30.dp)) }
+                SmallRound(Ic.note, "Tambah catatan", onNote)
+            }
         }
-        if (d.type == "tf") {
-            item { RowChip("Dari", onPocket, value = k.pocketName(pocket), icon = Ic.wallet) }
-            item { RowChip("Ke", onTo, value = k.pocketName(d.to), icon = Ic.swap) }
-        } else {
-            val c = k.cat(d.type, d.cat ?: "lain")
-            item { RowChip(c.n, onCat, secondary = "Kategori", dot = kColor(k.catColorIndex(d.type, c.id))) }
-            item { RowChip(if (pocket != null) k.pocketName(pocket) else "Pilih kantong", onPocket, secondary = "Kantong", icon = Ic.wallet) }
-        }
-        item { RowChip(dateLbl, onDate, secondary = "Tanggal · ketuk untuk ganti", icon = Ic.cal) }
-        item { RowChip(d.desc.ifBlank { "Tambah catatan" }, onNote, secondary = if (d.desc.isBlank()) "Opsional" else "Catatan", icon = Ic.note) }
-        if (d.type == "in" && (d.cat ?: "") in k.hideCats) item { Small("Pemasukan ini otomatis dirahasiakan dari pasangan.") }
-        item {
-            ActionChip("Simpan", {
-                if (!saving) { saving = true; haptic.performHapticFeedback(HapticFeedbackType.LongPress); onSave() }
-            }, Ic.check, enabled = !saving && (d.type != "tf" || (d.pocket != null && d.to != null)))
-        }
+    }
+}
+
+@Composable
+private fun SmallRound(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    Box(Modifier.size(36.dp).clip(CircleShape).background(Surface1).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = label, tint = Muted, modifier = Modifier.size(18.dp))
     }
 }
 
