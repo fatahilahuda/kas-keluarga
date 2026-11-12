@@ -1083,6 +1083,59 @@ details>summary{list-style:none;display:flex;align-items:center;gap:8px}
 details>summary::-webkit-details-marker{display:none}
 details>summary::before{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;flex:none;margin-left:2px}
 details[open]>summary::before{transform:rotate(45deg)}
+
+/* Riwayat toolbar */
+.hbar{display:flex;flex-direction:column;gap:10px}
+.tseg{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:3px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.tseg button{display:flex;align-items:center;justify-content:center;gap:5px;height:34px;min-width:0;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:700;transition:background-color .2s,color .2s,box-shadow .2s}
+.tseg button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tseg svg{width:15px;height:15px;flex:none}
+.tseg button[aria-pressed="true"]{--tc:var(--accent);background:var(--tc);color:#fff;box-shadow:0 2px 8px color-mix(in srgb,var(--tc) 32%,transparent)}
+.tseg .t-out[aria-pressed="true"]{--tc:var(--out)}
+.tseg .t-in[aria-pressed="true"]{--tc:var(--in)}
+.tseg .t-all[aria-pressed="true"],.tseg .t-tf[aria-pressed="true"]{color:var(--accent-ink)}
+.hsearch{display:flex;align-items:center;gap:8px;height:40px;padding:0 5px 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:text;transition:border-color .15s,box-shadow .15s}
+.hsearch:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.hsearch>svg{width:17px;height:17px;color:var(--muted);flex:none}
+.hsearch input{flex:1;min-width:0;height:100%;border:0;background:none;outline:none;font:inherit;font-size:15px;color:var(--ink);padding:0}
+.hsearch input::placeholder{color:var(--muted)}
+.hsx{width:30px;height:30px;flex:none;border:0;border-radius:999px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center}
+.hsx svg{width:14px;height:14px}
+.hsx[hidden]{display:none}
+.fchips{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;overflow-x:auto;margin:0 -16px;padding:2px 16px;scrollbar-width:none;overscroll-behavior-x:contain}
+.fchips::-webkit-scrollbar{display:none}
+.fchip,.freset{flex:none}
+.fchip{display:inline-flex;align-items:center;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--surface);max-width:100%;min-width:0;transition:background-color .15s,border-color .15s}
+.fchip:has(.fcb[aria-expanded="true"]){border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.fcb{display:inline-flex;align-items:center;gap:3px;height:100%;padding:0 9px 0 11px;border:0;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);border-radius:999px;min-width:0}
+.fcb .ddv{display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:150px}
+.fcb .dot{width:7px;height:7px;margin:0 6px 0 0;flex:none}
+.fcc{width:14px;height:14px;color:var(--muted);flex:none}
+.fchip.on{background:var(--accent);border-color:var(--accent)}
+.fchip.on .fcb{color:var(--accent-ink);font-weight:700;padding-right:4px}
+.fchip.on .dot{box-shadow:none;background:var(--accent-ink)}
+.fcx{width:24px;height:24px;margin-right:3px;flex:none;border:0;border-radius:999px;background:color-mix(in srgb,var(--accent-ink) 20%,transparent);color:var(--accent-ink);display:grid;place-items:center}
+.fcx svg{width:12px;height:12px;stroke-width:2.6}
+.freset{height:30px;border:0;background:none;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:0 6px}
+
+/* header month = period picker */
+.month .mlbl{order:-1;flex:1;display:flex;align-items:center;gap:4px;min-width:0;border:0;background:none;padding:4px 0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.month .mlbl span,#mlabel>span{order:0;flex:none;min-width:0;text-align:left;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em;padding:0;overflow:hidden;text-overflow:ellipsis}
+.mlc{width:18px;height:18px;color:var(--muted);flex:none;transition:transform .2s}
+.mlbl[aria-expanded="true"] .mlc{transform:rotate(180deg);color:var(--accent)}
+#permenu{position:fixed;z-index:95;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:0 14px 36px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.06);animation:ddIn .16s cubic-bezier(.2,.8,.2,1)}
+#permenu[hidden]{display:none}
+.perg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 4px}
+.perm{height:40px;border:0;border-radius:12px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:14px;font-weight:600}
+.perm.fut{color:var(--muted);background:none;border:1px dashed var(--line)}
+.perm.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.perm[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none;border-color:var(--accent)}
+/* page transitions */
+#view.pg-r{animation:pgR .3s cubic-bezier(.2,.8,.2,1)}
+#view.pg-l{animation:pgL .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes pgR{from{opacity:0;transform:translateX(24px)}}
+@keyframes pgL{from{opacity:0;transform:translateX(-24px)}}
+@media (prefers-reduced-motion:reduce){#view.pg-r,#view.pg-l{animation:none}}
 </style>
 
 <div class="app">
@@ -1092,7 +1145,7 @@ details[open]>summary::before{transform:rotate(45deg)}
     <button data-act="setmode:home" id="modechip" hidden aria-label="Kembali ke rumah tangga"></button>
     <div class="month" id="monthbar">
       <button class="ib" data-act="mprev" aria-label="Bulan sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <span id="mlabel">—</span>
+      <button type="button" id="mlabel" class="mlbl" data-act="period" aria-haspopup="dialog" aria-expanded="false">—</button>
       <button class="ib" data-act="mnext" aria-label="Bulan berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     </div>
@@ -1304,6 +1357,7 @@ const IP={
  cam:'<path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
  chev:'<path d="M9 6l6 6-6 6"/>',
  chevd:'<path d="M6 9l6 6 6-6"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
  cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -1869,33 +1923,36 @@ function vHome(){
 
 /* Riwayat filters: a compact grid of our own dropdowns. Whatever is active also shows as a pill
    under it; tapping a pill clears that filter. */
+/* Riwayat filters: small chips. An unused filter reads "Kategori ▾" and opens our dropdown; a used
+   one turns into an accent pill showing its value, with × to clear it. */
+function fchip(id,key,label,opts,val){
+  DDO[id]=opts;const o=opts.find(x=>x[0]===val&&x[0]!=='#'),on=!!val&&!!o;
+  return '<span class="fchip'+(on?' on':'')+'"><input type="hidden" id="'+id+'" value="'+esc(val||'')+'"><button type="button" class="fcb" data-act="dd:'+id+'" aria-haspopup="listbox" aria-expanded="false" aria-label="'+esc(label)+(on?': '+esc(o[1]):'')+'"><span class="ddv">'+(on?ddLabel(o):esc(label))+'</span>'+(on?'':ic('chevd','fcc'))+'</button>'+(on?'<button type="button" class="fcx" data-act="hclr:'+key+'" aria-label="Hapus filter '+esc(o[1])+'">'+ic('x')+'</button>':'')+'</span>';
+}
 function histFilterRows(){
   const mb=MODE(),ubm=mb&&bkind(mb)==='usaha',co=ubm?'bout':'out',ci=ubm?'bin':'in';
   const catO=[['','Semua kategori']].concat(H.type!=='in'?[['#','Keluar']].concat(CATS[co].map(c=>['out:'+c.id,c.n,ccolor(co,c.id)])):[],H.type!=='out'?[['#','Masuk']].concat(CATS[ci].map(c=>['in:'+c.id,c.n,ccolor(ci,c.id)])):[]);
   const pkO=[['','Semua kantong']].concat(S.pockets.filter(p=>!p.archived||H.pocket===p.id).map(p=>[p.id,p.n,'var(--k'+p.k+')']));
-  let h=ddField('hc',catO,H.cat,'Filter kategori','sm')+ddField('hp',pkO,H.pocket,'Filter kantong','sm');
+  let h=fchip('hc','cat','Kategori',catO,H.cat)+fchip('hp','pocket','Kantong',pkO,H.pocket);
   if(!mb){
-    h+=ddField('hw',[['','Semua orang'],['_',BERSAMA()]].concat(famAll().map(p=>[p.id,'Untuk '+p.n])),H.who,'Filter orang','sm');
-    if(shownBiz().length)h+=ddField('hb',[['','Semua bagian'],['home',HOMEN()]].concat(S.biz.filter(b=>kindOn(bkind(b))).map(b=>[b.id,b.n,bcolor(b.id)])),H.biz,'Filter bagian','sm');
+    h+=fchip('hw','who','Orang',[['','Semua orang'],['_',BERSAMA()]].concat(famAll().map(p=>[p.id,'Untuk '+p.n])),H.who);
+    if(shownBiz().length)h+=fchip('hb','biz','Bagian',[['','Semua bagian'],['home',HOMEN()]].concat(S.biz.filter(b=>kindOn(bkind(b))).map(b=>[b.id,b.n,bcolor(b.id)])),H.biz);
   }
-  return '<div class="fgrid">'+h+'</div><div id="hact" class="hact">'+histActive()+'</div>';
+  const n=['cat','pocket','who','biz'].filter(k=>H[k]).length+(H.type!=='all'?1:0)+(H.q?1:0);
+  return h+(n>1?'<button type="button" class="freset" data-act="hreset">Reset</button>':'');
 }
-function histActive(){
-  const L=[];
-  if(H.cat){const [t,id]=H.cat.split(':'),mb=MODE(),ubm=mb&&bkind(mb)==='usaha',ty=t==='in'?(ubm?'bin':'in'):(ubm?'bout':'out');L.push(['cat',cat(ty,id).n,ccolor(ty,id)]);}
-  if(H.pocket)L.push(['pocket',pname(H.pocket)]);
-  if(H.who)L.push(['who',H.who==='_'?BERSAMA():'Untuk '+pName(H.who)]);
-  if(H.biz)L.push(['biz',H.biz==='home'?HOMEN():bname(H.biz)]);
-  if(H.q)L.push(['q','“'+H.q+'”']);
-  if(!L.length)return '';
-  return L.map(([k,l,c])=>'<button class="apill" data-act="hclr:'+k+'" aria-label="Hapus filter '+esc(l)+'">'+(c?'<span class="dot" style="--c:'+c+'"></span>':'')+'<span>'+esc(l)+'</span>'+ic('x','apx')+'</button>').join('')+(L.length>1?'<button class="link apall" data-act="hreset">Hapus semua</button>':'');
+function refreshHistFilters(){
+  const hf=document.getElementById('hfilters'),fid=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.fchip')?document.activeElement.getAttribute('data-act'):null;
+  if(hf)hf.innerHTML=histFilterRows();
+  document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.act==='hf:'+H.type)));
+  if(fid){const b=document.querySelector('[data-act="'+fid+'"]');if(b)b.focus({preventScroll:true});}
 }
-function refreshHistFilters(){const hf=document.getElementById('hfilters');if(hf)hf.innerHTML=histFilterRows();}
 function vHist(){
   const mb=MODE();
-  return sampleBanner()+'<div id="hcards"></div><section class="filters"><div class="seg sm">'+
-    [['all','Semua'],['out','Keluar'],['in','Masuk'],['tf','Pindah']].map(([k,l])=>'<button data-act="hf:'+k+'" aria-pressed="'+(H.type===k)+'">'+l+'</button>').join('')+'</div>'+(mb?modeBanner(mb):'')+
-    '<input class="inp hq" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'"><div id="hfilters">'+histFilterRows()+'</div></section>'+
+  return sampleBanner()+'<div id="hcards"></div><section class="hbar">'+(mb?modeBanner(mb):'')+'<div class="tseg" role="group" aria-label="Jenis catatan">'+
+    [['all','Semua','list'],['out','Keluar','up'],['in','Masuk','down'],['tf','Pindah','swap']].map(([k,l,i])=>'<button data-act="hf:'+k+'" class="t-'+k+'" aria-pressed="'+(H.type===k)+'">'+ic(i)+'<span>'+l+'</span></button>').join('')+'</div>'+
+    '<label class="hsearch">'+ic('search')+'<input id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'" autocomplete="off"><button type="button" class="hsx" data-act="hclr:q" aria-label="Hapus pencarian"'+(H.q?'':' hidden')+'>'+ic('x')+'</button></label>'+
+    '<div id="hfilters" class="fchips">'+histFilterRows()+'</div></section>'+
     '<div id="hlist"></div>';
 }
 /* Riwayat: dashboard cards for whatever the filters currently show */
@@ -1929,7 +1986,6 @@ function renderHistList(){
   let tin=0,tout=0;list.forEach(t=>{if(masked(t))return;if(t.type==='in')tin+=t.amount;else if(t.type==='out')tout+=t.amount;});
   const filtered=!!(q||H.cat||H.pocket||H.biz||H.who||H.type!=='all');
   const hc=document.getElementById('hcards');if(hc)hc.innerHTML=histCards(list,tin,tout,filtered);
-  const ha=document.getElementById('hact');if(ha)ha.innerHTML=histActive();
   let h='';
   if(!list.length){el.innerHTML=h+'<div class="list empty" style="margin-top:10px"><b>'+(filtered?'Tidak ada yang cocok':'Bulan ini masih kosong')+'</b>'+(filtered?'Coba ubah filter atau kata kunci.':'Catat transaksi dengan tombol + di bawah.')+'</div>';return;}
   const groups={},order=[];list.forEach(t=>{if(!groups[t.date]){groups[t.date]=[];order.push(t.date);}groups[t.date].push(t);});
@@ -1945,6 +2001,42 @@ function fundsWarn(B){
   if(F.type==='in'||!F.pocket||!F._amt)return '';const b=B[F.pocket]||0;
   return F._amt>b?'<div class="warnline">Saldo '+esc(pname(F.pocket))+' tinggal '+fmt(b)+'. Kantong ini akan minus '+fmt(F._amt-b)+'.</div>':'';
 }
+/* ---------- period picker: tapping the month in the header ---------- */
+let PERY=null;
+function perOpen(btn){
+  let m=document.getElementById('permenu');if(m&&!m.hidden){perClose();return;}
+  if(!m){m=document.createElement('div');m.id='permenu';m.setAttribute('role','dialog');m.setAttribute('aria-label','Pilih periode');document.body.appendChild(m);}
+  PERY=+CUR.slice(0,4);perDraw();
+  const r=btn.getBoundingClientRect(),w=Math.min(300,innerWidth-16);
+  m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';m.style.top=(r.bottom+8)+'px';
+  m.hidden=false;btn.setAttribute('aria-expanded','true');
+  const sel=m.querySelector('[aria-pressed="true"]')||m.querySelector('.perm');if(sel)sel.focus({preventScroll:true});
+}
+function perDraw(){
+  const m=document.getElementById('permenu');if(!m)return;const now=mkey(todayISO());
+  m.innerHTML='<div class="calh"><button type="button" class="ib" data-act="pery:-1" aria-label="Tahun sebelumnya">'+ic('back')+'</button><b>'+PERY+'</b><button type="button" class="ib" data-act="pery:1" aria-label="Tahun berikutnya">'+ic('chev')+'</button></div><div class="perg">'+
+    BULAN.map((n,i)=>{const k=PERY+'-'+pad(i+1);return '<button type="button" class="perm'+(k===now?' today':'')+(k>now?' fut':'')+'" data-act="perpick:'+k+'" aria-pressed="'+(k===CUR)+'" aria-label="'+n+' '+PERY+'">'+n.slice(0,3)+'</button>';}).join('')+
+    '</div><div class="calf"><button type="button" class="fdtoday" data-act="perpick:'+now+'" aria-pressed="'+(CUR===now)+'">Bulan ini</button><span class="hint">'+esc(mname(CUR))+'</span></div>';
+}
+function perClose(refocus){const m=document.getElementById('permenu');if(m)m.hidden=true;const b=document.getElementById('mlabel');if(b){b.setAttribute('aria-expanded','false');if(refocus)b.focus();}}
+const perIsOpen=()=>{const m=document.getElementById('permenu');return !!(m&&!m.hidden);};
+document.addEventListener('pointerdown',e=>{if(!perIsOpen())return;const m=document.getElementById('permenu'),b=document.getElementById('mlabel');if(m.contains(e.target)||(b&&b.contains(e.target)))return;perClose();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&perIsOpen()){e.preventDefault();perClose(true);}});
+addEventListener('resize',()=>{if(perIsOpen())perClose();});
+
+/* ---------- page transitions: every tab, Kita section and Pengaturan subpage slides in from the
+   side it sits on; changing month slides the same way as the month moved. ---------- */
+const PG_ORDER=['home','hist','add','chart','tips','zakat','kita','set'],KT_ORDER=['sum','prop','gift','game'];let PG_LAST=null;
+function pageAnim(){
+  const v=document.getElementById('view'),key=TAB+'|'+(TAB==='set'?(UI.st||''):'')+'|'+(TAB==='kita'?(UI.kt||'sum'):''),prev=PG_LAST;
+  PG_LAST={k:key,cur:CUR};if(!prev||RM)return;
+  let dir=0;const [pt,ps,pk]=prev.k.split('|');
+  if(prev.k!==key){if(pt!==TAB)dir=PG_ORDER.indexOf(TAB)>=PG_ORDER.indexOf(pt)?1:-1;else if(TAB==='set')dir=UI.st?1:-1;else if(TAB==='kita')dir=KT_ORDER.indexOf(UI.kt||'sum')>=KT_ORDER.indexOf(pk)?1:-1;}
+  else if(prev.cur!==CUR)dir=CUR>prev.cur?1:-1;
+  if(!dir)return;
+  v.classList.remove('pg-r','pg-l');void v.offsetWidth;v.classList.add(dir>0?'pg-r':'pg-l');
+}
+document.addEventListener('animationend',e=>{if(e.target&&e.target.id==='view')e.target.classList.remove('pg-r','pg-l');});
 /* ---------- our own dropdown and date field (no device pickers) ----------
    ddField() renders a hidden input (same id the old <select> had, so save code and change
    listeners keep working) plus a button. The menu is one floating #ddmenu placed under or above
@@ -3863,18 +3955,19 @@ function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('
 /* ---------- render ---------- */
 const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
-function render(anim){BG_PENDING=false;if(DDOPEN)ddClose();
+function render(anim){BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClose();
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
   const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&(TAB==='add'||TAB==='set');cx.classList.toggle('home',!mb);}
   const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
-  const ml=document.getElementById('mlabel');ml.textContent=mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
+  const ml=document.getElementById('mlabel');ml.innerHTML='<span>'+esc(mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR))+'</span>'+ic('chevd','mlc');ml.setAttribute('aria-label','Periode: '+mname(CUR)+'. Ketuk untuk memilih bulan');
   document.getElementById('monthbar').hidden=TAB==='add'||TAB==='set';
   const kl=document.getElementById('kitalbl');if(kl)kl.textContent=SOLO()?'Keluarga':'Kita';
   const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   document.getElementById('view').innerHTML=(TAB==='chart'||TAB==='tips'||TAB==='zakat'?chartSeg(TAB):'')+VIEWS[TAB]();
+  pageAnim();
   if(TAB==='hist'){refreshHistFilters();renderHistList();}
   if(TAB==='add')refreshForm();
   if(TAB==='home')heroAnim();
@@ -3900,9 +3993,9 @@ document.addEventListener('click',e=>{
   if(a.indexOf('qadd:')===0){TAB='add';F=newForm(v,{typeManual:true});UI.bd=null;render(true);window.scrollTo(0,0);softFocus(document.getElementById('fdesc'));return;}
   if(a==='mprev'||a==='mnext'){CUR=addMonth(CUR,a==='mprev'?-1:1);UI.bd=null;UI.bm=null;UI.donutSel=-1;render(true);return;}
   if(a.indexOf('goto:')===0){CUR=v;UI.bm=null;UI.bd=null;render(true);return;}
-  if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;if(H.cat&&H.type!=='all'&&H.cat.indexOf(H.type+':')!==0)H.cat='';document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.act==='hf:'+H.type));refreshHistFilters();renderHistList();return;}
-if(a.indexOf('hclr:')===0){H[v]='';if(v==='q'){const q=document.getElementById('hq');if(q)q.value='';}refreshHistFilters();renderHistList();return;}
-if(a.indexOf('hf:')===0){H.type=v;if(H.cat&&v!=='all'&&H.cat.indexOf(v+':')!==0)H.cat='';document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b===el));refreshHistFilters();renderHistList();return;}
+  if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;if(H.cat&&H.type!=='all'&&H.cat.indexOf(H.type+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
+if(a.indexOf('hclr:')===0){H[v]='';if(v==='q'){const q=document.getElementById('hq');if(q){q.value='';q.focus();}const x=document.querySelector('.hsx');if(x)x.hidden=true;}refreshHistFilters();renderHistList();return;}
+if(a.indexOf('hf:')===0){H.type=v;if(H.cat&&v!=='all'&&H.cat.indexOf(v+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
   if(a==='hreset'){H.type='all';H.cat='';H.pocket='';H.biz='';H.q='';H.who='';render();return;}
   if(a.indexOf('histwho:')===0){H.type='all';H.cat='';H.pocket='';H.biz='home';H.q='';H.who=v;closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
   if(a.indexOf('histtype:')===0){H.who='';H.type=v;H.cat='';H.pocket='';H.biz=MODE()?'':'home';H.q='';closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
@@ -4092,6 +4185,9 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a==='bdelete'&&EDITB.id){const b=bizOf(EDITB.id),i=S.biz.indexOf(b);S.biz.splice(i,1);S.deleted[b.id]=Date.now();if(PG===b.id)PG='home';save();closeSheet();render();toast(b.n+' dihapus','Urungkan',()=>{delete S.deleted[b.id];b.u=Date.now();S.biz.splice(i,0,b);save();render();});return;}
   if(a.indexOf('bizadd:')===0){TAB='add';F=newForm(v,{typeManual:true});render(true);window.scrollTo(0,0);softFocus(document.getElementById(BOOKT[v]?(v==='beli'||v==='jual'?'fqty':'famt'):'fdesc'));return;}
   if(a.indexOf('fbiz:')===0){F.biz=v==='home'?null:v;F.bizManual=true;F.bizAuto=false;F.cat=null;F.catManual=false;F.pocketManual=false;refreshForm();return;}
+  if(a==='period'){perOpen(el);return;}
+  if(a.indexOf('pery:')===0){PERY+=+v;perDraw();return;}
+  if(a.indexOf('perpick:')===0){perClose();if(v!==CUR){CUR=v;UI.bd=null;UI.bm=null;UI.donutSel=-1;render(true);}return;}
   if(a.indexOf('dd:')===0){ddOpen(v,el);return;}
   if(a.indexOf('ddo:')===0){ddPick(v);return;}
   if(a.indexOf('dp:')===0||a.indexOf('dpm:')===0||a.indexOf('dpp:')===0){dpAct(a,parts);return;}
@@ -4123,11 +4219,11 @@ document.addEventListener('input',e=>{
   const id=e.target.id;
   if(id==='fdesc'){onDescInput();const er=document.getElementById('ferr');if(er)er.hidden=true;}
   else if(id==='famt'){F.amtManual=e.target.value!=='';const v=e.target.value;if(!/[a-z]/i.test(v)){const n=v.replace(/[^\d]/g,'');e.target.value=n?NF.format(+n):'';}document.getElementById('ferr').hidden=true;refreshForm();}
-  else if(id==='hq'){H.q=e.target.value;renderHistList();}
+  else if(id==='hq'){const had=!!H.q;H.q=e.target.value;const x=document.querySelector('.hsx');if(x)x.hidden=!H.q;if(had!==!!H.q){const hf=document.getElementById('hfilters');if(hf)hf.innerHTML=histFilterRows();}renderHistList();}
   else if(id==='fqty'){refreshForm();}
   else if(id==='budget'||id==='ed-amt'||id==='pk-start'){const n2=e.target.value.replace(/[^\d]/g,'');e.target.value=n2?NF.format(+n2):'';}
 });
-document.addEventListener('change',e=>{if(e.target.id==='qr-photo'&&e.target.files&&e.target.files[0]){scanPhoto(e.target.files[0]);e.target.value='';return;}if((e.target.id==='scan-cam'||e.target.id==='scan-gal')&&e.target.files&&e.target.files[0]){startScan(e.target.files[0]);return;}if(e.target.id==='ed-photo'&&e.target.files&&e.target.files[0]){savePhoto(e.target.files[0]);return;}if(e.target.id==='fhid'){F.hidden=e.target.checked;F.hiddenManual=true;refreshForm();}if(e.target.id==='wheel-custom'){readWheelCustom();save();paintGame();}if(e.target.id==='hb'){H.biz=e.target.value;renderHistList();}if(e.target.id==='hw'){H.who=e.target.value;renderHistList();}if(e.target.id==='hc'){H.cat=e.target.value;renderHistList();}if(e.target.id==='hp'){H.pocket=e.target.value;renderHistList();}if(e.target.id==='fdate')F.date=e.target.value;});
+document.addEventListener('change',e=>{if(e.target.id==='qr-photo'&&e.target.files&&e.target.files[0]){scanPhoto(e.target.files[0]);e.target.value='';return;}if((e.target.id==='scan-cam'||e.target.id==='scan-gal')&&e.target.files&&e.target.files[0]){startScan(e.target.files[0]);return;}if(e.target.id==='ed-photo'&&e.target.files&&e.target.files[0]){savePhoto(e.target.files[0]);return;}if(e.target.id==='fhid'){F.hidden=e.target.checked;F.hiddenManual=true;refreshForm();}if(e.target.id==='wheel-custom'){readWheelCustom();save();paintGame();}const hk={hb:'biz',hw:'who',hc:'cat',hp:'pocket'}[e.target.id];if(hk){H[hk]=e.target.value;refreshHistFilters();renderHistList();const b=document.querySelector('[data-act="dd:'+e.target.id+'"]');if(b)b.focus({preventScroll:true});}if(e.target.id==='fdate')F.date=e.target.value;});
 document.addEventListener('focusout',e=>{if(e.target.id==='famt'){const n=amountFromField(e.target.value);e.target.value=n?NF.format(n):'';refreshForm();}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.getElementById('celeb')){closeCeleb();return;}
@@ -4147,6 +4243,7 @@ function backStep(){
   if(document.getElementById('lockov'))return false;
   if(document.getElementById('celeb')){closeCeleb();return true;}
   if(DDOPEN){ddClose(true);return true;}
+  if(perIsOpen()){perClose(true);return true;}
   if(!document.getElementById('sheet').hidden){closeSheet();return true;}
   if(TAB==='set'&&UI.st){UI.st=null;render(true);window.scrollTo(0,0);return true;}
   if(UI.gfs){closeGame();return true;}
