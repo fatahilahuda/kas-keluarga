@@ -1001,7 +1001,11 @@ body.noscroll{overflow:hidden}
 
 .hsum{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px 8px;font-size:13px;color:var(--muted)}
 .hsum .link{font-size:13px;padding:0}
-.kpis.hk{margin-bottom:4px}
+.kpis.hk{display:flex;overflow-x:auto;gap:10px;margin:0 -16px 4px;padding:2px 16px 6px;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;overscroll-behavior-x:contain}
+.kpis.hk::-webkit-scrollbar{display:none}
+.kpis.hk .kpi{flex:0 0 142px;scroll-snap-align:start;padding:10px 12px;gap:4px}
+.kpis.hk .kpi.wide{flex-basis:230px}
+.kpis.hk .kpi .kv{font-size:18px}
 #hcards:empty{display:none}
 .kpi[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .kpi .kv small{white-space:nowrap}
@@ -1012,6 +1016,28 @@ body.noscroll{overflow:hidden}
 .nav button[aria-current="page"]:not(.plus)>svg{transform:none;background:var(--accent);color:var(--accent-ink)}
 .nav .plus[aria-current="page"] span{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);outline-offset:2px}
 .nav .badge{top:0;left:calc(50% + 10px)}
+
+/* Riwayat filter pills */
+.filters .hq{min-height:42px;padding-top:9px;padding-bottom:9px}
+.frows{display:flex;flex-direction:column;gap:6px;margin:0 -16px}
+.frow{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:1px 16px;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+.frow::-webkit-scrollbar{display:none}
+.flbl{flex:none;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);min-width:58px}
+.fsep{flex:none;font-size:11.5px;font-weight:600;color:var(--muted);padding:0 2px 0 6px;border-left:1px solid var(--line);margin-left:2px}
+.fpill{flex:none;display:inline-flex;align-items:center;gap:0;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
+.fpill .dot{width:7px;height:7px;margin:0 6px 0 0}
+.fpill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.fpill[aria-pressed="true"] .dot{box-shadow:0 0 0 1.5px var(--accent-ink)}
+/* Transaction rows: description beside the amount, details on their own line across the full width,
+   both allowed to wrap so nothing gets cut. */
+.tx{grid-template-areas:"m b a" "m s s";row-gap:2px;align-items:start}
+.tx>.mono{grid-area:m;margin-top:1px}
+.tx .d{display:contents}
+.tx .d b{grid-area:b;white-space:normal;overflow:hidden;text-overflow:clip;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:anywhere;line-height:1.3;align-self:center}
+.tx .d small{grid-area:s;white-space:normal;line-height:1.45}
+.tx .d small b{display:inline;-webkit-line-clamp:none}
+.tx .a{grid-area:a;align-self:center}
+.forline .av{margin-left:4px}
 </style>
 
 <div class="app">
@@ -1795,13 +1821,33 @@ function vHome(){
   return h+'</section>';
 }
 
-function vHist(){
+/* Riwayat filters: one row of small pills per filter, each row scrolls sideways. */
+function histFilterRows(){
   const mb=MODE(),ubm=mb&&bkind(mb)==='usaha',co=ubm?'bout':'out',ci=ubm?'bin':'in';
-  const cats=CATS[co].map(c=>'<option value="out:'+c.id+'">Keluar · '+esc(c.n)+'</option>').join('')+CATS[ci].map(c=>'<option value="in:'+c.id+'">Masuk · '+esc(c.n)+'</option>').join('');
-  return sampleBanner()+'<div id="hcards"></div><section class="filters"><div class="seg">'+
-    [['all','Semua'],['out','Keluar'],['in','Masuk'],['tf','Pindah']].map(([k,l])=>'<button data-act="hf:'+k+'" aria-pressed="'+(H.type===k)+'">'+l+'</button>').join('')+'</div>'+
-    (mb?modeBanner(mb):'')+'<input class="inp" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'">'+(mb?'':'<div class="row2">'+(shownBiz().length?'<select class="inp" id="hb" aria-label="Filter bagian"><option value="">Semua bagian</option><option value="home">'+HOMEN()+'</option>'+S.biz.filter(b=>kindOn(bkind(b))).map(b=>'<option value="'+b.id+'">'+esc(b.n)+'</option>').join('')+'</select>':'')+'<select class="inp" id="hw" aria-label="Filter orang"><option value="">Semua orang</option><option value="_">'+BERSAMA()+'</option>'+famAll().map(p=>'<option value="'+p.id+'">Untuk '+esc(p.n)+'</option>').join('')+'</select></div>')+
-    '<div class="row2"><select class="inp" id="hc" aria-label="Filter kategori"><option value="">Semua kategori</option>'+cats+'</select><select class="inp" id="hp" aria-label="Filter kantong"><option value="">Semua kantong</option>'+S.pockets.map(p=>'<option value="'+p.id+'">'+esc(p.n)+'</option>').join('')+'</select></div></section>'+
+  const pill=(key,v,t,c)=>'<button class="fpill" data-act="hpill:'+key+':'+v+'" aria-pressed="'+(H[key]===v)+'">'+(c?'<span class="dot" style="--c:'+c+'"></span>':'')+t+'</button>';
+  const row=(key,label,inner)=>'<div class="frow" data-key="'+key+'" role="group" aria-label="'+label+'"><span class="flbl">'+label+'</span>'+inner+'</div>';
+  let h=row('type','Jenis',[['all','Semua'],['out','Keluar'],['in','Masuk'],['tf','Pindah']].map(([k,l])=>pill('type',k,l)).join(''));
+  const outs=H.type!=='in'&&H.type!=='tf'?CATS[co].map(c=>pill('cat','out:'+c.id,esc(c.n),ccolor(co,c.id))).join(''):'',
+        ins=H.type!=='out'&&H.type!=='tf'?CATS[ci].map(c=>pill('cat','in:'+c.id,esc(c.n),ccolor(ci,c.id))).join(''):'';
+  if(H.type!=='tf')h+=row('cat','Kategori',pill('cat','','Semua')+(outs&&ins?'<span class="fsep">Keluar</span>':'')+outs+(outs&&ins?'<span class="fsep">Masuk</span>':'')+ins);
+  h+=row('pocket','Kantong',pill('pocket','','Semua')+S.pockets.filter(p=>!p.archived||H.pocket===p.id).map(p=>pill('pocket',p.id,esc(p.n),'var(--k'+p.k+')')).join(''));
+  if(!mb){
+    h+=row('who','Untuk',pill('who','','Semua')+pill('who','_',BERSAMA())+famAll().map(p=>pill('who',p.id,esc(p.n))).join(''));
+    if(shownBiz().length)h+=row('biz','Bagian',pill('biz','','Semua')+pill('biz','home',HOMEN())+S.biz.filter(b=>kindOn(bkind(b))).map(b=>pill('biz',b.id,esc(b.n),bcolor(b.id))).join(''));
+  }
+  return h;
+}
+/* Redraw the pill rows without losing how far each row was scrolled. */
+function refreshHistFilters(){
+  const hf=document.getElementById('hfilters');if(!hf)return;const pos={};
+  hf.querySelectorAll('.frow').forEach(r=>{pos[r.dataset.key]=r.scrollLeft;});
+  hf.innerHTML=histFilterRows();
+  hf.querySelectorAll('.frow').forEach(r=>{if(pos[r.dataset.key])r.scrollLeft=pos[r.dataset.key];});
+}
+function vHist(){
+  const mb=MODE();
+  return sampleBanner()+'<div id="hcards"></div><section class="filters">'+(mb?modeBanner(mb):'')+
+    '<input class="inp hq" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'"><div id="hfilters" class="frows">'+histFilterRows()+'</div></section>'+
     '<div id="hlist"></div>';
 }
 /* Riwayat: dashboard cards for whatever the filters currently show */
@@ -3714,7 +3760,7 @@ function render(anim){BG_PENDING=false;
   const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   document.getElementById('view').innerHTML=(TAB==='chart'||TAB==='tips'||TAB==='zakat'?chartSeg(TAB):'')+VIEWS[TAB]();
-  if(TAB==='hist'){document.getElementById('hc').value=H.cat;document.getElementById('hp').value=H.pocket;const hbs=document.getElementById('hb');if(hbs)hbs.value=H.biz;const hws=document.getElementById('hw');if(hws)hws.value=H.who;renderHistList();}
+  if(TAB==='hist'){refreshHistFilters();renderHistList();}
   if(TAB==='add')refreshForm();
   if(TAB==='home')heroAnim();
   gameMount();
@@ -3739,7 +3785,8 @@ document.addEventListener('click',e=>{
   if(a.indexOf('qadd:')===0){TAB='add';F=newForm(v,{typeManual:true});UI.bd=null;render(true);window.scrollTo(0,0);softFocus(document.getElementById('fdesc'));return;}
   if(a==='mprev'||a==='mnext'){CUR=addMonth(CUR,a==='mprev'?-1:1);UI.bd=null;UI.bm=null;UI.donutSel=-1;render(true);return;}
   if(a.indexOf('goto:')===0){CUR=v;UI.bm=null;UI.bd=null;render(true);return;}
-  if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.act==='hf:'+H.type));renderHistList();return;}
+  if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;if(H.cat&&H.type!=='all'&&H.cat.indexOf(H.type+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
+if(a.indexOf('hpill:')===0){const k=parts[1],val=a.slice(7+k.length);H[k]=val;if(k==='type'&&H.cat&&val!=='all'&&H.cat.indexOf(val+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
 if(a.indexOf('hf:')===0){H.type=v;document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b===el));renderHistList();return;}
   if(a==='hreset'){H.type='all';H.cat='';H.pocket='';H.biz='';H.q='';H.who='';render();return;}
   if(a.indexOf('histwho:')===0){H.type='all';H.cat='';H.pocket='';H.biz='home';H.q='';H.who=v;closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
