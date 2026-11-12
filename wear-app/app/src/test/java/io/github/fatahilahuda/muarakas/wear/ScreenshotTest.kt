@@ -12,7 +12,6 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.tiles.renderer.TileRenderer
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.android.resources.Density
 import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
@@ -63,15 +62,13 @@ class ScreenshotTest {
 
     @Test fun home() = shot("home") { HomeScreen(kas, {}, {}, {}, {}, {}) }
 
-    @Test fun homeFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 450, screenHeight = 1500, density = Density.XHIGH, xdpi = 320, ydpi = 320))
-        shot("home_full") { HomeScreen(kas, {}, {}, {}, {}, {}) }
+    private fun lower(name: String, skip: Int, content: @Composable () -> Unit) = paparazzi.snapshot(name) {
+        CompositionLocalProvider(LocalStaticPage provides true, LocalStaticSkip provides skip) { MuaraTheme(content) }
     }
 
-    @Test fun summaryFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 450, screenHeight = 1500, density = Density.XHIGH, xdpi = 320, ydpi = 320))
-        shot("summary_full") { SummaryScreen(kas) }
-    }
+    @Test fun homeLower() = lower("home_2", 2) { HomeScreen(kas, {}, {}, {}, {}, {}) }
+    @Test fun homeLowest() = lower("home_3", 6) { HomeScreen(kas, {}, {}, {}, {}, {}) }
+    @Test fun summaryLower() = lower("summary_2", 5) { SummaryScreen(kas) }
 
     @Test fun homeSmall() {
         paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.WEAR_OS_SMALL_ROUND)

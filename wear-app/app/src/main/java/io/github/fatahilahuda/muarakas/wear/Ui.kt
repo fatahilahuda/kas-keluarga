@@ -99,6 +99,8 @@ class PageScope {
 
 /** Screenshot tests set this: a ScalingLazyColumn only shows its rows from the second frame on. */
 val LocalStaticPage = staticCompositionLocalOf { false }
+/** Screenshot tests only: rows to skip, to see further down a page. */
+val LocalStaticSkip = staticCompositionLocalOf { 0 }
 
 /** A scrolling round-screen page with the clock on top and the scroll indicator on the side. */
 @Composable
@@ -109,7 +111,7 @@ fun Page(centerFirst: Boolean = false, content: PageScope.() -> Unit) {
             Modifier.fillMaxSize().background(Color.Black).padding(top = 30.dp, start = 10.dp, end = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) { rows.forEach { it() } }
+        ) { rows.drop(LocalStaticSkip.current).forEach { it() } }
         return
     }
     val st = rememberScalingLazyListState(initialCenterItemIndex = if (centerFirst) 0 else 1)
