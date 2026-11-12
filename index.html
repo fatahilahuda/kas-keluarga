@@ -1133,8 +1133,10 @@ details[open]>summary::before{transform:rotate(45deg)}
 .perm.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .perm[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none;border-color:var(--accent)}
 /* page transitions */
-#view.pg-r{animation:pgR .3s .12s cubic-bezier(.2,.8,.2,1) both}
-#view.pg-l{animation:pgL .3s .12s cubic-bezier(.2,.8,.2,1) both}
+.pg-r{animation:pgR .3s .1s cubic-bezier(.2,.8,.2,1) both}
+.pg-l{animation:pgL .3s .1s cubic-bezier(.2,.8,.2,1) both}
+.pgn-r{animation:pgR .28s cubic-bezier(.2,.8,.2,1) both}
+.pgn-l{animation:pgL .28s cubic-bezier(.2,.8,.2,1) both}
 @keyframes pgR{from{opacity:0;transform:translateX(24px)}}
 @keyframes pgL{from{opacity:0;transform:translateX(-24px)}}
 .pg-ghost{position:fixed;z-index:3;overflow:hidden;pointer-events:none;margin:0;contain:paint;background:var(--bg);box-shadow:0 0 0 16px var(--bg)}
@@ -1142,7 +1144,33 @@ details[open]>summary::before{transform:rotate(45deg)}
 .pg-out-r{animation:pgOutR .14s cubic-bezier(.4,0,1,1) both}
 @keyframes pgOutL{to{opacity:0;transform:translateX(-20px)}}
 @keyframes pgOutR{to{opacity:0;transform:translateX(20px)}}
-@media (prefers-reduced-motion:reduce){#view.pg-r,#view.pg-l,.pg-ghost{animation:none}.pg-ghost{display:none}}
+/* Pengaturan pushes in from the right over the page it came from, and slides back out to the right */
+.push-out-l{animation:pushOutL .36s cubic-bezier(.3,.7,.2,1) both}
+.push-out-r{animation:pushOutR .3s cubic-bezier(.4,0,.6,1) both;z-index:4;box-shadow:-12px 0 28px rgba(0,0,0,.1)}
+@keyframes pushOutL{to{transform:translateX(-26%);opacity:.25}}
+@keyframes pushOutR{to{transform:translateX(102%)}}
+#view.push-r{animation:pushInR .36s cubic-bezier(.3,.7,.2,1) both;position:relative;z-index:4;background:var(--bg);box-shadow:-12px 0 28px rgba(0,0,0,.1)}
+#view.push-l{animation:pushInL .32s cubic-bezier(.3,.7,.2,1) both}
+@keyframes pushInR{from{transform:translateX(102%)}}
+@keyframes pushInL{from{transform:translateX(-26%);opacity:.25}}
+/* header month row folds away instead of popping */
+.top .ctx{max-height:80px;transition:max-height .3s cubic-bezier(.2,.8,.2,1),opacity .2s,margin-top .3s}
+.top .ctx.gone{max-height:0;opacity:0;margin-top:-6px;overflow:hidden;pointer-events:none}
+/* sliding tab indicator */
+.seg.has-ind,.tseg.has-ind{position:relative}
+.seg.has-ind>button,.tseg.has-ind>button{position:relative;z-index:1}
+.seg.has-ind>button[aria-pressed="true"],.tseg.has-ind>button[aria-pressed="true"]{background:transparent;box-shadow:none}
+.tind{position:absolute;left:0;top:0;z-index:0;border-radius:9px;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.08);pointer-events:none;transition:transform .36s cubic-bezier(.3,1.2,.4,1),width .36s cubic-bezier(.3,1.2,.4,1),height .36s,background-color .25s,opacity .2s}
+.tind.noanim{transition:none}
+.seg.sm .tind{border-radius:7px}
+.tseg .tind{border-radius:999px;background:var(--accent);box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 32%,transparent)}
+.tseg .tind[data-tone="out"]{background:var(--out);box-shadow:0 2px 8px color-mix(in srgb,var(--out) 32%,transparent)}
+.tseg .tind[data-tone="in"]{background:var(--in);box-shadow:0 2px 8px color-mix(in srgb,var(--in) 32%,transparent)}
+.navind{position:absolute;left:0;top:0;width:56px;height:30px;border-radius:999px;background:var(--accent);z-index:0;pointer-events:none;transition:transform .4s cubic-bezier(.3,1.2,.4,1),opacity .2s}
+.navind.noanim{transition:none}
+.nav.nav-ind .nav-in{position:relative;z-index:1}
+.nav.nav-ind button[aria-current="page"]:not(.plus)>svg{background:transparent}
+@media (prefers-reduced-motion:reduce){.pgn-r,.pgn-l,.pg-r,.pg-l,.pg-ghost,#view.push-r,#view.push-l{animation:none}.pg-ghost{display:none}.tind,.navind,.top .ctx{transition:none}}
 </style>
 
 <div class="app">
@@ -1952,6 +1980,7 @@ function refreshHistFilters(){
   const hf=document.getElementById('hfilters'),fid=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.fchip')?document.activeElement.getAttribute('data-act'):null;
   if(hf)hf.innerHTML=histFilterRows();
   document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.act==='hf:'+H.type)));
+  const ts=document.querySelector('.tseg');if(ts)placeTabInd(ts,true);
   if(fid){const b=document.querySelector('[data-act="'+fid+'"]');if(b)b.focus({preventScroll:true});}
 }
 function vHist(){
@@ -2032,11 +2061,66 @@ addEventListener('resize',()=>{if(perIsOpen())perClose();});
 
 /* ---------- page transitions: every tab, Kita section and Pengaturan subpage slides in from the
    side it sits on; changing month slides the same way as the month moved. ---------- */
-const PG_ORDER=['home','hist','add','chart','tips','zakat','kita','set'],KT_ORDER=['sum','prop','gift','game'];let PG_LAST=null;
+const PG_ORDER=['home','hist','add','chart','tips','zakat','kita','set'],KT_ORDER=['sum','prop','gift','game'];let PG_LAST=null,PG_PREVK=null;
+/* ---------- tabs inside a page ----------
+   Analisis (Grafik/Saran/Zakat) and Kita (Keluarga/Pengajuan/Kado/Main) keep their tab bar and only
+   swap what is under it (#tabbody), sliding in from the side of the new tab. */
+const tabGroup=t=>t==='chart'||t==='tips'||t==='zakat'?'an':t==='kita'?'kita':null;
+function tabSwap(v,html,dir){
+  const ob=v.querySelector('#tabbody'),ob2=v.querySelector('[data-tabs],.seg');if(!ob||!ob2)return false;
+  const tmp=document.createElement('div');tmp.innerHTML=html;const nb=tmp.querySelector('#tabbody');if(!nb)return false;
+  const ot=ob.previousElementSibling,nt=nb.previousElementSibling;
+  if(!ot||!nt||!ot.matches('.seg,.tseg')||!nt.matches('.seg,.tseg'))return false;
+  const ob_=[...ot.querySelectorAll('button')],nb_=[...nt.querySelectorAll('button')];
+  if(ob_.length!==nb_.length||ob_.some((b,i)=>b.getAttribute('data-act')!==nb_[i].getAttribute('data-act')))return false;
+  ob_.forEach((b,i)=>{b.setAttribute('aria-pressed',nb_[i].getAttribute('aria-pressed'));const c1=b.querySelector('.cnt'),c2=nb_[i].querySelector('.cnt');if(!!c1!==!!c2||(c1&&c1.textContent!==c2.textContent))b.innerHTML=nb_[i].innerHTML;});
+  slideSwap(ob,()=>{ob.innerHTML=nb.innerHTML;},dir);
+  return true;
+}
+/* Freeze a copy of el where it sits, let fn() change el, then slide the copy out and el in. */
+function slideSwap(el,fn,dir){
+  if(RM||!dir){fn();return;}
+  document.querySelectorAll('.sw-ghost').forEach(g=>g.remove());
+  const r=el.getBoundingClientRect(),g=el.cloneNode(true);
+  g.removeAttribute('id');g.setAttribute('aria-hidden','true');g.setAttribute('inert','');g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+  g.classList.remove('pg-r','pg-l');g.classList.add('pg-ghost','sw-ghost',dir>0?'pg-out-l':'pg-out-r');
+  g.style.cssText='top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,Math.min(r.height,innerHeight-r.top))+'px;box-shadow:none';
+  document.body.appendChild(g);const kill=()=>g.remove();g.addEventListener('animationend',kill);setTimeout(kill,600);
+  fn();el.classList.remove('pg-r','pg-l');void el.offsetWidth;el.classList.add(dir>0?'pg-r':'pg-l');
+}
+/* Sliding indicator under the active tab of every .seg/.tseg bar. Each bar remembers where its
+   indicator was (by its label), so even a bar that was redrawn glides from the old tab to the new. */
+const TABPOS={};
+function placeTabInd(bar,animate){
+  const b=bar.querySelector('button[aria-pressed="true"]');let ind=bar.querySelector(':scope>.tind');
+  if(!ind){ind=document.createElement('span');ind.className='tind';ind.setAttribute('aria-hidden','true');bar.insertBefore(ind,bar.firstChild);}
+  bar.classList.add('has-ind');
+  if(!b){ind.style.opacity='0';return;}
+  const key=bar.getAttribute('aria-label')||'',to={x:b.offsetLeft,y:b.offsetTop,w:b.offsetWidth,h:b.offsetHeight,c:b.className},from=TABPOS[key];
+  const set=p=>{ind.style.width=p.w+'px';ind.style.height=p.h+'px';ind.style.transform='translate('+p.x+'px,'+p.y+'px)';};
+  ind.dataset.tone=(b.className.match(/\bt-(out|in)\b/)||b.className.match(/(?:^|\s)(o|i)(?:\s|$)/)||[])[1]||'';
+  ind.style.opacity='1';
+  if(animate&&from&&!RM&&(from.x!==to.x||from.w!==to.w)){ind.classList.add('noanim');set(from);void ind.offsetWidth;ind.classList.remove('noanim');set(to);}
+  else{ind.classList.add('noanim');set(to);void ind.offsetWidth;ind.classList.remove('noanim');}
+  TABPOS[key]=to;
+}
+function initTabBars(root){(root||document).querySelectorAll('.seg,.tseg').forEach(bar=>{if(bar.querySelector('button[aria-pressed]'))placeTabInd(bar,true);});}
+addEventListener('resize',()=>{document.querySelectorAll('.seg.has-ind,.tseg.has-ind').forEach(b=>placeTabInd(b,false));placeNavInd(true);});
+/* Bottom menu: one pill that glides to the active tab instead of each icon lighting up on its own. */
+let NAVPOS=null;
+function placeNavInd(instant){
+  const nav=document.querySelector('.nav');if(!nav)return;let ind=nav.querySelector('.navind');
+  if(!ind){ind=document.createElement('span');ind.className='navind';ind.setAttribute('aria-hidden','true');nav.insertBefore(ind,nav.firstChild);nav.classList.add('nav-ind');}
+  const b=nav.querySelector('button[aria-current="page"]:not(.plus)');if(!b){ind.style.opacity='0';return;}
+  const svg=b.querySelector('svg'),nr=nav.getBoundingClientRect(),r=(svg||b).getBoundingClientRect(),x=r.left-nr.left+r.width/2-28,y=r.top-nr.top+r.height/2-15;
+  if(instant||!NAVPOS||RM){ind.classList.add('noanim');ind.style.transform='translate('+x+'px,'+y+'px)';void ind.offsetWidth;ind.classList.remove('noanim');}
+  else ind.style.transform='translate('+x+'px,'+y+'px)';
+  ind.style.opacity='1';NAVPOS={x,y};
+}
 /* Which way the page moved since the last render: 1 forward, -1 back, 0 same page. */
 function pageDir(){
   const key=TAB+'|'+(TAB==='set'?(UI.st||''):'')+'|'+(TAB==='kita'?(UI.kt||'sum'):''),prev=PG_LAST;
-  PG_LAST={k:key,cur:CUR};if(!prev||RM)return 0;
+  PG_PREVK=prev?prev.k:null;PG_LAST={k:key,cur:CUR};if(!prev||RM)return 0;
   const [pt,ps,pk]=prev.k.split('|');
   if(prev.k!==key){if(pt!==TAB)return PG_ORDER.indexOf(TAB)>=PG_ORDER.indexOf(pt)?1:-1;if(TAB==='set')return UI.st?1:-1;if(TAB==='kita')return KT_ORDER.indexOf(UI.kt||'sum')>=KT_ORDER.indexOf(pk)?1:-1;return 1;}
   return prev.cur!==CUR?(CUR>prev.cur?1:-1):0;
@@ -2044,19 +2128,19 @@ function pageDir(){
 /* The old page leaves while the new one arrives: a frozen copy of the old page (ids stripped so
    nothing can find it) is pinned where it was and slides out under the header, and the new page
    slides in from the other side. The real DOM swaps instantly, so code after render() sees it. */
-function pageGhost(dir){
+function pageGhost(dir,push){
   const v=document.getElementById('view');if(!v||!v.firstChild)return;
   document.querySelectorAll('.pg-ghost').forEach(g=>g.remove());
   const r=v.getBoundingClientRect(),g=v.cloneNode(true);
   g.removeAttribute('id');g.removeAttribute('aria-live');g.setAttribute('aria-hidden','true');g.setAttribute('inert','');
   g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
-  g.className='stack pg-ghost '+(dir>0?'pg-out-l':'pg-out-r');
+  g.className='stack pg-ghost '+(push?(dir>0?'push-out-l':'push-out-r'):(dir>0?'pg-out-l':'pg-out-r'));
   g.style.cssText='top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,innerHeight-r.top)+'px';
   document.body.appendChild(g);
   const kill=()=>g.remove();g.addEventListener('animationend',kill);setTimeout(kill,600);
 }
-function pageIn(dir){const v=document.getElementById('view');v.classList.remove('pg-r','pg-l');void v.offsetWidth;v.classList.add(dir>0?'pg-r':'pg-l');}
-document.addEventListener('animationend',e=>{if(e.target&&e.target.id==='view')e.target.classList.remove('pg-r','pg-l');});
+function pageIn(dir,push){const v=document.getElementById('view');v.classList.remove('pg-r','pg-l','push-r','push-l');void v.offsetWidth;v.classList.add(push?(dir>0?'push-r':'push-l'):(dir>0?'pg-r':'pg-l'));}
+document.addEventListener('animationend',e=>{const t=e.target;if(t&&t.classList&&!t.classList.contains('pg-ghost'))t.classList.remove('pg-r','pg-l','push-r','push-l','pgn-r','pgn-l');});
 /* ---------- our own dropdown and date field (no device pickers) ----------
    ddField() renders a hidden input (same id the old <select> had, so save code and change
    listeners keep working) plus a button. The menu is one floating #ddmenu placed under or above
@@ -3075,7 +3159,7 @@ function vKita(){
   if(SOLO())return famSection();
   const kt=UI.kt||'sum',pend=S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length,gr=giftsReady().length,fa=famAll();
   let h=meBanner()+'<section class="card"><div class="fam-head"><span class="avs">'+fa.slice(0,5).map(p=>av(p.id,1)).join('')+'</span><div style="min-width:0"><h2>Keluarga kita</h2><p class="hint">'+fa.length+' orang · HP '+esc(me().n)+' · <span id="kitasync">'+(S.family?syncLabel():'belum tersambung')+'</span></p></div></div></section>';
-  h+='<div class="seg ic" role="group" aria-label="Bagian">'+[['sum','Keluarga','users',0],['prop','Pengajuan','inbox',pend],['gift','Kado','gift',gr],['game','Main','dice',0]].map(([k,l,i,c])=>'<button data-act="kita:'+k+'" aria-pressed="'+(kt===k)+'">'+ic(i)+l+(c?'<span class="cnt">'+c+'</span>':'')+'</button>').join('')+'</div>';
+  h+='<div class="seg ic" role="group" aria-label="Bagian">'+[['sum','Keluarga','users',0],['prop','Pengajuan','inbox',pend],['gift','Kado','gift',gr],['game','Main','dice',0]].map(([k,l,i,c])=>'<button data-act="kita:'+k+'" aria-pressed="'+(kt===k)+'">'+ic(i)+l+(c?'<span class="cnt">'+c+'</span>':'')+'</button>').join('')+'</div><div id="tabbody" class="stack tabbody">';
   if(kt==='sum'){h+=famSection()+sumKita();}
   else if(kt==='prop'){
     h+='<button class="btn" data-act="newprop">+ Ajukan pengeluaran</button>';
@@ -3094,7 +3178,7 @@ function vKita(){
   }else{
     h+=vGames();
   }
-  return h;
+  return h+'</div>';
 }
 
 /* ---------- family members & per-person spending ---------- */
@@ -3678,7 +3762,7 @@ function vTips(){
 
 /* ---------- sheets ---------- */
 let lastFocus=null,OPEN=null,EDITP=null;
-function openSheet(html){stopCam();stopNfc();lastFocus=document.activeElement;const p=document.getElementById('panel');p.innerHTML='<div class="grab"></div>'+html;document.getElementById('sheet').hidden=false;p.scrollTop=0;setTimeout(()=>{const h=p.querySelector('h2');if(h)h.focus();},30);}
+function openSheet(html){stopCam();stopNfc();lastFocus=document.activeElement;const p=document.getElementById('panel');p.innerHTML='<div class="grab"></div>'+html;document.getElementById('sheet').hidden=false;p.scrollTop=0;initTabBars(p);setTimeout(()=>{const h=p.querySelector('h2');if(h)h.focus();},30);}
 function closeSheet(){stopCam();stopNfc();document.getElementById('sheet').hidden=true;if(lastFocus&&lastFocus.focus&&document.contains(lastFocus))lastFocus.focus();}
 const sheetHead=t=>'<div class="panel-h"><h2 id="sheet-title" tabindex="-1">'+t+'</h2><button class="ib" data-act="close" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
 function openTx(id){
@@ -3983,16 +4067,23 @@ function render(anim){BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClo
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
-  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&(TAB==='add'||TAB==='set');cx.classList.toggle('home',!mb);}
+  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=false;cx.classList.toggle('gone',!mb&&(TAB==='add'||TAB==='set'));cx.classList.toggle('home',!mb);}
   const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
   const ml=document.getElementById('mlabel');ml.innerHTML='<span>'+esc(mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR))+'</span>'+ic('chevd','mlc');ml.setAttribute('aria-label','Periode: '+mname(CUR)+'. Ketuk untuk memilih bulan');
   document.getElementById('monthbar').hidden=TAB==='add'||TAB==='set';
   const kl=document.getElementById('kitalbl');if(kl)kl.textContent=SOLO()?'Keluarga':'Kita';
   const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
-  const pgd=pageDir();if(pgd)pageGhost(pgd);
-  document.getElementById('view').innerHTML=(TAB==='chart'||TAB==='tips'||TAB==='zakat'?chartSeg(TAB):'')+VIEWS[TAB]();
-  if(pgd)pageIn(pgd);
+  const pgd=pageDir(),v=document.getElementById('view'),isAn=TAB==='chart'||TAB==='tips'||TAB==='zakat';
+  const html=isAn?chartSeg(TAB)+'<div id="tabbody" class="stack tabbody">'+VIEWS[TAB]()+'</div>':VIEWS[TAB]();
+  const pt=PG_PREVK?PG_PREVK.split('|')[0]:null,same=pgd&&pt&&tabGroup(pt)&&tabGroup(pt)===tabGroup(TAB)&&(PG_LAST.cur===CUR);
+  if(!(same&&tabSwap(v,html,pgd))){
+    const push=pgd&&(TAB==='set'||pt==='set');
+    if(pgd)pageGhost(pgd,push);
+    v.innerHTML=html;
+    if(pgd)pageIn(pgd,push);
+  }
+  initTabBars(v);placeNavInd();
   if(TAB==='hist'){refreshHistFilters();renderHistList();}
   if(TAB==='add')refreshForm();
   if(TAB==='home')heroAnim();
@@ -4020,13 +4111,13 @@ document.addEventListener('click',e=>{
   if(a.indexOf('goto:')===0){CUR=v;UI.bm=null;UI.bd=null;render(true);return;}
   if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;if(H.cat&&H.type!=='all'&&H.cat.indexOf(H.type+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
 if(a.indexOf('hclr:')===0){H[v]='';if(v==='q'){const q=document.getElementById('hq');if(q){q.value='';q.focus();}const x=document.querySelector('.hsx');if(x)x.hidden=true;}refreshHistFilters();renderHistList();return;}
-if(a.indexOf('hf:')===0){H.type=v;if(H.cat&&v!=='all'&&H.cat.indexOf(v+':')!==0)H.cat='';refreshHistFilters();renderHistList();return;}
+if(a.indexOf('hf:')===0){const o=['all','out','in','tf'],d=Math.sign(o.indexOf(v)-o.indexOf(H.type));H.type=v;if(H.cat&&v!=='all'&&H.cat.indexOf(v+':')!==0)H.cat='';refreshHistFilters();const hl=document.getElementById('hlist');if(hl&&d)slideSwap(hl,renderHistList,d);else renderHistList();return;}
   if(a==='hreset'){H.type='all';H.cat='';H.pocket='';H.biz='';H.q='';H.who='';render();return;}
   if(a.indexOf('histwho:')===0){H.type='all';H.cat='';H.pocket='';H.biz='home';H.q='';H.who=v;closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
   if(a.indexOf('histtype:')===0){H.who='';H.type=v;H.cat='';H.pocket='';H.biz=MODE()?'':'home';H.q='';closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
 if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[2];H.pocket='';H.biz=MODE()?'':'home';H.q='';closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
   if(a.indexOf('histpocket:')===0){H.who='';H.type='all';H.cat='';H.pocket=v;H.q='';closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
-  if(a.indexOf('ftype:')===0){F=newForm(v,{typeManual:true,date:F.date,amtManual:F.amtManual,biz:F.biz,bizManual:F.bizManual});rerenderAddKeep();return;}
+  if(a.indexOf('ftype:')===0){const o=['out','in','tf'],d=Math.sign(o.indexOf(v)-o.indexOf(F.type));F=newForm(v,{typeManual:true,date:F.date,amtManual:F.amtManual,biz:F.biz,bizManual:F.bizManual});rerenderAddKeep();if(d&&!RM){const card=document.querySelector('#view .card');if(card)[...card.children].forEach(c=>{if(c.matches('.seg'))return;c.classList.remove('pgn-r','pgn-l');void c.offsetWidth;c.classList.add(d>0?'pgn-r':'pgn-l');});}return;}
   if(a.indexOf('fcat:')===0){F.cat=v;F.catManual=true;refreshForm();return;}
   if(a.indexOf('fpk:')===0||a.indexOf('ffrom:')===0){F.pocket=v;F.pocketManual=true;refreshForm();return;}
   if(a.indexOf('fto:')===0){F.to=v;refreshForm();return;}
@@ -4078,7 +4169,7 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a.indexOf('bd:')===0){const d=+v;UI.bd=d&&UI.bd!==d?d:null;render();return;}
   if(a==='skin'){const order=['light','dark','pink'];setSkin(order[(order.indexOf(SKIN)+1)%order.length]);toast('Tampilan: '+SKINS.find(x=>x[0]===SKIN)[1]);return;}
   if(a.indexOf('setskin:')===0){setSkin(v);return;}
-  if(a.indexOf('kita:')===0){TAB='kita';UI.kt=v;closeSheet();render(true);if(v!=='game')window.scrollTo(0,0);return;}
+  if(a.indexOf('kita:')===0){const was=TAB==='kita';TAB='kita';UI.kt=v;closeSheet();render(true);if(!was)window.scrollTo(0,0);return;}
   if(a.indexOf('setme:')===0){S.me=v;S.meSet=true;SECKEY=null;loadKey().then(unlockOwnSealed);save();closeSheet();if(TAB==='add')F=newForm(F.type);render();toast('HP ini milik '+memName(v));return;}
   if(a==='savenames'){['m1','m2'].forEach(id=>{const i=document.getElementById('mn-'+id),m=mem(id);if(i&&i.value.trim()&&i.value.trim()!==m.n){m.n=i.value.trim().slice(0,20);m.u=Date.now();}});save();settingsSheet();render();toast('Nama disimpan');return;}
   if(a.indexOf('hidecat:')===0){const m=me();m.hideCats=m.hideCats||[];const i=m.hideCats.indexOf(v);if(i>=0)m.hideCats.splice(i,1);else m.hideCats.push(v);m.u=Date.now();save();el.setAttribute('aria-pressed',String(i<0));return;}
