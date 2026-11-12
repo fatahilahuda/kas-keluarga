@@ -44,7 +44,7 @@ jobs:
           KAS_KEYSTORE_PASSWORD: ${{ secrets.WEAR_KEYSTORE_PASSWORD }}
           KAS_KEY_ALIAS: ${{ secrets.WEAR_KEY_ALIAS }}
           KAS_KEY_PASSWORD: ${{ secrets.WEAR_KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: gradle testReleaseUnitTest assembleRelease --no-daemon --stacktrace
 
       - name: Collect APK
         run: |

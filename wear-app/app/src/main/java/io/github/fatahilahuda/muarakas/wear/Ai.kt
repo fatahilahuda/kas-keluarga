@@ -101,7 +101,7 @@ object Amount {
     /** Speech often says "lima belas ribu"; turn common Indonesian number words into digits first. */
     fun normalizeSpeech(s: String): String {
         val units = mapOf("satu" to 1L, "dua" to 2L, "tiga" to 3L, "empat" to 4L, "lima" to 5L, "enam" to 6L, "tujuh" to 7L, "delapan" to 8L, "sembilan" to 9L)
-        val words = s.lowercase().replace("rp", " ").split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val words = s.lowercase().replace(Regex("\\brp\\.?\\s*(?=\\d)"), " ").split(Regex("\\s+")).filter { it.isNotEmpty() }
         val out = mutableListOf<String>()
         var total = 0L; var cur = 0L; var last = 0L; var any = false
         fun flush() { if (any) out += (total + cur + last).toString(); total = 0; cur = 0; last = 0; any = false }
@@ -136,7 +136,7 @@ object Fmt {
     fun short(n: Long, rp: Boolean = true): String {
         val a = abs(n).toDouble()
         val s = when {
-            a >= 1e9 -> dec(a / 1e9) + " M"
+            a >= 1e7 -> nf.format(Math.round(a / 1e6)) + " jt"
             a >= 1e6 -> dec(a / 1e6) + " jt"
             a >= 1e3 -> Math.round(a / 1e3).toString() + " rb"
             else -> Math.round(a).toString()
