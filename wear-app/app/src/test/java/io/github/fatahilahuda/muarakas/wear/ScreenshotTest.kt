@@ -4,6 +4,7 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
@@ -55,9 +56,21 @@ class ScreenshotTest {
         )
     }
 
-    private fun shot(name: String, content: @Composable () -> Unit) = paparazzi.snapshot(name) { MuaraTheme(content) }
+    private fun shot(name: String, content: @Composable () -> Unit) = paparazzi.snapshot(name) {
+        CompositionLocalProvider(LocalStaticPage provides true) { MuaraTheme(content) }
+    }
 
     @Test fun home() = shot("home") { HomeScreen(kas, {}, {}, {}, {}, {}) }
+
+    @Test fun homeFull() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500))
+        shot("home_full") { HomeScreen(kas, {}, {}, {}, {}, {}) }
+    }
+
+    @Test fun summaryFull() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500))
+        shot("summary_full") { SummaryScreen(kas) }
+    }
 
     @Test fun homeSmall() {
         paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.WEAR_OS_SMALL_ROUND)

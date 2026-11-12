@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +43,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -89,9 +89,28 @@ fun MuaraTheme(content: @Composable () -> Unit) {
     )
 }
 
+/** Collects a page's rows; real pages lay them out in a ScalingLazyColumn. */
+class PageScope {
+    internal val entries = mutableListOf<@Composable () -> Unit>()
+    fun item(content: @Composable () -> Unit) { entries += content }
+    fun <T> items(list: List<T>, content: @Composable (T) -> Unit) { list.forEach { t -> entries += { content(t) } } }
+}
+
+/** Screenshot tests set this: a ScalingLazyColumn only shows its rows from the second frame on. */
+val LocalStaticPage = staticCompositionLocalOf { false }
+
 /** A scrolling round-screen page with the clock on top and the scroll indicator on the side. */
 @Composable
-fun Page(content: ScalingLazyListScope.() -> Unit) {
+fun Page(content: PageScope.() -> Unit) {
+    val rows = PageScope().apply(content).entries
+    if (LocalStaticPage.current) {
+        Column(
+            Modifier.fillMaxSize().background(Color.Black).padding(top = 30.dp, start = 10.dp, end = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) { rows.forEach { it() } }
+        return
+    }
     val st = rememberScalingLazyListState()
     Scaffold(
         timeText = { TimeText() },
@@ -101,8 +120,7 @@ fun Page(content: ScalingLazyListScope.() -> Unit) {
             modifier = Modifier.fillMaxSize(),
             state = st,
             horizontalAlignment = Alignment.CenterHorizontally,
-            content = content,
-        )
+        ) { rows.forEach { r -> item { r() } } }
     }
 }
 

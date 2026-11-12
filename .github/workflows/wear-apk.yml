@@ -61,6 +61,7 @@ jobs:
           d=wear-app/app/src/test/snapshots/images
           ls "$d" || exit 0
           (cd "$d" && zip -q /tmp/wear-shots.zip *.png)
+          (cd wear-app/app/build/test-results && zip -qr /tmp/wear-shots.zip . ) || true
           gh release create "wear-shots-${{ github.run_number }}" /tmp/wear-shots.zip --draft \
             --target "${{ github.sha }}" --title "Screenshot jam ${{ github.run_number }}" --notes "Screenshot otomatis (Paparazzi)."
 
