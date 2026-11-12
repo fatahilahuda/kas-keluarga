@@ -872,6 +872,29 @@ body.noscroll{overflow:hidden}
 .stk-hud b{display:block;font-family:var(--display);font-size:46px;line-height:1}
 .stk-hud small{font-weight:600;color:var(--muted);font-size:13.5px}
 @media (prefers-reduced-motion:reduce){.cube{transition:none}}
+
+/* Pengaturan page */
+.pgh{display:flex;align-items:center;gap:6px;min-height:40px}
+.pgh h1{font-size:24px}
+.pgh .ib{margin-left:-8px}
+.pgh .ib svg{width:22px;height:22px}
+.sgrp{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 4px -6px}
+.slist{padding-top:4px;padding-bottom:4px}
+.srow,.mecard{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;color:var(--ink);font:inherit}
+.srow{background:none;border:0;border-top:1px solid var(--line);padding:12px 2px;min-height:56px}
+.srow:first-child{border-top:0}
+.srow .mono{width:34px;height:34px;border-radius:10px}
+.srow .mono svg{width:18px;height:18px}
+.st{display:flex;flex-direction:column;gap:2px;min-width:0}
+.st b{font-size:15px;font-weight:600}
+.st .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chv{width:18px;height:18px;color:var(--muted);flex:none}
+.srow:active,.mecard:active{transform:scale(.99)}
+.mecard{cursor:pointer}
+.mecard .st b{font-size:17px}
+.rmonth{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rmonth .ib{background:var(--surface-2)}
+.rmonth .ib svg{width:18px;height:18px}
 </style>
 
 <div class="app">
@@ -995,7 +1018,46 @@ const DEFAULT_BIZ=[
 
 const cat=(type,id)=>{const l=CATS[type]||CATS.out;return l.find(c=>c.id===id)||l[l.length-1];};
 const cidx=(type,id)=>{const l=CATS[type];const i=l.findIndex(c=>c.id===id);return i<0?l.length-1:i;};
-const ccolor=(type,id)=>id==='lain'?'var(--k7)':'var(--k'+(cidx(type,id)%7)+')';
+const ccolor=(type,id)=>{if(id==='lain')return 'var(--k7)';const c=(CATS[type]||[]).find(x=>x.id===id);return 'var(--k'+((c&&c.k!=null?c.k:cidx(type,id))%7)+')';};
+
+/* ---------- kategori per keluarga ----------
+   The built-in lists above are only the starting point. Each family keeps its own changes in
+   S.settings.cats, one entry per category {t,c,n,g,ic,w,k,custom,del,to,at,u}, so they sync with
+   the settings doc. Entries merge one by one on the newer u, so two phones editing different
+   categories don't overwrite each other. A deleted category keeps its entry (del + to) so any
+   phone that still holds old catatan in it moves them to the chosen category. */
+const DEF_CATS=JSON.parse(JSON.stringify(CATS));
+const CTYPES=['out','in','bout','bin'];
+const CT_LBL={out:'Keluar',in:'Masuk',bout:'Biaya usaha',bin:'Masuk usaha'};
+const CT_LONG={out:'Pengeluaran',in:'Pemasukan',bout:'Biaya usaha',bin:'Pemasukan usaha'};
+const catDefs=()=>(S.settings&&S.settings.cats)||[];
+const catKey=d=>d.t+':'+d.c;
+const pickDef=d=>{const o={};['n','g','ic','w','k'].forEach(f=>{if(d[f]!=null&&d[f]!=='')o[f]=d[f];});return o;};
+function applyCats(){
+  const by={};catDefs().forEach(d=>{by[catKey(d)]=d;});
+  CTYPES.forEach(t=>{
+    const list=[];
+    DEF_CATS[t].forEach((c0,i)=>{const c=Object.assign({},c0,{k:i%7}),d=by[t+':'+c.id];
+      if(d&&d.del&&c.id!=='lain')return;list.push(d?Object.assign(c,pickDef(d)):c);});
+    catDefs().filter(d=>d.t===t&&d.custom&&!d.del).sort((a,b)=>(a.at||0)-(b.at||0))
+      .forEach(d=>list.push(Object.assign({id:d.c,custom:true,g:'want'},pickDef(d))));
+    const li=list.findIndex(c=>c.id==='lain');if(li>=0&&li!==list.length-1)list.push(list.splice(li,1)[0]);
+    CATS[t]=list;});
+}
+/* Newer entry wins per category. `ahead` says the local list holds something the incoming one lacks. */
+function mergeCats(a,b){
+  const m={};let ahead=false;(b||[]).forEach(d=>{if(d&&d.t&&d.c)m[catKey(d)]=d;});
+  (a||[]).forEach(d=>{if(!d||!d.t||!d.c)return;const k=catKey(d),o=m[k];if(!o||(d.u||0)>(o.u||0)){m[k]=d;ahead=true;}});
+  return {list:Object.keys(m).map(k=>m[k]),ahead};
+}
+/* Move catatan out of deleted categories. Every phone does this itself after a delete, a merge,
+   and at start, so the catatan don't need re-pushing (and don't show up as fresh activity). */
+function remapCats(){
+  let n=0;
+  catDefs().forEach(d=>{if(!d.del||d.c==='lain')return;const to=CATS[d.t].some(c=>c.id===d.to)?d.to:'lain';
+    S.tx.forEach(t=>{if(t.cat!==d.c||ctype(t)!==d.t)return;t.cat=to;n++;});});
+  return n;
+}
 
 /* ---------- icon set (24px stroke icons, drawn in-house so the app stays offline) ---------- */
 /* Muarakas logo, vector. Colours come from --mk-* so it follows the app theme on a transparent background. */
@@ -1066,7 +1128,7 @@ const CAT_IC={
  in:{gaji:'wallet',usaha:'store',freelance:'laptop',bonus:'spark',hadiah:'gift',invest:'trend',lain:'dots'},
  bout:{bahan:'box',produksi:'printer',kemasan:'bag',ongkir:'truck',iklan:'mega',alat:'monitor',platform:'store',tenaga:'users',aset:'brief',lain:'dots'},
  bin:{jual:'tag',dp:'coins',jasa:'pen',lain:'dots'}};
-const catIc=(type,id)=>((CAT_IC[type]||CAT_IC.out)[id])||'dots';
+const catIc=(type,id)=>{const c=(CATS[type]||CATS.out).find(x=>x.id===id);return (c&&c.ic)||((CAT_IC[type]||CAT_IC.out)[id])||'dots';};
 function pocketIc(p){if(!p)return 'wallet';const n=(p.n||'').toLowerCase();
   if(/emas|gold|logam/.test(n))return 'gem';if(/haji|umroh|tabung|nabung|darurat|dana/.test(n)||p.save)return 'piggy';if(/usaha|toko|jualan|bisnis/.test(n))return 'store';
   if(/side|freelance|proyek|kerja/.test(n))return 'laptop';if(/bank|rekening|atm|bca|bri|bni|mandiri/.test(n))return 'card';if(/tunai|cash|dompet/.test(n))return 'coins';return 'wallet';}
@@ -1286,6 +1348,10 @@ function buildModel(){
     CATS[type].forEach(c=>{counts[c.id]={};totals[c.id]=0;});
     const add=(c,fs,w)=>{if(!counts[c])return;fs.forEach(f=>{counts[c][f]=(counts[c][f]||0)+w;totals[c]+=w;if(!vocab[f]){vocab[f]=1;V++;}});};
     Object.keys(SEED[type]).forEach(c=>SEED[type][c].split(' ').forEach(w=>add(c,feats(w),1)));
+    /* a deleted built-in category hands its seed words to the category its catatan moved to */
+    catDefs().forEach(d=>{if(d.t===type&&d.del&&d.to&&SEED[type][d.c]&&counts[d.to])SEED[type][d.c].split(' ').forEach(w=>add(d.to,feats(w),1));});
+    /* the family's own keywords count more than the built-in ones */
+    CATS[type].forEach(c=>{if(c.w)String(c.w).toLowerCase().split(/[\s,;]+/).forEach(w=>{if(w)add(c.id,feats(w),3);});});
     const L=S.learned[type]||{};Object.keys(L).forEach(c=>Object.keys(L[c]).forEach(f=>add(c,[f],L[c][f]*3)));
     MODEL[type]={counts,totals,vocab,V};
   });
@@ -1381,7 +1447,7 @@ const UI={prange:3,incBy:'pocket',donutKey:null,donutSel:-1,bm:null,bd:null};
 let F=null;F=newForm('out');
 let deferredInstall=null;
 function newForm(type,extra){return Object.assign({type,forId:null,forManual:false,hidden:false,hiddenManual:false,biz:MODE()?MODE().id:null,bizManual:!!MODE(),bizAuto:false,cat:null,catManual:false,typeManual:false,amtManual:false,pocket:null,pocketManual:false,to:null,ai:null,_amt:0,date:F&&F.date||null},extra||{});}
-buildModel();
+applyCats();remapCats();buildModel();
 
 /* ---------- shared bits ---------- */
 const TF_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>';
@@ -1848,7 +1914,7 @@ function clearSamplesData(){if(!S.tx.some(t=>t.sample)&&!S.props.some(p=>p.sampl
 function schedSync(){if(!S.family||!onlineOK())return;clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>syncNow(),1200);}
 const agoS=ts=>Date.now()-ts<60000?'baru saja':ago(ts);
 function syncLabel(){if(SYNC.busy)return 'Menyinkronkan…';if(SYNC.err==='Offline')return 'Offline, menunggu sinyal';if(SYNC.err)return 'Belum tersinkron';return SYNC.at?'Tersinkron '+agoS(SYNC.at):'Terhubung';}
-function updSync(){const p=document.getElementById('syncpill');if(p){p.textContent=syncLabel();p.className='pill '+(SYNC.err?'warn':'good');}const k=document.getElementById('kitasync');if(k)k.textContent=S.family?syncLabel():'belum tersambung';}
+function updSync(){const p=document.getElementById('syncpill');if(p){p.textContent=syncLabel();p.className='pill '+(SYNC.err?'warn':'good');}const k=document.getElementById('kitasync');if(k)k.textContent=S.family?syncLabel():'belum tersambung';const ss=document.getElementById('setsync');if(ss)ss.textContent=syncLabel();}
 async function syncNow(manual){
   if(!S.family||!onlineOK()||SYNC.busy)return;
   if(!navigator.onLine){SYNC.err='Offline';updSync();if(manual)toast('Sedang offline. Sinkron jalan lagi begitu ada sinyal.');return;}
@@ -1882,7 +1948,7 @@ async function pushDirty(){
   Object.keys(S.deleted).forEach(id=>{const u=S.deleted[id];if(dirty('del',id,u))items.push({kind:'del',id,u,data:{ts:u}});});
   for(let i=0;i<items.length;i+=400){const ch=items.slice(i,i+400);await rpc('kas_push',{p_code:S.family.code,p_items:ch});ch.forEach(x=>{S.srvU[x.kind+':'+x.id]=x.u;});persist();}
 }
-function syncBanner(){if(S.family||SOLO()||!onlineOK())return '';return note({icon:'link',title:'Sambungkan dengan '+esc(partner().n),sub:'Catatan muncul di dua HP',act:'settings',btn:'Sambung'});}
+function syncBanner(){if(S.family||SOLO()||!onlineOK())return '';return note({icon:'link',title:'Sambungkan dengan '+esc(partner().n),sub:'Catatan muncul di dua HP',act:'settings:sinkron',btn:'Sambung'});}
 function syncSection(){
   if(!onlineOK())return '<section class="card stack"><h2>Sinkron otomatis</h2><p class="small muted">Sinkron otomatis aktif di aplikasi yang dipasang dari <b>fatahilahuda.github.io/kas-keluarga</b>. Halaman pratinjau ini tidak bisa terhubung ke server.</p></section>';
   if(!S.family)return '<section class="card stack"><h2>Sinkron otomatis dengan '+esc(partner().n)+'</h2><p class="small muted">Catatan kalian langsung muncul di kedua HP setiap kali online. Satu orang membuat keluarga, lalu yang lain bergabung dengan kodenya. Data contoh akan dihapus saat tersambung.</p><button class="btn" data-act="fam-new">Buat keluarga baru</button>'+
@@ -1915,7 +1981,7 @@ async function joinAndReport(c){
     if(r==='same'){closeSheet();toast('HP ini sudah tersambung ke keluarga ini.');return true;}
     if(r==='other'){closeSheet();toast('HP ini sudah tersambung ke keluarga lain. Putuskan dulu di Pengaturan kalau mau pindah.');return true;}
     if(r==='notfound'){toast('Kode tidak ditemukan. Minta '+partner().n+' membuka undangan lagi.');return false;}
-    settingsSheet();render(true);toast('Tersambung! Pilih dulu HP ini milik siapa.');return true;}
+    openSettings('profil');toast('Tersambung! Pilih dulu HP ini milik siapa.');return true;}
   catch(e){toast('Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.');return false;}}
 
 function inviteSheet(){const c=S.family.code,pn=esc(partner().n);
@@ -2794,7 +2860,7 @@ function recDue(){const cm=mkey(todayISO()),td=new Date().getDate();return SET()
 function recCard(){if(MODE())return '';const L=recDue();if(!L.length)return '';
   return '<section class="card"><div class="card-h"><h2>Rutin bulan ini</h2><span class="pill warn">'+L.length+' menunggu</span></div><div class="plist">'+L.map(r=>'<div class="prow" style="grid-template-columns:1fr auto auto"><span style="min-width:0"><b style="display:block">'+esc(r.desc)+'</b><span class="hint">tgl '+r.day+' · '+esc(pname(r.pocket))+' · '+(r.type==='in'?'+':'−')+fmt(r.amount)+'</span></span><button class="link" data-act="recskip:'+r.id+'">Lewati</button><button class="btn" style="width:auto;padding:8px 14px" data-act="recdo:'+r.id+'">Catat</button></div>').join('')+'</div></section>';}
 function cbudCard(t){const cb=SET().cbud,ks=Object.keys(cb);if(!ks.length||CUR!==mkey(todayISO()))return '';
-  return '<section class="card"><div class="card-h"><h2>Anggaran kategori</h2><button class="link" data-act="settings">Atur</button></div>'+ks.map(c=>{const sp=t.cats[c]||0,lim=cb[c],p=lim?sp/lim*100:0,cls=p>=100?'bad':p>=80?'warn':'';
+  return '<section class="card"><div class="card-h"><h2>Anggaran kategori</h2><button class="link" data-act="settings:anggaran">Atur</button></div>'+ks.map(c=>{const sp=t.cats[c]||0,lim=cb[c],p=lim?sp/lim*100:0,cls=p>=100?'bad':p>=80?'warn':'';
     return '<div class="rule"><div class="top2"><span>'+esc(cat('out',c).n)+(cls?' <span class="pill '+cls+'">'+(p>=100?'Lewat':'Hampir habis')+'</span>':'')+'</span><span class="num"><b>'+fmtS(sp)+'</b> <span class="muted">/ '+fmtS(lim)+'</span></span></div><div class="track"><div class="fill '+cls+'" style="width:'+Math.min(100,p)+'%"></div></div></div>';}).join('')+'</section>';}
 function cbudAlerts(t){const cb=SET().cbud,out=[];Object.keys(cb).forEach(c=>{const sp=t.cats[c]||0,lim=cb[c];if(!lim)return;const p=sp/lim;
   if(p>=1)out.push({level:'bad',title:'Anggaran '+cat('out',c).n+' terlewati',body:'Sudah '+fmt(sp)+' dari batas '+fmt(lim)+'.'});else if(p>=.8)out.push({level:'warn',title:'Anggaran '+cat('out',c).n+' tinggal '+Math.round((1-p)*100)+'%',body:'Sisa '+fmt(lim-sp)+' untuk bulan ini.'});});return out;}
@@ -2955,13 +3021,14 @@ function sumKita(){
   const act=sortTx(S.tx.filter(t=>!t.sample&&!masked(t))).sort((a,b)=>(b.u||0)-(a.u||0)).slice(0,8);
   h+='<section class="card stack">'+hh('pulse','Aktivitas terbaru','var(--k2)')+(act.length?act.map(t=>'<div class="meter-row" style="margin:0"><span style="min-width:0">'+av(t.eby||t.by)+esc(memName(t.eby||t.by))+' '+(t.eby?'mengubah':'mencatat')+' <b>'+esc(t.desc||'')+'</b></span><span class="hint">'+ago(t.u||t.ts)+'</span></div>').join(''):'<p class="small muted">Belum ada aktivitas.</p>')+'</section>';
   return h;}
-function extraSettings(){const st=SET(),cb=st.cbud;
+function cbudSection(){const cb=SET().cbud;
   const cats=CATS.out.filter(c=>c.id!=='tabungan');
   return '<section class="card stack"><h2>Anggaran per kategori</h2>'+(Object.keys(cb).length?Object.keys(cb).map(c=>'<div class="meter-row" style="margin:0"><span>'+esc(cat('out',c).n)+' · <b class="num">'+fmt(cb[c])+'</b>/bulan</span><button class="link" data-act="cbdel:'+c+'">Hapus</button></div>').join(''):'<p class="small muted">Misal jajan maksimal Rp 300 rb per bulan. Ada peringatan di 80% dan 100%.</p>')+
-    '<div class="row2"><select class="inp" id="cb-cat" aria-label="Kategori">'+cats.map(c=>'<option value="'+c.id+'">'+esc(c.n)+'</option>').join('')+'</select><input class="inp" id="cb-amt" inputmode="numeric" placeholder="Rp batas" aria-label="Batas per bulan"></div><button class="btn ghost" data-act="cbadd">Tambah anggaran</button></section>'+
-   '<section class="card stack"><h2>Transaksi rutin</h2>'+(st.rec.length?st.rec.map(r=>'<div class="meter-row" style="margin:0"><span>'+esc(r.desc)+' · tgl '+r.day+' · <b class="num">'+fmtS(r.amount)+'</b></span><button class="link" data-act="recdel:'+r.id+'">Hapus</button></div>').join(''):'<p class="small muted">Buka catatan seperti gaji, SPP, atau listrik, lalu ketuk <b>Jadikan rutin tiap bulan</b>. Aplikasi akan mengingatkan menjelang tanggalnya.</p>')+'</section>'+
-   lockSection()+
-   '<section class="card stack"><h2>Laporan</h2><p class="small muted">Unduh semua catatan '+esc(mname(CUR))+' sebagai file CSV yang bisa dibuka di Excel atau Google Sheets.</p><button class="btn ghost" data-act="report">Unduh laporan '+esc(mshort(CUR))+'</button></section>';}
+    '<div class="row2"><select class="inp" id="cb-cat" aria-label="Kategori">'+cats.map(c=>'<option value="'+c.id+'">'+esc(c.n)+'</option>').join('')+'</select><input class="inp" id="cb-amt" inputmode="numeric" placeholder="Rp batas" aria-label="Batas per bulan"></div><button class="btn ghost" data-act="cbadd">Tambah anggaran</button></section>';}
+function recSection(){const st=SET();
+  return '<section class="card stack"><h2>Transaksi rutin</h2>'+(st.rec.length?st.rec.map(r=>'<div class="meter-row" style="margin:0"><span>'+esc(r.desc)+' · tgl '+r.day+' · <b class="num">'+fmtS(r.amount)+'</b></span><button class="link" data-act="recdel:'+r.id+'">Hapus</button></div>').join(''):'<p class="small muted">Buka catatan seperti gaji, SPP, atau listrik, lalu ketuk <b>Jadikan rutin tiap bulan</b>. Aplikasi akan mengingatkan menjelang tanggalnya.</p>')+'</section>';}
+function reportSection(){
+  return '<section class="card stack"><h2>Laporan bulanan</h2><div class="rmonth"><button class="ib" data-act="mprev" aria-label="Bulan sebelumnya">'+ic('back')+'</button><b>'+esc(mname(CUR))+'</b><button class="ib" data-act="mnext" aria-label="Bulan berikutnya">'+ic('chev')+'</button></div><p class="small muted">Unduh semua catatan '+esc(mname(CUR))+' sebagai file CSV yang bisa dibuka di Excel atau Google Sheets.</p><button class="btn ghost" data-act="report">Unduh laporan '+esc(mshort(CUR))+'</button></section>';}
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
@@ -3186,30 +3253,133 @@ function modSection(){
       (on&&MOD_ADD[k]?(L.length?'<div class="plist">'+L.map(bizRowS).join('')+'</div>':'')+'<div class="modadd">'+MOD_ADD[k]+'</div>':'')+'</div>';});
   h+='<div class="modrow"><b>Target tabungan</b> <span class="hint">· selalu ada, dipasang di kantong</span>'+(tg.length?'<div class="plist">'+tg.map(bizRowS).join('')+'</div>':'<p class="hint" style="margin-top:4px">Buka sebuah kantong lalu ketuk <b>Pasang target</b>, misal untuk haji atau DP rumah.</p>')+'</div>';
   return h+'</section>';}
-function settingsSheet(){
-  const n=S.tx.filter(t=>!t.sample).length,standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone,B=balances();
-  openSheet(sheetHead('Pengaturan')+'<div class="stack">'+
-   whoSection()+(SOLO()?'':syncSection())+'<section class="card stack"><h2>Tampilan</h2>'+skinPicker()+'<p class="hint">Bisa juga diganti cepat lewat tombol di pojok atas: terang, gelap, lalu pink.</p></section>'+
-   (SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
+/* ---------- kelola kategori ---------- */
+let CTAB='out',EDC=null;
+const CAT_ICONS=['utensils','coffee','basket','car','receipt','home','card','pulse','cap','users','heart','film','bag','box','piggy','wallet','store','laptop','spark','gift','trend','printer','truck','mega','monitor','brief','tag','coins','pen','gem','phone','target','user','dots'];
+const CAT_G=[['need','Kebutuhan'],['want','Keinginan'],['save','Tabungan']];
+const catTypes=()=>modOn('usaha')?CTYPES:['out','in'];
+const catCount=(t,id)=>S.tx.filter(x=>!x.sample&&x.cat===id&&ctype(x)===t).length;
+const catScope=()=>SOLO()?'Berlaku untuk akunmu.':'Berlaku untuk seluruh keluarga dan ikut tersinkron ke HP '+esc(partner().n)+'.';
+function catsSheet(t){if(t)CTAB=t;openSettings('kategori');}
+function catsBody(){
+  if(catTypes().indexOf(CTAB)<0)CTAB='out';
+  const L=CATS[CTAB],gone=DEF_CATS[CTAB].filter(c=>!L.some(x=>x.id===c.id));
+  return ''+
+   '<div class="seg'+(catTypes().length>2?' sm':'')+'">'+catTypes().map(k=>'<button data-act="ctab:'+k+'" aria-pressed="'+(k===CTAB)+'">'+CT_LBL[k]+'</button>').join('')+'</div>'+
+   '<section class="card"><div class="card-h"><h2>'+CT_LONG[CTAB]+'</h2><button class="link" data-act="catnew">+ Tambah</button></div><div class="plist">'+
+   L.map(c=>{const n=catCount(CTAB,c.id);return '<button class="prow" data-act="catedit:'+CTAB+':'+c.id+'"><span class="mono" style="--c:'+ccolor(CTAB,c.id)+'">'+ic(catIc(CTAB,c.id))+'</span><span>'+esc(c.n)+(c.custom?' <span class="hint">· buatan sendiri</span>':'')+'</span><span class="hint num">'+(n?n+' catatan':'')+'</span></button>';}).join('')+'</div></section>'+
+   (gone.length?'<section class="card stack"><h2>Bawaan yang dihapus</h2>'+gone.map(c=>'<div class="meter-row" style="margin:0"><span>'+esc(c.n)+'</span><button class="link" data-act="catrestore:'+CTAB+':'+c.id+'">Kembalikan</button></div>').join('')+'</section>':'')+
+   '<p class="hint">'+catScope()+' AI kategori langsung memakai daftar ini.</p>';}
+function catForm(t,id){
+  const c=id?CATS[t].find(x=>x.id===id):null;if(id&&!c){catsSheet(t);return;}
+  EDC={t,id:id||null,ic:c?catIc(t,c.id):'tag',g:(c&&c.g)||'want'};
+  const n=c?catCount(t,c.id):0,others=CATS[t].filter(x=>!c||x.id!==c.id);
+  openSheet(sheetHead(c?'Ubah kategori':'Tambah kategori')+'<div class="stack"><section class="card stack">'+
+   '<p class="small muted">'+CT_LONG[t]+'</p>'+
+   '<div class="field"><label for="ct-name">Nama kategori</label><input class="inp" id="ct-name" maxlength="32" value="'+esc(c?c.n:'')+'" placeholder="contoh: Hewan peliharaan"></div>'+
+   '<div class="field"><span class="flabel">Ikon</span><div class="chips" id="ct-ic">'+CAT_ICONS.map(k=>'<button class="chip" data-act="ctic:'+k+'" aria-pressed="'+(EDC.ic===k)+'" aria-label="Ikon '+k+'">'+ic(k,'ci')+'</button>').join('')+'</div></div>'+
+   (t==='out'?'<div class="field"><span class="flabel">Termasuk</span><div class="seg" id="ct-g">'+CAT_G.map(([k,l])=>'<button data-act="ctg:'+k+'" aria-pressed="'+(EDC.g===k)+'">'+l+'</button>').join('')+'</div><span class="hint">Dipakai untuk pembagian kebutuhan, keinginan, dan tabungan di Ringkasan.</span></div>':'')+
+   '<div class="field"><label for="ct-words">Kata kunci</label><input class="inp" id="ct-words" value="'+esc((c&&c.w)||'')+'" placeholder="contoh: kucing whiskas pasir vet"><span class="hint">Pisahkan dengan spasi. Catatan yang memuat kata ini otomatis masuk ke kategori ini.</span></div>'+
+   '<span class="err" id="ct-err" hidden></span><button class="btn" data-act="ctsave">'+(c?'Simpan kategori':'Buat kategori')+'</button></section>'+
+   (c&&c.id!=='lain'?'<section class="card stack"><h2>Hapus kategori</h2>'+
+     (n?'<div class="field"><label for="ct-to">'+n+' catatan di kategori ini dipindah ke</label><select class="inp" id="ct-to">'+others.map(x=>'<option value="'+x.id+'"'+(x.id==='lain'?' selected':'')+'>'+esc(x.n)+'</option>').join('')+'</select></div>':'<p class="small muted">Belum ada catatan di kategori ini.</p>')+
+     '<button class="btn danger" data-act="ctdel">Hapus kategori</button>'+(c.custom?'':'<p class="hint">Kategori bawaan bisa dikembalikan lagi dari daftar kategori.</p>')+'</section>':
+    (c?'<p class="hint">Kategori Lainnya tidak bisa dihapus karena jadi tempat catatan yang tidak cocok ke kategori mana pun. Namanya tetap bisa diganti.</p>':''))+
+   '</div>');
+  if(!c)setTimeout(()=>softFocus(document.getElementById('ct-name')),60);}
+/* Write one category entry, keeping fields not passed in. */
+function putCat(t,c,fields){
+  S.settings.cats=S.settings.cats||[];const L=S.settings.cats;let d=L.find(x=>x.t===t&&x.c===c);
+  if(!d){d={t,c};L.push(d);}Object.assign(d,fields,{u:Date.now()});touchSet();applyCats();return d;}
+function saveCat(){
+  const t=EDC.t,name=document.getElementById('ct-name').value.trim().replace(/\s+/g,' '),words=document.getElementById('ct-words').value.trim().toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  const er=document.getElementById('ct-err'),bad=m=>{er.textContent=m;er.hidden=false;document.getElementById('ct-name').focus();};
+  if(!name)return bad('Beri nama kategorinya dulu.');
+  if(CATS[t].some(x=>x.id!==EDC.id&&x.n.toLowerCase()===name.toLowerCase()))return bad('Sudah ada kategori bernama '+name+'.');
+  const f={n:name,ic:EDC.ic,w:words};if(t==='out')f.g=EDC.g;
+  if(EDC.id){putCat(t,EDC.id,f);toast('Kategori '+name+' disimpan');}
+  else{const used=CATS[t].map(x=>x.k);let k=0;for(let i=0;i<7;i++)if(used.filter(u=>u===i).length<used.filter(u=>u===k).length)k=i;
+    putCat(t,'c'+uid(),Object.assign(f,{custom:true,at:Date.now(),k}));toast('Kategori '+name+' dibuat');}
+  buildModel();render();catsSheet(t);}
+function deleteCat(){
+  const t=EDC.t,id=EDC.id,c=CATS[t].find(x=>x.id===id);if(!c||id==='lain')return;
+  const sel=document.getElementById('ct-to'),to=sel?sel.value:'lain',toN=cat(t,to).n;
+  const moved=S.tx.filter(x=>x.cat===id&&ctype(x)===t).map(x=>x.id);
+  const prev=Object.assign({},(S.settings.cats||[]).find(x=>x.t===t&&x.c===id)||{}),bud=t==='out'?SET().cbud[id]:null;
+  const L=(S.learned[t]||{})[id];if(L){const T=S.learned[t][to]=S.learned[t][to]||{};Object.keys(L).forEach(f=>{T[f]=(T[f]||0)+L[f];});delete S.learned[t][id];}
+  if(S.catPocket[t])delete S.catPocket[t][id];if(bud!=null)delete SET().cbud[id];
+  putCat(t,id,{del:true,to});remapCats();buildModel();save();render();catsSheet(t);
+  const nReal=S.tx.filter(x=>!x.sample&&moved.indexOf(x.id)>=0).length;
+  toast('Kategori '+c.n+' dihapus'+(nReal?', '+nReal+' catatan pindah ke '+toN:''),'Urungkan',()=>{
+    const d=(S.settings.cats||[]).find(x=>x.t===t&&x.c===id);if(d){Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,prev,{t,c:id,del:false,u:Date.now()});delete d.to;}
+    if(bud!=null)SET().cbud[id]=bud;touchSet();applyCats();
+    S.tx.forEach(x=>{if(moved.indexOf(x.id)>=0)x.cat=id;});buildModel();save();render();toast('Kategori '+c.n+' dikembalikan');});}
+/* ---------- Pengaturan: its own page. The first screen is a menu; each row opens a subpage.
+   Forms that edit one thing (kantong, kategori, usaha, PIN) still open as sheets on top. ---------- */
+const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||!!navigator.standalone;
+const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',pasang:'Pasang aplikasi'};
+const SET_BODY={
+  profil:()=>whoSection()+(SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
    '<button class="btn ghost" data-act="savenames">Simpan nama</button>'+
    '<div class="field"><span class="flabel">Pemasukan yang otomatis dirahasiakan</span><div class="chips">'+CATS.in.map(c=>'<button class="chip" data-act="hidecat:'+c.id+'" aria-pressed="'+((me().hideCats||[]).indexOf(c.id)>=0)+'">'+esc(c.n)+'</button>').join('')+'</div><span class="hint">Selain ini, semua pemasukan publik. Usaha bisa diatur rahasia di pengaturan usahanya.</span></div>'+
-   '<p class="hint">Rahasia benar-benar aman kalau masing-masing memakai HP sendiri. Kalau satu HP dipakai berdua, mengganti pemilik HP hanya menyamarkan tampilan.</p></section>')+
-   modSection()+
-   '<section class="card"><div class="card-h"><h2>Kantong</h2><button class="link" data-act="newpocket">+ Tambah</button></div><div class="plist">'+
-     S.pockets.map(p=>'<button class="prow" data-act="pocket:'+p.id+'"><span class="dot" style="--c:var(--k'+p.k+');width:10px;height:10px"></span><span>'+esc(p.n)+(p.save?'<span class="save-tag">TABUNG</span>':'')+(tgtOf(p.id)?' <span class="hint">· target '+Math.round(tabStats(tgtOf(p.id)).pct)+'%</span>':'')+(p.archived?' <span class="hint">· diarsipkan</span>':'')+'</span><b>'+fmtS(B[p.id]||0)+'</b></button>').join('')+'</div></section>'+
-   (SOLO()?'<section class="card stack"><h2>Cadangan</h2><p class="small muted">Simpan file berisi semua catatanmu, misalnya ke Google Drive. Di HP baru, buka Muarakas lalu ketuk <b>Pulihkan</b>.</p><div class="btns"><button class="btn" data-act="sharefull">Buat cadangan</button><button class="btn ghost" data-act="import">Pulihkan</button></div></section>':'<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
+   '<p class="hint">Rahasia benar-benar aman kalau masing-masing memakai HP sendiri. Kalau satu HP dipakai berdua, mengganti pemilik HP hanya menyamarkan tampilan.</p></section>'),
+  sinkron:()=>syncSection(),
+  kantong:()=>{const B=balances();return '<section class="card"><div class="card-h"><h2>Kantong</h2><button class="link" data-act="newpocket">+ Tambah</button></div><div class="plist">'+
+     S.pockets.map(p=>'<button class="prow" data-act="pocket:'+p.id+'"><span class="mono" style="--c:var(--k'+p.k+')">'+ic(pocketIc(p))+'</span><span>'+esc(p.n)+(p.save?'<span class="save-tag">TABUNG</span>':'')+(tgtOf(p.id)?' <span class="hint">· target '+Math.round(tabStats(tgtOf(p.id)).pct)+'%</span>':'')+(p.archived?' <span class="hint">· diarsipkan</span>':'')+'</span><b>'+fmtS(B[p.id]||0)+'</b></button>').join('')+'</div></section>'+
+     '<p class="hint">Ketuk kantong untuk mengubah nama, saldo awal, warna, atau memasang target tabungan.</p>';},
+  kategori:()=>catsBody()+'<section class="card stack"><h2>AI kategori</h2><p class="small muted">Berjalan di HP ini, tanpa internet. Sudah belajar dari <b class="num">'+(S.learnN||0)+'</b> catatanmu, termasuk kantong yang biasa dipakai untuk tiap kategori.</p><button class="btn ghost" data-act="resetai">Lupakan hasil belajar AI</button></section>',
+  anggaran:()=>'<section class="card stack"><h2>Anggaran bulanan</h2><div class="field"><label for="budget">Batas pengeluaran per bulan</label><input class="inp" id="budget" inputmode="numeric" placeholder="contoh: 5.000.000" value="'+(S.settings.budget?NF.format(S.settings.budget):'')+'"><span class="hint">Dipakai untuk jatah harian dan garis anggaran di grafik laju. Kosongkan untuk mematikan.</span></div><button class="btn ghost" data-act="savebudget">Simpan anggaran</button></section>'+cbudSection(),
+  rutin:()=>recSection(),
+  modul:()=>modSection(),
+  tampilan:()=>'<section class="card stack"><h2>Tema</h2>'+skinPicker()+'<p class="hint">Bisa juga diganti cepat lewat tombol di pojok atas: terang, gelap, lalu pink.</p></section>',
+  keamanan:()=>lockSection(),
+  cadangan:()=>{const n=S.tx.filter(t=>!t.sample).length;return (SOLO()?'<section class="card stack"><h2>Cadangan</h2><p class="small muted">Simpan file berisi semua catatanmu, misalnya ke Google Drive. Di HP baru, buka Muarakas lalu ketuk <b>Pulihkan</b>.</p><div class="btns"><button class="btn" data-act="sharefull">Buat cadangan</button><button class="btn ghost" data-act="import">Pulihkan</button></div></section>':'<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
    '<div class="btns"><button class="btn" data-act="share">Kirim ke '+esc(partner().n)+'</button><button class="btn ghost" data-act="import">Terima data</button></div>'+
    '<button class="btn ghost" data-act="sharefull">Cadangan lengkap untuk diri sendiri</button><p class="hint">Cadangan lengkap berisi semua rahasiamu. Simpan sendiri, jangan dikirim ke pasangan.</p>'+
    '<details><summary class="small muted" style="cursor:pointer">Tidak bisa pilih file? Salin–tempel teks</summary><div class="stack" style="margin-top:10px"><button class="btn ghost" data-act="copyexport">Salin data sebagai teks</button><textarea class="inp" id="pastebox" placeholder="Tempel teks data dari HP lain di sini" aria-label="Tempel teks data"></textarea><button class="btn ghost" data-act="pasteimport">Gabungkan teks ini</button></div></details></section>')+
-   '<section class="card stack"><h2>Anggaran bulanan</h2><div class="field"><label for="budget">Batas pengeluaran per bulan</label><input class="inp" id="budget" inputmode="numeric" placeholder="contoh: 5.000.000" value="'+(S.settings.budget?NF.format(S.settings.budget):'')+'"><span class="hint">Dipakai untuk jatah harian dan garis anggaran di grafik laju. Kosongkan untuk mematikan.</span></div><button class="btn ghost" data-act="savebudget">Simpan anggaran</button></section>'+
-   extraSettings()+'<section class="card stack"><h2>AI kategori</h2><p class="small muted">Berjalan di HP ini, tanpa internet. Sudah belajar dari <b class="num">'+(S.learnN||0)+'</b> catatanmu, termasuk kantong yang biasa dipakai untuk tiap kategori.</p><button class="btn ghost" data-act="resetai">Lupakan hasil belajar AI</button></section>'+
-   (standalone?'':'<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
-   '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
-   '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>')+
    '<section class="card stack"><h2>Data</h2><p class="small muted">Semua data tersimpan di HP ini saja: <b class="num">'+n+'</b> catatan milikmu'+(S.tx.length>n?' dan '+(S.tx.length-n)+' data contoh':'')+'.</p>'+
-   (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section><div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div></div>');
+   (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section>';},
+  laporan:()=>reportSection(),
+  pasang:()=>{return '<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
+   '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
+   '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>';}
+};
+const SKIN_N={light:'Terang',dark:'Gelap',pink:'Pink'};
+const setRow=(k,icon,c,title,sub)=>'<button class="srow" data-act="settings:'+k+'"><span class="mono" style="--c:'+c+'">'+ic(icon)+'</span><span class="st"><b>'+title+'</b>'+(sub?'<span class="hint">'+sub+'</span>':'')+'</span>'+ic('chev','chv')+'</button>';
+const setGroup=(title,rows)=>'<h2 class="sgrp">'+title+'</h2><section class="card slist">'+rows.join('')+'</section>';
+function vSet(){
+  const st=UI.st;
+  if(st&&SET_T[st]&&!(st==='sinkron'&&SOLO())&&!(st==='pasang'&&isStandalone()))
+    return '<div class="pgh"><button class="ib" data-act="setback" aria-label="Kembali ke Pengaturan">'+ic('back')+'</button><h1>'+SET_T[st]+'</h1></div>'+SET_BODY[st]();
+  UI.st=null;
+  const on=MODS.filter(m=>modOn(m[0])).map(m=>m[1]),rec=SET().rec.length,cbn=Object.keys(SET().cbud).length,locked=!!lsGet('kas.lock');
+  const who=SOLO()?'Dipakai sendiri':esc(mem('m1').n)+' & '+esc(mem('m2').n)+' · HP ini milik '+esc(me().n);
+  return '<div class="pgh"><h1>Pengaturan</h1></div>'+
+   '<button class="card mecard" data-act="settings:profil">'+av(S.me,2)+'<span class="st"><b>'+esc(me().n)+'</b><span class="hint">'+who+'</span></span>'+ic('chev','chv')+'</button>'+
+   setGroup(SOLO()?'Akun':'Keluarga',[setRow('profil','users','var(--k0)',SOLO()?'Profil':'Profil & pasangan',SOLO()?'Nama, dipakai sendiri atau berdua':'Nama, pemilik HP, pemasukan rahasia')].concat(SOLO()?[]:[setRow('sinkron','link','var(--k3)','Sinkron dua HP',!onlineOK()?'Hanya di aplikasi terpasang':S.family?'<span id="setsync">'+syncLabel()+'</span>':'Belum tersambung')]))+
+   setGroup('Keuangan',[
+     setRow('kantong','wallet','var(--k1)','Kantong',activePockets().length+' kantong aktif'),
+     setRow('kategori','tag','var(--k2)','Kategori',CATS.out.length+' pengeluaran · '+CATS.in.length+' pemasukan'),
+     setRow('anggaran','target','var(--k4)','Anggaran',(S.settings.budget?fmtS(S.settings.budget)+'/bulan':'Belum diatur')+(cbn?' · '+cbn+' kategori':'')),
+     setRow('rutin','swap','var(--k5)','Transaksi rutin',rec?rec+' transaksi tiap bulan':'Gaji, SPP, listrik, dan lainnya'),
+     setRow('modul','box','var(--k6)','Modul',on.length?on.join(', '):'Semua modul mati')])+
+   setGroup('Aplikasi',[
+     setRow('tampilan','eye','var(--k0)','Tampilan','Tema '+(SKIN_N[SKIN]||'').toLowerCase()),
+     setRow('keamanan','finger','var(--k3)','Keamanan',locked?'Kunci PIN aktif':'Kunci aplikasi mati'),
+     setRow('cadangan','inbox','var(--k1)','Cadangan & data',SOLO()?'Buat cadangan, pulihkan, hapus data':'Kirim manual, cadangan, hapus data'),
+     setRow('laporan','chart','var(--k2)','Laporan','Unduh CSV untuk Excel atau Sheets')].concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
+   '<div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div>';
 }
+/* Open Pengaturan, or refresh it. With a subpage name it goes there; '' is the menu. */
+function openSettings(sub){
+  if(!document.getElementById('sheet').hidden)closeSheet();
+  const from=TAB!=='set';if(from&&sub==null)sub='';
+  const moved=from||(sub!=null&&(sub||null)!==UI.st);
+  TAB='set';if(sub!=null)UI.st=sub||null;
+  render(moved);if(moved)window.scrollTo(0,0);
+}
+function settingsSheet(sub){openSettings(sub);}
 
 /* ---------- sync ---------- */
 function exportObj(full){
@@ -3235,9 +3405,11 @@ function merge(o){
   const before=S.tx.length;S.tx=S.tx.filter(t=>!(S.deleted[t.id]&&S.deleted[t.id]>=(t.u||t.ts)));const removed=before-S.tx.length;
   ['out','in','bout','bin'].forEach(ty=>{S.learned[ty]=S.learned[ty]||{};const L=(o.learned||{})[ty]||{};Object.keys(L).forEach(c=>{S.learned[ty][c]=S.learned[ty][c]||{};Object.keys(L[c]).forEach(f=>{S.learned[ty][c][f]=Math.max(S.learned[ty][c][f]||0,L[c][f]);});});
     const cp=(o.catPocket||{})[ty]||{};S.catPocket[ty]=S.catPocket[ty]||{};Object.keys(cp).forEach(c=>{if(!S.catPocket[ty][c])S.catPocket[ty][c]=cp[c];});});
-  if(o.settings&&(((o.settings.u||0)>(S.settings.u||0))||(!S.settings.budget&&o.settings.budget)))Object.assign(S.settings,o.settings);
+  const mc=mergeCats(S.settings.cats,o.settings&&o.settings.cats);
+  if(o.settings&&(((o.settings.u||0)>(S.settings.u||0))||(!S.settings.budget&&o.settings.budget))){Object.assign(S.settings,o.settings);if(mc.ahead)S.settings.u=Math.max(S.settings.u||0,Date.now());}
+  if(mc.list.length)S.settings.cats=mc.list;
   ['pockets','biz','props','people'].forEach(k=>{S[k]=S[k].filter(x=>!(S.deleted[x.id]&&S.deleted[x.id]>=(x.u||0)));});
-  buildModel();save();return {added,updated,removed,gifts};
+  applyCats();remapCats();buildModel();save();return {added,updated,removed,gifts};
 }
 const mergeReport=r=>{if(r.gifts)toast('Ada '+r.gifts+' kado baru dari '+partner().n+'!','Buka',()=>{TAB='kita';UI.kt='gift';render(true);});else toast(r.added||r.updated||r.removed?'Tergabung: '+r.added+' baru, '+r.updated+' diperbarui'+(r.removed?', '+r.removed+' dihapus':''):'Data sudah sama, tidak ada yang baru');};
 function shareData(full){
@@ -3247,7 +3419,7 @@ function shareData(full){
   downloadFallback(txt,name);
 }
 function downloadFallback(txt,name){
-  if(window.KAS_ARTIFACT){const dt=document.querySelector('#panel details');if(dt)dt.open=true;copyText(txt);return;}
+  if(window.KAS_ARTIFACT){const dt=document.querySelector('#view details')||document.querySelector('#panel details');if(dt)dt.open=true;copyText(txt);return;}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
     toast('File disimpan. Kirim lewat Quick Share/AirDrop dari folder Unduhan.');}catch(e){copyText(txt);}
 }
@@ -3311,7 +3483,7 @@ function onbAct(p,el){const k=p[0],v=p[1];if(!ONB)return;
   if(k==='next'){if(!ONB.who)return;if(ONB.step===1){onbKeep();if(!ONB.n1){ONB.err='Isi namamu dulu.';paintOnb();return;}if(ONB.who==='duo'&&!ONB.n2){ONB.err='Isi nama pasanganmu juga.';paintOnb();return;}}
     ONB.err='';ONB.step=Math.min(2,ONB.step+1);paintOnb();return;}
   if(k==='mod'){ONB.mods[v]=!!(el&&el.checked);return;}
-  if(k==='join'){S.settings.who='duo';ONB=null;const o=document.getElementById('onb');if(o)o.remove();persist();render(true);settingsSheet();return;}
+  if(k==='join'){S.settings.who='duo';ONB=null;const o=document.getElementById('onb');if(o)o.remove();persist();render(true);openSettings('sinkron');return;}
   if(k==='go')finishOnb(v==='sample');}
 function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('m2');
   S.settings.who=o.who;S.settings.mods=Object.assign({},o.mods);S.settings.u=now;
@@ -3321,16 +3493,16 @@ function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('
   toast(keepSamples?'Ini data contoh. Hapus kapan saja lewat kartu di atas.':'Siap! Isi saldo awal tiap kantong, lalu mulai catat.');}
 
 /* ---------- render ---------- */
-const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat};
+const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
 function render(anim){
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
-  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&TAB==='add';cx.classList.toggle('home',!mb);}
+  const cx=document.querySelector('.top .ctx');if(cx){cx.hidden=!mb&&(TAB==='add'||TAB==='set');cx.classList.toggle('home',!mb);}
   const bmk=document.getElementById('brandmk');if(bmk&&!bmk.firstChild){bmk.innerHTML=mkSvg('mark','mk-gh');document.getElementById('brandwm').innerHTML=MK.word.replace(' role="img" aria-label="Muarakas"',' aria-hidden="true"');}
   const ml=document.getElementById('mlabel');ml.textContent=mb?BLN[+CUR.slice(5,7)-1]+(CUR.slice(0,4)!==todayISO().slice(0,4)?' '+CUR.slice(2,4):''):mname(CUR);ml.title=mname(CUR);ml.setAttribute('aria-label',mname(CUR));
-  document.getElementById('monthbar').hidden=TAB==='add';
+  document.getElementById('monthbar').hidden=TAB==='add'||TAB==='set';
   const kl=document.getElementById('kitalbl');if(kl)kl.textContent=SOLO()?'Keluarga':'Kita';
   const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
@@ -3463,7 +3635,7 @@ document.addEventListener('click',e=>{
   if(a==='fam-join'){const c=normCode(document.getElementById('fam-code').value),er=document.getElementById('fam-err');er.hidden=true;
     if(c.length<12){er.textContent='Kodenya 12 huruf dan angka, misal KAS7-3MXP-Q9RT.';er.hidden=false;return;}el.disabled=true;
     (async()=>{try{if(await joinFamily(c)==='notfound'){el.disabled=false;er.textContent='Kode tidak ditemukan. Cek lagi ke pasanganmu.';er.hidden=false;return;}
-      settingsSheet();render(true);toast('Tersambung! Pilih dulu HP ini milik siapa.');}
+      openSettings('profil');toast('Tersambung! Pilih dulu HP ini milik siapa.');}
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
   if(a==='fam-copy'){copyPlain(fmtCode(S.family.code),'Kode keluarga disalin');return;}
@@ -3488,6 +3660,15 @@ document.addEventListener('click',e=>{
     if(a.indexOf('recdo:')===0){const td=new Date().getDate(),d=cm+'-'+pad(Math.min(r.day,td)),now=Date.now(),t={id:uid(),type:r.type,amount:r.amount,desc:r.desc,cat:r.cat,pocket:r.pocket,date:d,ts:now,u:now,by:S.me};if(r.biz)t.biz=r.biz;S.tx.push(t);toast(r.desc+' tercatat');}
     r.last=cm;touchSet();render();return;}
   if(a==='cbadd'){const c=document.getElementById('cb-cat').value,am=amountFromField(document.getElementById('cb-amt').value);if(!am){toast('Isi batasnya dulu, misal 300rb');return;}SET().cbud[c]=am;touchSet();settingsSheet();render();toast('Anggaran '+cat('out',c).n+' '+fmtS(am)+'/bulan');return;}
+  if(a==='cats'){catsSheet();return;}
+  if(a.indexOf('ctab:')===0){catsSheet(v);return;}
+  if(a==='catnew'){catForm(CTAB,null);return;}
+  if(a.indexOf('catedit:')===0){catForm(parts[1],parts[2]);return;}
+  if(a.indexOf('catrestore:')===0){const d=putCat(parts[1],parts[2],{del:false});delete d.to;buildModel();render();catsSheet(parts[1]);toast('Kategori '+cat(parts[1],parts[2]).n+' dikembalikan');return;}
+  if(a.indexOf('ctic:')===0&&EDC){EDC.ic=v;pickIn('ct-ic','ctic',el);return;}
+  if(a.indexOf('ctg:')===0&&EDC){EDC.g=v;pickIn('ct-g','ctg',el);return;}
+  if(a==='ctsave'&&EDC){saveCat();return;}
+  if(a==='ctdel'&&EDC){if(el.dataset.armed!=='1'){el.dataset.armed='1';el.textContent='Ketuk lagi untuk menghapus';return;}deleteCat();return;}
   if(a.indexOf('cbdel:')===0){delete SET().cbud[v];touchSet();settingsSheet();render();return;}
   if(a==='phdel'&&OPEN){try{localStorage.removeItem('kas.ph.'+OPEN.id);}catch(e){}openTx(OPEN.id);return;}
   if(a.indexOf('zpay:')===0){const now=Date.now();S.tx.push({id:uid(),type:'out',amount:+v,desc:'Zakat',cat:'sosial',pocket:defaultPocket('out','sosial'),date:todayISO(),ts:now,u:now,by:S.me});save();render();toast('Zakat '+fmtS(+v)+' tercatat. Semoga berkah.');return;}
@@ -3539,7 +3720,9 @@ document.addEventListener('click',e=>{
   if(a==='bdelete'&&EDITB.id){const b=bizOf(EDITB.id),i=S.biz.indexOf(b);S.biz.splice(i,1);S.deleted[b.id]=Date.now();if(PG===b.id)PG='home';save();closeSheet();render();toast(b.n+' dihapus','Urungkan',()=>{delete S.deleted[b.id];b.u=Date.now();S.biz.splice(i,0,b);save();render();});return;}
   if(a.indexOf('bizadd:')===0){TAB='add';F=newForm(v,{typeManual:true});render(true);window.scrollTo(0,0);softFocus(document.getElementById(BOOKT[v]?(v==='beli'||v==='jual'?'fqty':'famt'):'fdesc'));return;}
   if(a.indexOf('fbiz:')===0){F.biz=v==='home'?null:v;F.bizManual=true;F.bizAuto=false;F.cat=null;F.catManual=false;F.pocketManual=false;refreshForm();return;}
-  if(a==='settings'){settingsSheet();return;}
+  if(a==='settings'){openSettings('');return;}
+  if(a.indexOf('settings:')===0){openSettings(v);return;}
+  if(a==='setback'){UI.st=null;render(true);window.scrollTo(0,0);return;}
   if(a==='clearsamples'){clearSamplesData();save();closeSheet();render(true);toast('Data contoh dihapus. Isi saldo awal tiap kantong, lalu mulai catat!');return;}
   if(a==='wipe'){if(el.dataset.armed!=='1'){el.dataset.armed='1';el.textContent='Ketuk lagi untuk menghapus semuanya';return;}
     S.tx.forEach(t=>{if(!t.sample)S.deleted[t.id]=Date.now();});S.tx=[];S.learned={out:{},in:{}};S.catPocket={out:{},in:{}};S.learnN=0;S.sample=false;S.pockets.forEach(p=>{p.start=0;p.u=Date.now();});buildModel();save();closeSheet();render(true);toast('Semua data dihapus');return;}
@@ -3585,6 +3768,7 @@ function backStep(){
   if(document.getElementById('lockov'))return false;
   if(document.getElementById('celeb')){closeCeleb();return true;}
   if(!document.getElementById('sheet').hidden){closeSheet();return true;}
+  if(TAB==='set'&&UI.st){UI.st=null;render(true);window.scrollTo(0,0);return true;}
   if(UI.gfs){closeGame();return true;}
   if(TAB!=='home'){TAB='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
   if(MODE()){PG='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
