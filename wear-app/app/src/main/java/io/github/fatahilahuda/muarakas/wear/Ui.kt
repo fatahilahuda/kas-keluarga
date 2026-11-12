@@ -7,6 +7,7 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +53,7 @@ import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.material.Typography
 import androidx.wear.input.RemoteInputIntentHelper
 
 val Accent = Color(0xFF3BB3AB)
@@ -62,9 +66,19 @@ val Warn = Color(0xFFE3AE4D)
 private val K = listOf(0xFF7F96FF, 0xFFE9A866, 0xFF4FC1B4, 0xFFD97AB3, 0xFFA496F0, 0xFFE0C25A, 0xFF8DBE66, 0xFF6F7F7A)
 fun kColor(i: Int): Color = Color(K[((i % 8) + 8) % 8])
 
+/** Plus Jakarta Sans for text, Bricolage Grotesque for big numbers: the phone app's pair. */
+val Jakarta = FontFamily(
+    Font(R.font.jakarta_medium, FontWeight.Normal),
+    Font(R.font.jakarta_medium, FontWeight.Medium),
+    Font(R.font.jakarta_semibold, FontWeight.SemiBold),
+    Font(R.font.jakarta_bold, FontWeight.Bold),
+)
+val Display = FontFamily(Font(R.font.bricolage_bold, FontWeight.Bold))
+
 @Composable
 fun MuaraTheme(content: @Composable () -> Unit) {
     MaterialTheme(
+        typography = Typography(defaultFontFamily = Jakarta),
         colors = Colors(
             primary = Accent, primaryVariant = Accent, secondary = Accent, secondaryVariant = Accent,
             background = Color.Black, surface = Surface1, error = Bad,
@@ -102,7 +116,7 @@ fun Heading(text: String, sub: String? = null) {
 
 @Composable
 fun Big(text: String, color: Color = Ink, size: Int = 26) {
-    Text(text, color = color, fontSize = size.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+    Text(text, color = color, fontSize = size.sp, fontWeight = FontWeight.Bold, fontFamily = Display, textAlign = TextAlign.Center,
         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth())
 }
 
@@ -137,6 +151,7 @@ fun RowChip(
     icon: ImageVector? = null,
     bg: Color = Surface1,
     enabled: Boolean = true,
+    iconColor: Color = Accent,
 ) {
     Chip(
         onClick = onClick,
@@ -144,18 +159,38 @@ fun RowChip(
         modifier = Modifier.fillMaxWidth(),
         colors = ChipDefaults.chipColors(backgroundColor = bg, contentColor = Ink, secondaryContentColor = Muted, iconColor = Accent),
         icon = when {
-            icon != null -> ({ Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp)) })
-            dot != null -> ({ Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) { Dot(dot) } })
+            icon != null -> ({ Mono(icon, iconColor) })
+            dot != null -> ({ Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) { Dot(dot) } })
             else -> null
         },
         label = {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), fontSize = 14.sp)
+                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 if (value != null) Text(value, color = valueColor, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
             }
         },
         secondaryLabel = if (secondary != null) ({ Text(secondary, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp) }) else null,
     )
+}
+
+/** Icon in a softly tinted circle, like the phone's settings rows. */
+@Composable
+fun Mono(icon: ImageVector, color: Color, size: Int = 28) {
+    Box(Modifier.size(size.dp).clip(CircleShape).background(color.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size((size * 0.58f).dp))
+    }
+}
+
+/** Big round action with a caption under it (Suara, Nominal, Ketik). */
+@Composable
+fun RoundAction(icon: ImageVector, label: String, onClick: () -> Unit, filled: Boolean, size: Int = 48) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier.size(size.dp).clip(CircleShape).background(if (filled) Accent else Surface2).clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, contentDescription = label, tint = if (filled) Color.Black else Ink, modifier = Modifier.size((size * 0.46f).dp)) }
+        Text(label, color = if (filled) Accent else Muted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 3.dp))
+    }
 }
 
 /** Primary round-ish action used for Simpan, Sambungkan, etc. */
@@ -246,7 +281,9 @@ object Ic {
     ).build()
 
     val mic = make("M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21")
-    val keypad = make("M5 5h.01M12 5h.01M19 5h.01M5 12h.01M12 12h.01M19 12h.01M5 19h.01M12 19h.01M19 19h.01")
+    val keypad = make("M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM10 16h4v4h-4z")
+    val keyboard = make("M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10")
+    val close = make("M6 6l12 12M18 6 6 18")
     val chart = make("M3 20h18M4 16l5-6 4 3 7-8")
     val list = make("M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01")
     val wallet = make("M4 7h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2h11M16 13.5h.01")

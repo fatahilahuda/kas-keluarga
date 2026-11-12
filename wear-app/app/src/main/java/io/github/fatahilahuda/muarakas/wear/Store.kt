@@ -113,7 +113,12 @@ object Store {
     }
 
     private fun refreshSurfaces() {
-        try { TileService.getUpdater(app).requestUpdate(KasTileService::class.java) } catch (_: Exception) {}
+        try {
+            val u = TileService.getUpdater(app)
+            u.requestUpdate(KasTileService::class.java)
+            u.requestUpdate(KasCatTileService::class.java)
+            u.requestUpdate(KasPocketTileService::class.java)
+        } catch (_: Exception) {}
         try {
             ComplicationDataSourceUpdateRequester.create(app, ComponentName(app, KasComplicationService::class.java)).requestUpdateAll()
         } catch (_: Exception) {}

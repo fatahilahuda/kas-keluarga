@@ -1,5 +1,6 @@
 package io.github.fatahilahuda.muarakas.wear
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -127,32 +129,54 @@ fun PairScreen() {
 @Composable
 fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onTypeText: () -> Unit, onOpen: (String) -> Unit, onSync: () -> Unit) {
     val sync by Store.sync.collectAsState()
-    val mk = Kas.monthKey()
-    val t = k.totals(mk)
-    val sisa = t.hin - t.hout
+    val now = LocalDate.now()
+    val t = k.totals(Kas.monthKey())
     val budget = k.budget
+    val left = if (budget > 0) budget - t.hout else t.hin - t.hout
+    val frac = if (budget > 0) t.hout.toFloat() / budget else if (t.hin > 0) t.hout.toFloat() / t.hin else 0f
+    val tone = when { left < 0 || frac > 1f -> Bad; frac >= 0.8f -> Warn; else -> Accent }
+    val recent = k.recent(3)
+    val today = k.visible.filter { it.date == now.toString() && it.type == "out" && !k.isUsaha(it.biz) }.sumOf { it.amount }
     Page {
         item {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().clickable { onOpen("summary") }) {
-                Text(if (budget > 0) "Sisa anggaran " + BLN[LocalDate.now().monthValue - 1] else "Sisa " + BULAN[LocalDate.now().monthValue - 1],
-                    color = Muted, fontSize = 12.sp)
-                if (budget > 0) {
-                    val left = budget - t.hout
-                    Big(Fmt.short(left), if (left < 0) Bad else Ink, 24)
-                    Bar((t.hout.toFloat() / budget).coerceIn(0f, 1f), if (t.hout > budget) Bad else if (t.hout >= budget * 0.8) Warn else Accent,
-                        Modifier.padding(horizontal = 26.dp, vertical = 4.dp))
-                } else Big(Fmt.short(sisa), if (sisa < 0) Bad else Ink, 24)
-                Text("keluar " + Fmt.short(t.hout), color = Muted, fontSize = 11.sp)
+                Image(painterResource(R.drawable.mark), contentDescription = "Muarakas", modifier = Modifier.size(18.dp))
+                Text((if (budget > 0) "Sisa anggaran " else "Sisa ") + BULAN[now.monthValue - 1], color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
+                Text(Fmt.short(left), color = if (left < 0) Bad else Ink, fontSize = 30.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1)
+                Bar(frac, tone, Modifier.padding(horizontal = 34.dp, vertical = 3.dp))
+                Text(
+                    if (budget > 0) "terpakai " + Fmt.short(t.hout, rp = false) + " · " + Math.round(frac * 100) + "%"
+                    else "masuk " + Fmt.short(t.hin, rp = false) + " · keluar " + Fmt.short(t.hout, rp = false),
+                    color = tone, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                )
             }
         }
-        item { TwoButtons("Suara", Ic.mic, onVoice, "Nominal", Ic.keypad, onKeypad) }
-        item { RowChip("Ketik", onTypeText, secondary = "misal: bakso 15rb", icon = Ic.note, bg = Color.Black) }
-        item { RowChip("Ringkasan", { onOpen("summary") }, icon = Ic.chart, secondary = "Bulan ini & kategori") }
-        item { RowChip("Riwayat", { onOpen("history") }, icon = Ic.list, secondary = k.recent(1).firstOrNull()?.let { (it.desc.ifBlank { k.cat(k.ctype(it), it.cat).n }) + " · " + Fmt.short(it.amount) }) }
-        item { RowChip("Kantong", { onOpen("pockets") }, icon = Ic.wallet, secondary = "Total " + Fmt.short(k.balances().let { b -> k.activePockets.sumOf { b[it.id] ?: 0L } })) }
-        if (k.shownBooks.isNotEmpty()) item { RowChip("Modul", { onOpen("modules") }, icon = Ic.box, secondary = "Usaha, target, utang, emas") }
-        item { RowChip(syncText(sync), onSync, icon = Ic.sync, bg = Color.Black) }
-        item { RowChip(if (k.solo) k.meName else "Jam ini milik " + k.meName, { onOpen("about") }, icon = Ic.user, bg = Color.Black) }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)) {
+                RoundAction(Ic.mic, "Suara", onVoice, filled = true)
+                RoundAction(Ic.keypad, "Nominal", onKeypad, filled = false)
+                RoundAction(Ic.keyboard, "Ketik", onTypeText, filled = false)
+            }
+        }
+        item { RowChip("Ringkasan", { onOpen("summary") }, icon = Ic.chart, iconColor = kColor(2), secondary = "Hari ini keluar " + Fmt.short(today, rp = false)) }
+        item { RowChip("Riwayat", { onOpen("history") }, icon = Ic.list, iconColor = kColor(0), secondary = "${k.totals(Kas.monthKey()).n} catatan bulan ini") }
+        item {
+            val b = k.balances()
+            RowChip("Kantong", { onOpen("pockets") }, icon = Ic.wallet, iconColor = kColor(1), secondary = "Total " + Fmt.short(k.activePockets.sumOf { b[it.id] ?: 0L }, rp = false))
+        }
+        if (k.shownBooks.isNotEmpty()) item { RowChip("Modul", { onOpen("modules") }, icon = Ic.box, iconColor = kColor(4), secondary = "Usaha, target, utang, emas") }
+        if (recent.isNotEmpty()) {
+            item { Text("Terakhir", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp)) }
+            items(recent) { tx -> TxChip(k, tx) { onOpen("tx/" + tx.id) } }
+        }
+        item {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
+                Text(syncText(sync), color = if (sync == SyncState.ERROR || sync == SyncState.NOT_FOUND) Warn else Muted, fontSize = 11.sp,
+                    textAlign = TextAlign.Center, modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onSync).padding(horizontal = 8.dp, vertical = 4.dp))
+                Text((if (k.solo) k.meName else "Jam " + k.meName) + " ›", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { onOpen("about") }.padding(horizontal = 8.dp, vertical = 4.dp))
+            }
+        }
     }
 }
 

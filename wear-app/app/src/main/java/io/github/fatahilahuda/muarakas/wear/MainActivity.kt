@@ -92,10 +92,11 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
     }
     // Fallback when the watch has no speech recognizer app: the system voice/keyboard input.
     val systemInput = rememberTextInput("Ucapkan atau ketik, misal: bakso 15 ribu") { fromSpeech(it) }
-    val voice = rememberVoiceInput("Sebutkan, misal: bakso 15 ribu", systemInput) { results ->
-        // Prefer the alternative that actually contains an amount.
+    // Only used when the watch has no speech service of its own: the system dialog, still in id-ID.
+    val systemVoice = rememberVoiceInput("Sebutkan, misal: bakso 15 ribu", systemInput) { results ->
         fromSpeech(results.firstOrNull { Amount.parse(Amount.normalizeSpeech(it)) != null } ?: results[0])
     }
+    val voice: () -> Unit = { nav.navigate("voice") }
     val noteInput = rememberTextInput("Catatan") { t ->
         draft = draft.copy(desc = t.trim())
         if (draft.type != "tf" && draft.cat == null) Store.ai()?.rank(draft.type, t)?.firstOrNull()?.let { draft = draft.copy(cat = it.first) }
@@ -119,6 +120,14 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
                 onTypeText = { draft = Store.Draft(); systemInput() },
                 onOpen = { nav.navigate(it) },
                 onSync = { scope.launch { Store.syncNow() } },
+            )
+        }
+        composable("voice") {
+            VoiceScreen(
+                k,
+                onDone = { t -> nav.popBackStack(); fromSpeech(t) },
+                onKeyboard = { nav.popBackStack(); systemInput() },
+                onFallback = { nav.popBackStack(); systemVoice() },
             )
         }
         composable("keypad") {

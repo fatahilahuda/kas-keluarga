@@ -44,7 +44,25 @@ jobs:
           KAS_KEYSTORE_PASSWORD: ${{ secrets.WEAR_KEYSTORE_PASSWORD }}
           KAS_KEY_ALIAS: ${{ secrets.WEAR_KEY_ALIAS }}
           KAS_KEY_PASSWORD: ${{ secrets.WEAR_KEY_PASSWORD }}
-        run: gradle testReleaseUnitTest assembleRelease --no-daemon --stacktrace
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Unit tests and screenshots
+        id: shots
+        continue-on-error: true
+        working-directory: wear-app
+        run: gradle recordPaparazziDebug --no-daemon --stacktrace
+
+      - name: Publish screenshots
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          d=wear-app/app/src/test/snapshots/images
+          ls "$d" || exit 0
+          (cd "$d" && zip -q /tmp/wear-shots.zip *.png)
+          gh release create "wear-shots-${{ github.run_number }}" /tmp/wear-shots.zip --draft \
+            --target "${{ github.sha }}" --title "Screenshot jam ${{ github.run_number }}" --notes "Screenshot otomatis (Paparazzi)."
 
       - name: Collect APK
         run: |
