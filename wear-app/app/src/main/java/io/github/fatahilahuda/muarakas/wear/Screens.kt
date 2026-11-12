@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -288,10 +289,15 @@ fun ConfirmScreen(
                 (TYPE_LBL[d.type] ?: "") + " · " + dateLbl, color = typeColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onDate).padding(horizontal = 8.dp, vertical = 2.dp),
             )
-            Text(
-                Fmt.full(d.amount), color = Ink, fontSize = if (small) 24.sp else 28.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1,
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onAmount).padding(horizontal = 6.dp),
-            )
+            BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val txt = Fmt.full(d.amount)
+                // Shrink long amounts (Rp 12.500.000) so they never wrap or get cut.
+                val fit = (maxWidth.value / (txt.length * 0.6f)).coerceIn(15f, if (small) 24f else 28f)
+                Text(
+                    txt, color = Ink, fontSize = fit.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onAmount).padding(horizontal = 4.dp),
+                )
+            }
             if (d.type == "tf") {
                 Text(k.pocketName(pocket) + " → " + k.pocketName(d.to), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
