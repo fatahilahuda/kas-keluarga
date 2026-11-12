@@ -895,6 +895,30 @@ body.noscroll{overflow:hidden}
 .rmonth{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rmonth .ib{background:var(--surface-2)}
 .rmonth .ib svg{width:18px;height:18px}
+
+/* Catat: tanggal */
+.fdate{display:flex;flex-direction:column;gap:8px}
+.fdbar{display:flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:14px;padding:4px}
+.fdbar .ib{width:40px;height:40px;flex:none;color:var(--ink);background:none}
+.fdbar .ib svg{width:18px;height:18px}
+.fdlbl{flex:1;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:4px 6px;color:var(--ink);font:inherit;text-align:left;border-radius:10px;min-height:44px}
+.fdlbl svg{width:20px;height:20px;color:var(--accent);flex:none}
+.fdlbl span{display:flex;flex-direction:column;min-width:0}
+.fdlbl b{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdlbl small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdtoday{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:0 12px;height:36px;font:inherit;font-size:13.5px;font-weight:600;margin-left:2px}
+.fdtoday[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cal{border:1px solid var(--line);border-radius:14px;padding:8px 8px 10px;background:var(--surface)}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.calh b{font-size:15px}
+.calh .ib{width:40px;height:40px;background:none;color:var(--ink)}
+.calh .ib svg{width:18px;height:18px}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.calw{font-size:12px;color:var(--muted);padding:4px 0;font-weight:600}
+.calw.sun,.cald.sun{color:var(--out)}
+.cald{height:40px;border:0;background:none;border-radius:999px;font:inherit;font-size:14.5px;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+.cald.today{box-shadow:inset 0 0 0 1.5px var(--accent);font-weight:700}
+.cald[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none}
 </style>
 
 <div class="app">
@@ -1115,6 +1139,7 @@ const IP={
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  cam:'<path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
  chev:'<path d="M9 6l6 6-6 6"/>',
+ cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
  qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 18v3h3v-3"/>',
@@ -1690,6 +1715,29 @@ function fundsWarn(B){
   if(F.type==='in'||!F.pocket||!F._amt)return '';const b=B[F.pocket]||0;
   return F._amt>b?'<div class="warnline">Saldo '+esc(pname(F.pocket))+' tinggal '+fmt(b)+'. Kantong ini akan minus '+fmt(F._amt-b)+'.</div>':'';
 }
+/* ---------- tanggal di Catat: our own picker, no device date popup ----------
+   The value lives in F.date and a hidden #fdate, so save code reads it as before. Changing the date
+   only redraws this box, so whatever is typed in the form stays put. */
+function dateField(){
+  const t=todayISO(),s=F.date||t,d=parseISO(s),full=HARI[d.getDay()]+', '+d.getDate()+' '+BULAN[d.getMonth()].slice(0,3)+' '+d.getFullYear();
+  const rel=s===t?'Hari ini':s===addDay(t,-1)?'Kemarin':s===addDay(t,1)?'Besok':'';
+  return '<div class="fdate" id="fdatebox"><input type="hidden" id="fdate" value="'+s+'">'+
+   '<div class="fdbar"><button class="ib" data-act="fd:-1" aria-label="Sehari sebelumnya">'+ic('back')+'</button>'+
+   '<button class="fdlbl" data-act="fdcal" aria-expanded="'+!!F.calOpen+'" aria-label="Pilih tanggal, sekarang '+full+'">'+ic('cal')+'<span><b>'+(rel||full)+'</b>'+(rel?'<small>'+full+'</small>':'')+'</span></button>'+
+   '<button class="ib" data-act="fd:1" aria-label="Sehari sesudahnya">'+ic('chev')+'</button>'+
+   '<button class="fdtoday" data-act="fdtoday" aria-pressed="'+(s===t)+'">Hari ini</button></div>'+
+   (F.calOpen?calGrid(s):'')+'</div>';
+}
+function calGrid(sel){
+  const k=F.calM||mkey(sel),t=todayISO(),off=new Date(+k.slice(0,4),+k.slice(5,7)-1,1).getDay(),n=dim(k);
+  let h='<div class="cal"><div class="calh"><button class="ib" data-act="fdm:-1" aria-label="Bulan sebelumnya">'+ic('back')+'</button><b>'+mname(k)+'</b><button class="ib" data-act="fdm:1" aria-label="Bulan berikutnya">'+ic('chev')+'</button></div><div class="calg">';
+  ['Min','Sen','Sel','Rab','Kam','Jum','Sab'].forEach((x,i)=>{h+='<span class="calw'+(i===0?' sun':'')+'">'+x+'</span>';});
+  for(let i=0;i<off;i++)h+='<span></span>';
+  for(let d=1;d<=n;d++){const s=k+'-'+pad(d);h+='<button class="cald'+(s===t?' today':'')+((off+d-1)%7===0?' sun':'')+'" data-act="fdpick:'+s+'" aria-pressed="'+(s===sel)+'" aria-label="'+d+' '+mname(k)+'">'+d+'</button>';}
+  return h+'</div></div>';
+}
+function setFDate(s){F.date=s;F.calM=mkey(s);redrawDate();}
+function redrawDate(){const b=document.getElementById('fdatebox');if(!b)return;const t=document.createElement('div');t.innerHTML=dateField();b.replaceWith(t.firstChild);}
 function vAdd(){
   const mb0=MODE();
   if(mb0&&(BOOKT[F.type]||bkind(mb0)!=='usaha')){if(!BOOKT[F.type]||!bookActs(mb0).some(x=>x[0]===F.type))F=newForm(defaultAddType(),{date:F.date});return vBookAdd(mb0);}
@@ -1698,23 +1746,22 @@ function vAdd(){
   const seg=MODE()?bookSeg(MODE()):'<div class="seg" role="group" aria-label="Jenis transaksi"><button class="o" data-act="ftype:out" aria-pressed="'+(ty==='out')+'">Keluar</button><button class="i" data-act="ftype:in" aria-pressed="'+(ty==='in')+'">Masuk</button><button class="t" data-act="ftype:tf" aria-pressed="'+(ty==='tf')+'">Pindah</button></div>';
   const desc='<div class="field"><label for="fdesc">Keterangan'+(ty==='tf'?' <span class="hint">(boleh kosong)</span>':'')+'</label><input class="inp" id="fdesc" autocomplete="off" placeholder="'+({out:'contoh: nasi padang 25rb',in:'contoh: gaji oktober 6,2jt',tf:'contoh: nabung emas'})[ty]+'"></div>';
   const amt='<div class="field"><label for="famt">Nominal</label><input class="inp amt" id="famt" inputmode="numeric" autocomplete="off" placeholder="Rp 0"><span class="err" id="ferr" hidden></span></div>';
-  const date='<div class="field"><label for="fdate">Tanggal</label><input class="inp" id="fdate" type="date" value="'+(F.date||todayISO())+'"></div>';
   const recent=sortTx(S.tx.filter(t=>!t.sample)).slice(0,3);
   const recentH=recent.length?'<section><h2 style="margin-bottom:8px">Baru kamu catat</h2><div class="list">'+recent.map(txRow).join('')+'</div></section>':'';
-  if(ty==='tf')return '<section class="card stack">'+seg+amt+
+  if(ty==='tf')return '<section class="card stack">'+seg+dateField()+amt+
       '<div class="field"><span class="flabel">Dari kantong</span>'+pocketChips('ffrom',F.pocket,'ffrom',B,null,amount,true)+'</div>'+
       '<div class="field"><span class="flabel">Ke kantong</span>'+pocketChips('fto',F.to,'fto',B,F.pocket,0,false)+'</div>'+
-      '<div id="fwarn">'+fundsWarn(B)+'</div>'+desc+date+'<button class="btn" data-act="fsave">Pindahkan saldo</button></section>'+recentH;
+      '<div id="fwarn">'+fundsWarn(B)+'</div>'+desc+'<button class="btn" data-act="fsave">Pindahkan saldo</button></section>'+recentH;
   const cty=F.biz?(ty==='in'?'bin':'bout'):ty,ai=F.ai,list=CATS[cty];
   const aiLine=ai&&ai.conf>0?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg><span>AI menebak <b>'+esc(cat(cty,ai.best).n)+'</b> · '+Math.round(ai.conf*100)+'% yakin</span>'
     :'<span class="muted">Ketik keterangan, AI akan memilih kategori dan kantong. Bisa langsung tulis nominal, misal <b>bakso 15rb</b>.</span>';
   const tabHint=!F.biz&&ty==='out'&&F.cat==='tabungan'&&activePockets().some(p=>p.save)?'<div class="ai"><span>Menabung ke kantong sendiri? Pakai <b>Pindah</b> supaya saldonya tetap terhitung.</span><button class="link" data-act="ftype:tf">Jadikan pindah</button></div>':'';
-  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">'+HOMEN()+' atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
+  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+dateField()+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">'+HOMEN()+' atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
     '<div class="field"><span class="flabel">Kategori</span><div class="chips" id="fcats">'+list.filter(c=>cty!=='out'||c.id!=='tabungan'||F.cat==='tabungan').map(c=>'<button class="chip" data-act="fcat:'+c.id+'" aria-pressed="'+(F.cat===c.id)+'" style="--cc:'+ccolor(cty,c.id)+'">'+ic(catIc(cty,c.id),'ci')+esc(c.n)+(ai&&ai.conf>0&&ai.best===c.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'</div></div>'+
     '<div class="field" id="fforw"'+(ty==='out'&&!F.biz&&(!SOLO()||people().length)?'':' hidden')+'><span class="flabel">Untuk siapa</span><div class="chips" id="ffor">'+forChips(F.forId,'ffor',!F.forManual)+'</div></div>'+
     '<div id="ftab">'+tabHint+'</div>'+
     '<div class="field"><span class="flabel">'+(ty==='out'?'Ambil dari kantong':'Masuk ke kantong')+'</span>'+pocketChips('fpk',F.pocket,'fpk',B,null,amount,ty==='out')+'</div>'+
-    '<div id="fwarn">'+fundsWarn(B)+'</div><div id="fhide">'+hideToggle()+'</div>'+date+
+    '<div id="fwarn">'+fundsWarn(B)+'</div><div id="fhide">'+hideToggle()+'</div>'+
     '<button class="btn '+(ty==='out'?'o':'i')+'" data-act="fsave">Simpan '+(ty==='out'?'pengeluaran':'pemasukan')+'</button></section>'+recentH;
 }
 function refreshForm(){
@@ -1924,6 +1971,17 @@ async function syncNow(manual){
   SYNC.busy=false;updSync();
 }
 async function pullAll(){for(let i=0;i<30;i++){const rows=await rpc('kas_pull',{p_code:S.family.code,p_since:S.family.rev||0});if(!rows||!rows.length)return;await applyRows(rows);S.family.rev=rows[rows.length-1].rev;persist();if(rows.length<1000)return;}}
+/* Background updates (sync, gold price) must not wipe what the user is typing. If they are typing,
+   or the Catat form holds unsaved text, the redraw waits until they're done or the next render. */
+let BG_PENDING=false;
+const typingNow=()=>{const ae=document.activeElement,v=document.getElementById('view');return !!(ae&&v&&v.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));};
+const formHasText=()=>['fdesc','famt','fqty'].some(id=>{const e=document.getElementById(id);return e&&e.value.trim();});
+function bgRender(){
+  if(!document.getElementById('sheet').hidden)return;
+  if(typingNow()||(TAB==='add'&&formHasText())){BG_PENDING=true;return;}
+  render();
+}
+document.addEventListener('focusout',()=>{if(BG_PENDING)setTimeout(()=>{if(BG_PENDING&&!typingNow()&&!(TAB==='add'&&formHasText()))bgRender();},250);});
 async function applyRows(rows){
   const o={app:'kas-keluarga',tx:[],pockets:[],biz:[],props:[],members:[],people:[],deleted:{}};
   for(const r of rows){S.srvU[r.kind+':'+r.id]=r.u;const d=r.data;
@@ -1932,7 +1990,7 @@ async function applyRows(rows){
     else if(r.kind==='settings')o.settings=d;else if(r.kind==='del')o.deleted[r.id]=r.u;}
   const res=merge(o);
   if(res.gifts)toast('Ada '+res.gifts+' kado baru dari '+partner().n+'!','Buka',()=>{TAB='kita';UI.kt='gift';render(true);});
-  if(document.getElementById('sheet').hidden)render();
+  bgRender();
 }
 async function pushDirty(){
   const items=[],dirty=(k,id,u)=>(S.srvU[k+':'+id]||0)<(u||1);
@@ -2809,9 +2867,8 @@ function vBookAdd(b){
   if(ty==='cair')chips=chips.slice(0,-6)+'<button class="pchip" style="--c:var(--accent)" data-act="fpk:__new" aria-pressed="'+(F.pocket==='__new')+'"><span>+ Kantong "Dana '+esc(b.n)+'"</span><small>kantong khusus</small></button></div>';
   const pk='<div class="field"><span class="flabel">'+labels[1]+'</span>'+chips+'</div>'+(!nobp?(bp?'<p class="hint">'+(inward?'Masuk ke':'Diambil dari')+' kantong <b>'+esc(pname(bp))+'</b>.</p>':'<p class="warnline">Pilih kantongnya dulu lewat tombol Ubah di bagian bawah.</p>'):'');
   const desc='<div class="field"><label for="fdesc">Keterangan <span class="hint">(boleh kosong)</span></label><input class="inp" id="fdesc" autocomplete="off" placeholder="'+esc(labels[0])+'"></div>';
-  const date='<div class="field"><label for="fdate">Tanggal</label><input class="inp" id="fdate" type="date" value="'+(F.date||todayISO())+'"></div>';
   const green=inward||RECVF[ty];
-  return modeBanner(b)+'<section class="card stack">'+bookSeg(b)+amt+qty+'<div id="fpkw">'+pk+'</div><div id="fwarn">'+warn+'</div>'+desc+date+'<button class="btn '+(green?'i':PAYF[ty]?'o':'')+'" data-act="fsave">'+esc(labels[0])+'</button></section>';
+  return modeBanner(b)+'<section class="card stack">'+bookSeg(b)+dateField()+amt+qty+'<div id="fpkw">'+pk+'</div><div id="fwarn">'+warn+'</div>'+desc+'<button class="btn '+(green?'i':PAYF[ty]?'o':'')+'" data-act="fsave">'+esc(labels[0])+'</button></section>';
 }
 function qtyHint(b){const pr=curPrice(b),u=b.unit||'gram';if(F._qty&&F._amt)return 'Harga per '+u+': '+fmt(F._amt/F._qty)+(pr?' · acuan hari ini '+fmt(pr):'');return pr?'Harga acuan hari ini '+fmt(pr)+'/'+u+'. Isi jumlahnya, totalnya terisi otomatis.':'Isi jumlah dan total rupiah sesuai struk.';}
 function bookRefresh(){const b=MODE();if(!b)return;const fa=document.getElementById('famt'),fq=document.getElementById('fqty');
@@ -2848,7 +2905,7 @@ async function fetchGold(force){
   try{const [g,fx]=await Promise.all([fetch('https://api.gold-api.com/price/XAU').then(r=>r.json()),fetch('https://open.er-api.com/v6/latest/USD').then(r=>r.json())]);
     const usd=+g.price,rate=+(fx&&fx.rates&&fx.rates.IDR);if(!(usd>0&&rate>0))throw new Error('price');
     S.gold={usdOz:usd,rate,idr:Math.round(usd*rate/31.1034768),at:Date.now()};stampGold(gb);persist();
-    if(document.getElementById('sheet').hidden)render();if(force===true&&MODE()&&bkind(MODE())==='investasi')toast('Harga emas diperbarui');}
+    bgRender();if(force===true&&MODE()&&bkind(MODE())==='investasi')toast('Harga emas diperbarui');}
   catch(e){if(force===true)toast('Belum bisa mengambil harga emas. Coba lagi nanti atau isi manual.');}
 }
 function stampGold(gb){const d=todayISO();let ch=false;gb.forEach(b=>{b.ph=b.ph||{};if(!b.ph[d]&&goldPrice()){b.ph[d]=curPrice(b);const ks=Object.keys(b.ph).sort();while(ks.length>180)delete b.ph[ks.shift()];b.u=Date.now();ch=true;}});if(ch)save();}
@@ -3495,7 +3552,7 @@ function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('
 /* ---------- render ---------- */
 const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
-function render(anim){
+function render(anim){BG_PENDING=false;
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
@@ -3720,6 +3777,11 @@ document.addEventListener('click',e=>{
   if(a==='bdelete'&&EDITB.id){const b=bizOf(EDITB.id),i=S.biz.indexOf(b);S.biz.splice(i,1);S.deleted[b.id]=Date.now();if(PG===b.id)PG='home';save();closeSheet();render();toast(b.n+' dihapus','Urungkan',()=>{delete S.deleted[b.id];b.u=Date.now();S.biz.splice(i,0,b);save();render();});return;}
   if(a.indexOf('bizadd:')===0){TAB='add';F=newForm(v,{typeManual:true});render(true);window.scrollTo(0,0);softFocus(document.getElementById(BOOKT[v]?(v==='beli'||v==='jual'?'fqty':'famt'):'fdesc'));return;}
   if(a.indexOf('fbiz:')===0){F.biz=v==='home'?null:v;F.bizManual=true;F.bizAuto=false;F.cat=null;F.catManual=false;F.pocketManual=false;refreshForm();return;}
+  if(a.indexOf('fd:')===0){setFDate(addDay(F.date||todayISO(),+v));return;}
+  if(a==='fdtoday'){F.calOpen=false;setFDate(todayISO());return;}
+  if(a==='fdcal'){F.calOpen=!F.calOpen;F.calM=mkey(F.date||todayISO());redrawDate();return;}
+  if(a.indexOf('fdm:')===0){F.calM=addMonth(F.calM||mkey(F.date||todayISO()),+v);redrawDate();return;}
+  if(a.indexOf('fdpick:')===0){F.calOpen=false;setFDate(v);return;}
   if(a==='settings'){openSettings('');return;}
   if(a.indexOf('settings:')===0){openSettings(v);return;}
   if(a==='setback'){UI.st=null;render(true);window.scrollTo(0,0);return;}
