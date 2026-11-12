@@ -22,6 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Long-press shortcuts on the app icon: catat dengan suara / ketik -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+
             <!-- Family invite read from another phone over NFC (see KasNfcPlugin) -->
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
@@ -30,6 +33,39 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Catat cepat popup over the home screen (widget, shortcuts, Quick Settings tile) -->
+        <activity
+            android:name=".QuickAddActivity"
+            android:label="@string/quick_label"
+            android:theme="@style/AppTheme.Quick"
+            android:exported="true"
+            android:taskAffinity="io.github.fatahilahuda.muarakas.quick"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustNothing"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density" />
+
+        <receiver
+            android:name=".KasWidget"
+            android:exported="true"
+            android:label="@string/quick_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/kas_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".KasQsTile"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_mic"
+            android:label="@string/qs_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- Answers as an NFC tag holding the invite link while "Kirim lewat NFC" is on -->
         <service
@@ -63,6 +99,15 @@
     <uses-permission android:name="android.permission.NFC" />
     <!-- Fingerprint / face unlock for the app lock (KasBioPlugin) -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Catat dengan suara (KasNative uses SpeechRecognizer directly, no Google dialog) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Lets SpeechRecognizer find the phone's speech service (package visibility, Android 11+) -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.nfc" android:required="false" />

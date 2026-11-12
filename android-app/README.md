@@ -53,3 +53,11 @@ python3 android-app/tools/v2sign.py Muarakas-unsigned.apk Muarakas.apk muarakas-
 
 Skrip ini memakai APK Signature Scheme v2 (cukup untuk minSdk 24) dan menolak APK yang entrinya belum ter-align. Sidik jari SHA-256 sertifikat rilis:
 `E8:8A:79:56:5D:8A:0E:E7:54:0D:C0:9C:6E:EE:EF:C8:D0:2F:24:26:FD:4D:F9:63:20:EA:9E:A3:02:32:2B:AF`
+
+## Catat cepat: suara, widget, shortcut
+
+- **Suara** (`KasNative`, terpasang sebagai `window.KasQuickNative`): `SpeechRecognizer` langsung dengan bahasa `id-ID`, tanpa dialog Google. Web app menampilkan layar mendengarkan sendiri dan menerima event lewat `window.__kasVoice`.
+- **Popup** (`QuickAddActivity`): jendela transparan berisi web app dalam mode `?quick=voice|text`, hanya sheet Catat. Origin sama dengan aplikasi utama, jadi datanya sama.
+- **Widget** (`KasWidget`): sisa anggaran bulan ini plus tombol Suara dan Ketik. Angkanya dikirim web app lewat `KasQuickNative.widget(json)` setiap kali menyimpan; kalau kunci aplikasi aktif, angka disembunyikan.
+- **Shortcut ikon** (`res/xml/shortcuts.xml`): tekan lama ikon Muarakas, pilih "Catat suara" atau "Catat ketik".
+- **Tile Quick Settings** (`KasQsTile`): "Catat Muarakas" di panel notifikasi, langsung ke suara.

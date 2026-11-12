@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget and shortcut colours, light skin (values-night holds the dark one). Same tokens as the web app. -->
+<resources>
+    <color name="w_bg">#FFFFFF</color>
+    <color name="w_ink">#13201C</color>
+    <color name="w_muted">#5A6A65</color>
+    <color name="w_soft">#E8EEEC</color>
+    <color name="w_accent">#1D7781</color>
+    <color name="w_on_accent">#FFFFFF</color>
+    <color name="w_warn">#A86F12</color>
+    <color name="w_bad">#BE3A30</color>
+</resources>

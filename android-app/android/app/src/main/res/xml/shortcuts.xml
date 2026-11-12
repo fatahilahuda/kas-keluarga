@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon. targetPackage is the applicationId, targetClass the Java class. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/sc_mic"
+        android:shortcutId="catat_suara"
+        android:shortcutLongLabel="@string/sc_voice_long"
+        android:shortcutShortLabel="@string/sc_voice_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.github.fatahilahuda.kaskeluarga.QuickAddActivity"
+            android:targetPackage="io.github.fatahilahuda.muarakas">
+            <extra android:name="mode" android:value="voice" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/sc_kbd"
+        android:shortcutId="catat_teks"
+        android:shortcutLongLabel="@string/sc_text_long"
+        android:shortcutShortLabel="@string/sc_text_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.github.fatahilahuda.kaskeluarga.QuickAddActivity"
+            android:targetPackage="io.github.fatahilahuda.muarakas">
+            <extra android:name="mode" android:value="text" />
+        </intent>
+    </shortcut>
+</shortcuts>

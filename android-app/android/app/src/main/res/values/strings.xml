@@ -6,4 +6,11 @@
     <string name="custom_url_scheme">io.github.fatahilahuda.muarakas</string>
     <string name="nfc_invite_service">Undangan keluarga Muarakas</string>
     <string name="nfc_invite_aid">Tautan undangan keluarga</string>
+    <string name="widget_desc">Sisa anggaran bulan ini, catat lewat suara atau ketik</string>
+    <string name="sc_voice_short">Catat suara</string>
+    <string name="sc_voice_long">Catat dengan suara</string>
+    <string name="sc_text_short">Catat ketik</string>
+    <string name="sc_text_long">Catat dengan mengetik</string>
+    <string name="qs_label">Catat Muarakas</string>
+    <string name="quick_label">Catat cepat</string>
 </resources>
