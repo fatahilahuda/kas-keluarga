@@ -1007,6 +1007,8 @@ body.noscroll{overflow:hidden}
 .kpis.hk .kpi.wide{flex-basis:230px}
 .kpis.hk .kpi .kv{font-size:18px}
 #hcards:empty{display:none}
+/* keep the page tall enough that changing tab or filter never pulls the toolbar up */
+#hlist{min-height:72vh}
 .kpi[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .kpi .kv small{white-space:nowrap}
 
@@ -1958,7 +1960,6 @@ function vHist(){
 /* Riwayat: dashboard cards for whatever the filters currently show */
 function histCards(list,tin,tout,filtered){
   const head='<div class="hsum"><span>'+list.length+' catatan · '+esc(mname(CUR))+'</span></div>';
-  if(!list.length)return head;
   const vis=list.filter(t=>!masked(t)),outs=vis.filter(t=>t.type==='out'),nIn=vis.filter(t=>t.type==='in').length;
   const span=CUR===mkey(todayISO())?new Date().getDate():dim(CUR),perDay={};let big=null;
   outs.forEach(t=>{perDay[t.date]=(perDay[t.date]||0)+t.amount;if(!big||t.amount>big.amount)big=t;});
