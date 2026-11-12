@@ -1387,6 +1387,7 @@ const IP={
  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
  chart:'<path d="M3 20h18M4 16l5-6 4 3 7-8"/>',
+ watch:'<rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6l.8-3h4.4l.8 3M9 18l.8 3h4.4l.8-3M12 9.5V12l1.6 1.2"/>',
  pie:'<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
  cam:'<path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
@@ -2509,6 +2510,31 @@ function syncSection(){
     '<div class="couple" style="justify-content:space-between"><span class="small muted">PIN rahasia: '+(me().pinCheck?(SECKEY?'aktif di HP ini':'perlu dimasukkan di HP ini'):'belum dibuat')+'</span><button class="link" data-act="pin">'+(me().pinCheck?(SECKEY?'':'Masukkan PIN'):'Buat PIN')+'</button></div>'+
     '<button class="btn danger" data-act="fam-leave">Putuskan sinkron di HP ini</button></section>';
 }
+/* ---------- Wear OS watch: the watch shows a 6-digit pin, this phone hands it the family code ---------- */
+const WEAR_URL='https://github.com/fatahilahuda/kas-keluarga/releases?q=wear';
+function watchSection(){
+  if(!onlineOK())return '<section class="card stack"><h2>Jam tangan</h2><p class="small muted">Menyambungkan jam hanya bisa di aplikasi yang dipasang dari <b>fatahilahuda.github.io/kas-keluarga</b>.</p></section>';
+  return '<section class="card stack"><h2>Sambungkan jam</h2><p class="small muted">Buka Muarakas di jam Wear OS, lalu ketik kode 6 digit yang tampil di jam. Catatan dari jam tercatat atas nama <b>'+esc(me().n)+'</b>.</p>'+
+   (S.family?'':'<p class="hint">Jam membaca data lewat sinkron online. '+(SOLO()?'Catatanmu ikut tersimpan di server Muarakas supaya jam bisa membacanya.':'Menyambungkan jam sekaligus menyalakan sinkron keluarga.')+(S.sample?' Data contoh akan dihapus.':'')+'</p>')+
+   '<div class="field"><label for="watch-pin">Kode di jam</label><input class="inp" id="watch-pin" inputmode="numeric" maxlength="7" placeholder="contoh: 482 913" autocomplete="off"></div>'+
+   '<span class="err" id="watch-err" hidden></span><button class="btn" data-act="watch-link">'+ic('link')+'Sambungkan jam</button></section>'+
+   '<section class="card stack"><h2>Yang bisa di jam</h2><p class="small muted">Catat dengan suara ("bakso 15 ribu") atau keypad, ringkasan bulan ini, riwayat, saldo kantong, target, utang, emas, plus tile dan komplikasi di watch face.</p></section>'+
+   '<section class="card stack"><h2>Pasang di jam</h2><ol class="steps"><li>Unduh <b>Muarakas-Wear.apk</b> dari halaman rilis.</li><li>Di jam: Setelan → Info jam → Info perangkat lunak, ketuk Versi perangkat lunak 5 kali. Lalu Opsi pengembang → nyalakan Debugging ADB dan Debug lewat Wi-Fi.</li><li>Di HP pasang aplikasi Bugjaeger, sambungkan ke alamat IP jam, lalu pasang APK-nya.</li></ol><a class="btn ghost" href="'+WEAR_URL+'" target="_blank" rel="noopener">'+ic('watch')+'Buka halaman rilis</a><p class="hint">Butuh jam Wear OS 3 ke atas, misalnya Galaxy Watch 4 atau lebih baru. Jam Xiaomi/Redmi dan Galaxy Fit tidak bisa.</p></section>';
+}
+async function watchLink(btn){
+  const inp=document.getElementById('watch-pin'),er=document.getElementById('watch-err'),pin=String(inp&&inp.value||'').replace(/\D/g,'');
+  const fail=m=>{er.textContent=m;er.hidden=false;};er.hidden=true;
+  if(pin.length!==6){fail('Kodenya 6 angka, lihat di layar jam.');return;}
+  btn.disabled=true;
+  try{
+    if(!S.family){const code=genCode();await rpc('kas_create',{p_code:code});clearSamplesData();S.family={code,rev:0};S.srvU={};save();await syncNow();}
+    const ok=await rpc('kas_watch_link',{p_pin:pin,p_code:S.family.code,p_me:S.me});
+    if(ok){inp.value='';toast('Jam tersambung. Tunggu sebentar sampai jam selesai sinkron.');}
+    else fail('Kode tidak cocok atau sudah kedaluwarsa. Buka lagi layar sambung di jam.');
+  }catch(e){fail(/kas_watch_link|function|schema cache/i.test(String(e&&e.message))?'Server belum siap untuk jam. Untuk sementara, di jam pilih "Pakai kode keluarga".':'Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.');}
+  btn.disabled=false;
+}
+
 /* ---------- pairing: invite QR, camera scan, NFC tap, #gabung= links ---------- */
 /* The invite is one link, APP_URL#gabung=CODE. QR, NFC and chat all carry it, so a phone camera, an iPhone's NFC reader or a plain tap opens the same join sheet. */
 const APP_URL='https://fatahilahuda.github.io/kas-keluarga/';
@@ -3881,7 +3907,7 @@ function deleteCat(){
 /* ---------- Pengaturan: its own page. The first screen is a menu; each row opens a subpage.
    Forms that edit one thing (kantong, kategori, usaha, PIN) still open as sheets on top. ---------- */
 const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||!!navigator.standalone;
-const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',pasang:'Pasang aplikasi'};
+const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',pasang:'Pasang aplikasi'};
 const SET_BODY={
   profil:()=>whoSection()+(SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
@@ -3905,6 +3931,7 @@ const SET_BODY={
    '<section class="card stack"><h2>Data</h2><p class="small muted">Semua data tersimpan di HP ini saja: <b class="num">'+n+'</b> catatan milikmu'+(S.tx.length>n?' dan '+(S.tx.length-n)+' data contoh':'')+'.</p>'+
    (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section>';},
   laporan:()=>reportSection(),
+  jam:()=>watchSection(),
   pasang:()=>{return '<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
    '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
    '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>';}
@@ -3932,7 +3959,8 @@ function vSet(){
      setRow('tampilan','eye','var(--k0)','Tampilan','Tema '+(SKIN_N[SKIN]||'').toLowerCase()),
      setRow('keamanan','finger','var(--k3)','Keamanan',locked?'Kunci PIN aktif':'Kunci aplikasi mati'),
      setRow('cadangan','inbox','var(--k1)','Cadangan & data',SOLO()?'Buat cadangan, pulihkan, hapus data':'Kirim manual, cadangan, hapus data'),
-     setRow('laporan','chart','var(--k2)','Laporan','Unduh CSV untuk Excel atau Sheets')].concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
+     setRow('laporan','chart','var(--k2)','Laporan','Unduh CSV untuk Excel atau Sheets'),
+     setRow('jam','watch','var(--k5)','Jam tangan','Muarakas di Wear OS')].concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
    '<div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div>';
 }
 /* Open Pengaturan, or refresh it. With a subpage name it goes there; '' is the menu. */
@@ -4218,6 +4246,7 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
       openSettings('profil');toast('Tersambung! Pilih dulu HP ini milik siapa.');}
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
+  if(a==='watch-link'){watchLink(el);return;}
   if(a==='fam-copy'){copyPlain(fmtCode(S.family.code),'Kode keluarga disalin');return;}
   if(a==='fam-invite'){inviteSheet();return;}
   if(a==='fam-link'){const txt='Yuk pakai Muarakas bareng. Ketuk tautan ini untuk bergabung: '+inviteURL(S.family.code)+' (atau Pengaturan → Gabung dengan kode: '+fmtCode(S.family.code)+')';
