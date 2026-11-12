@@ -941,6 +941,13 @@ body.noscroll{overflow:hidden}
 .delta.good{background:var(--in-soft);color:var(--in)}
 .delta.bad{background:var(--out-soft);color:var(--out)}
 .delta.flat{background:var(--surface-2);color:var(--muted)}
+
+.hsum{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px 8px;font-size:13px;color:var(--muted)}
+.hsum .link{font-size:13px;padding:0}
+.kpis.hk{margin-bottom:4px}
+#hcards:empty{display:none}
+.kpi[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.kpi .kv small{white-space:nowrap}
 </style>
 
 <div class="app">
@@ -1727,11 +1734,29 @@ function vHome(){
 function vHist(){
   const mb=MODE(),ubm=mb&&bkind(mb)==='usaha',co=ubm?'bout':'out',ci=ubm?'bin':'in';
   const cats=CATS[co].map(c=>'<option value="out:'+c.id+'">Keluar · '+esc(c.n)+'</option>').join('')+CATS[ci].map(c=>'<option value="in:'+c.id+'">Masuk · '+esc(c.n)+'</option>').join('');
-  return sampleBanner()+'<section class="filters"><div class="seg">'+
+  return sampleBanner()+'<div id="hcards"></div><section class="filters"><div class="seg">'+
     [['all','Semua'],['out','Keluar'],['in','Masuk'],['tf','Pindah']].map(([k,l])=>'<button data-act="hf:'+k+'" aria-pressed="'+(H.type===k)+'">'+l+'</button>').join('')+'</div>'+
     (mb?modeBanner(mb):'')+'<input class="inp" id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'">'+(mb?'':'<div class="row2">'+(shownBiz().length?'<select class="inp" id="hb" aria-label="Filter bagian"><option value="">Semua bagian</option><option value="home">'+HOMEN()+'</option>'+S.biz.filter(b=>kindOn(bkind(b))).map(b=>'<option value="'+b.id+'">'+esc(b.n)+'</option>').join('')+'</select>':'')+'<select class="inp" id="hw" aria-label="Filter orang"><option value="">Semua orang</option><option value="_">'+BERSAMA()+'</option>'+famAll().map(p=>'<option value="'+p.id+'">Untuk '+esc(p.n)+'</option>').join('')+'</select></div>')+
     '<div class="row2"><select class="inp" id="hc" aria-label="Filter kategori"><option value="">Semua kategori</option>'+cats+'</select><select class="inp" id="hp" aria-label="Filter kantong"><option value="">Semua kantong</option>'+S.pockets.map(p=>'<option value="'+p.id+'">'+esc(p.n)+'</option>').join('')+'</select></div></section>'+
     '<div id="hlist"></div>';
+}
+/* Riwayat: dashboard cards for whatever the filters currently show */
+function histCards(list,tin,tout,filtered){
+  const head='<div class="hsum"><span>'+list.length+' catatan · '+esc(mname(CUR))+'</span>'+(filtered?'<button class="link" data-act="hreset">Hapus filter</button>':'')+'</div>';
+  if(!list.length)return head;
+  const vis=list.filter(t=>!masked(t)),outs=vis.filter(t=>t.type==='out'),nIn=vis.filter(t=>t.type==='in').length;
+  const span=CUR===mkey(todayISO())?new Date().getDate():dim(CUR),perDay={};let big=null;
+  outs.forEach(t=>{perDay[t.date]=(perDay[t.date]||0)+t.amount;if(!big||t.amount>big.amount)big=t;});
+  const topDay=Object.keys(perDay).sort((a,b)=>perDay[b]-perDay[a])[0],net=tin-tout;
+  const card=(act,icon,c,label,val,sub,on,vstyle)=>'<'+(act?'button':'div')+' class="kpi"'+(act?' data-act="'+act+'"':'')+(on!=null?' aria-pressed="'+on+'"':'')+'><span class="kh"><span class="mono" style="--c:'+c+'">'+ic(icon)+'</span>'+label+'</span><span class="kv num"'+(vstyle?' style="'+vstyle+'"':'')+'>'+val+'</span><span class="ks"><span>'+sub+'</span></span></'+(act?'button':'div')+'>';
+  const cards=[
+    card('hcard:in','down','var(--in)','Masuk',fmtS(tin),nIn+' catatan',H.type==='in'),
+    card('hcard:out','up','var(--out)','Keluar',fmtS(tout),outs.length+' catatan',H.type==='out'),
+    card('','swap',net>=0?'var(--in)':'var(--out)','Selisih',(net>0?'+':net<0?'−':'')+fmtS(Math.abs(net)),'Masuk dikurangi keluar',null,'color:'+(net>=0?'var(--in)':'var(--out)')),
+    card('tab:chart','pulse','var(--k3)','Keluar/hari',fmtS(tout/span),topDay?'Paling boros '+(d=>d.getDate()+' '+BLN[d.getMonth()])(parseISO(topDay)):'Belum ada pengeluaran')];
+  if(big){const c=cat(ctype(big),big.cat);
+    cards.push(card('open:'+big.id,catIc(ctype(big),big.cat),ccolor(ctype(big),big.cat),'Pengeluaran terbesar',fmtS(big.amount)+'<small> '+esc(big.desc||c.n)+'</small>',dayLabel(big.date)+' · '+esc(c.n)).replace('class="kpi"','class="kpi wide"'));}
+  return head+'<div class="kpis hk">'+cards.join('')+'</div>';
 }
 function renderHistList(){
   const el=document.getElementById('hlist');if(!el)return;const q=H.q.trim().toLowerCase();
@@ -1745,7 +1770,8 @@ function renderHistList(){
     if(q&&(t.desc+' '+(t.type==='tf'?'pindah':cat(ctype(t),t.cat).n)+' '+pname(t.pocket)+' '+(t.to?pname(t.to):'')).toLowerCase().indexOf(q)<0)return false;return true;}));
   let tin=0,tout=0;list.forEach(t=>{if(masked(t))return;if(t.type==='in')tin+=t.amount;else if(t.type==='out')tout+=t.amount;});
   const filtered=!!(q||H.cat||H.pocket||H.biz||H.who||H.type!=='all');
-  let h='<p class="small muted" style="padding:6px 2px 0">'+list.length+' catatan di '+esc(mname(CUR))+' · keluar <b class="num" style="color:var(--out)">'+fmt(tout)+'</b> · masuk <b class="num" style="color:var(--in)">'+fmt(tin)+'</b>'+(filtered?' · <button class="link" data-act="hreset" style="font-size:13px;padding:0">Hapus filter</button>':'')+'</p>';
+  const hc=document.getElementById('hcards');if(hc)hc.innerHTML=histCards(list,tin,tout,filtered);
+  let h='';
   if(!list.length){el.innerHTML=h+'<div class="list empty" style="margin-top:10px"><b>'+(filtered?'Tidak ada yang cocok':'Bulan ini masih kosong')+'</b>'+(filtered?'Coba ubah filter atau kata kunci.':'Catat transaksi dengan tombol + di bawah.')+'</div>';return;}
   const groups={},order=[];list.forEach(t=>{if(!groups[t.date]){groups[t.date]=[];order.push(t.date);}groups[t.date].push(t);});
   order.forEach(d=>{let net=0;groups[d].forEach(t=>{if(t.type!=='tf'&&!masked(t))net+=t.type==='in'?t.amount:-t.amount;});
@@ -3635,7 +3661,8 @@ document.addEventListener('click',e=>{
   if(a.indexOf('qadd:')===0){TAB='add';F=newForm(v,{typeManual:true});UI.bd=null;render(true);window.scrollTo(0,0);softFocus(document.getElementById('fdesc'));return;}
   if(a==='mprev'||a==='mnext'){CUR=addMonth(CUR,a==='mprev'?-1:1);UI.bd=null;UI.bm=null;UI.donutSel=-1;render(true);return;}
   if(a.indexOf('goto:')===0){CUR=v;UI.bm=null;UI.bd=null;render(true);return;}
-  if(a.indexOf('hf:')===0){H.type=v;document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b===el));renderHistList();return;}
+  if(a.indexOf('hcard:')===0){H.type=H.type===v?'all':v;document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.act==='hf:'+H.type));renderHistList();return;}
+if(a.indexOf('hf:')===0){H.type=v;document.querySelectorAll('[data-act^="hf:"]').forEach(b=>b.setAttribute('aria-pressed',b===el));renderHistList();return;}
   if(a==='hreset'){H.type='all';H.cat='';H.pocket='';H.biz='';H.q='';H.who='';render();return;}
   if(a.indexOf('histwho:')===0){H.type='all';H.cat='';H.pocket='';H.biz='home';H.q='';H.who=v;closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
   if(a.indexOf('histtype:')===0){H.who='';H.type=v;H.cat='';H.pocket='';H.biz=MODE()?'':'home';H.q='';closeSheet();TAB='hist';render(true);window.scrollTo(0,0);return;}
