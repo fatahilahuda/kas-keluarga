@@ -16,7 +16,66 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Muarakas">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}
+/* Quick add popup (Android widget, shortcut and Quick Settings tile open index.html?quick=voice|text) */
+html.quick,html.quick body{background:transparent!important;min-height:100%}
+html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(script){display:none!important}
+.qk{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;z-index:40}
+.qk-scrim{position:absolute;inset:0;background:rgba(6,12,10,.42);animation:qkf .2s ease}
+.qk-sheet{position:relative;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + var(--nb,0px) + env(safe-area-inset-bottom));box-shadow:0 -10px 34px rgba(0,0,0,.2);animation:qku .28s cubic-bezier(.2,.8,.2,1);max-height:94vh;overflow:auto}
+.qk-sheet .grab{margin:0 auto 6px}
+.qk-top{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.qk-brand{display:flex;align-items:center;gap:7px;font:700 15px var(--display);margin-right:auto}
+.qk-brand img{width:22px;height:22px}
+.qk-x{width:36px;height:36px;border-radius:50%;border:0;background:var(--surface-2);color:var(--muted);display:grid;place-items:center}
+.qk-x svg{width:18px;height:18px}
+.qk-in{display:flex;gap:8px;align-items:center}
+.qk-in .inp{flex:1;min-width:0}
+.qk .qk-in .inp{font-size:17px;padding-top:14px;padding-bottom:14px}
+.mic-btn{width:48px;height:48px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.mic-btn svg{width:22px;height:22px}
+.qk-mid{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:12px 0 2px}
+.qk-amt{font:700 32px/1.1 var(--display);letter-spacing:-.5px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qk-amt.zero{color:var(--muted)}
+.qk .seg{flex:1}
+.qk .ai{margin-top:8px}
+.qk-l{font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 6px}
+.qk .chips,.qk .pchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.qk .chips::-webkit-scrollbar,.qk .pchips::-webkit-scrollbar{display:none}
+.qk .pchips{display:flex;gap:8px}
+.qk .chip,.qk .pchip{flex:none}
+.qk .pchip{min-width:128px}
+.qk .chip.addc{display:none}
+.qk.locked .pchip small{visibility:hidden}
+.qk .btn.qk-save{margin-top:16px;width:100%;font-size:16px;padding:15px}
+.qk-done{text-align:center;padding:22px 0 10px}
+.qk-ok{width:64px;height:64px;border-radius:50%;background:var(--in);color:#fff;display:grid;place-items:center;margin:0 auto 12px;animation:qkpop .35s cubic-bezier(.2,1.4,.4,1)}
+.qk-ok svg{width:32px;height:32px}
+.qk-damt{font:700 28px var(--display);margin-top:4px}
+@keyframes qku{from{transform:translateY(100%)}to{transform:none}}
+@keyframes qkf{from{opacity:0}}
+@keyframes qkpop{from{transform:scale(.4);opacity:0}}
+/* Voice: Muarakas's own listening sheet, never the Google dialog */
+.vo{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end}
+.vo-scrim{position:absolute;inset:0;background:rgba(6,12,10,.55);animation:qkf .2s ease}
+.vo-card{position:relative;width:100%;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:20px 20px calc(20px + var(--nb,0px) + env(safe-area-inset-bottom));text-align:center;animation:qku .24s cubic-bezier(.2,.8,.2,1)}
+.vo-state{font-weight:700;color:var(--accent);font-size:14px}
+.vo.err .vo-state{color:var(--warn)}
+.vo-mic{position:relative;width:120px;height:120px;margin:14px auto 10px;display:grid;place-items:center}
+.vo-mic button{position:relative;z-index:1;width:76px;height:76px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.vo-mic button svg{width:32px;height:32px}
+.vo-ring{position:absolute;inset:0;border-radius:50%;background:var(--accent);opacity:.16;transform:scale(calc(.64 + var(--lv,0) * .36));transition:transform .12s ease-out}
+.vo-wave{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);animation:vow 1.5s linear infinite}
+@keyframes vow{from{transform:scale(.64);opacity:.55}to{transform:scale(1.04);opacity:0}}
+.vo.err .vo-ring,.vo.err .vo-wave,.vo.think .vo-wave{display:none}
+.vo.err .vo-mic button{background:var(--surface-2);color:var(--ink)}
+.vo-text{font-size:19px;font-weight:600;min-height:28px;line-height:1.35;padding:0 6px}
+.vo-text.ph{color:var(--muted);font-size:14px;font-weight:500}
+.vo-parse{margin-top:6px;font:700 17px var(--display);color:var(--accent);min-height:24px}
+.vo-parse span{font:600 13px var(--body);color:var(--muted);margin-left:6px}
+.vo-btns{display:flex;justify-content:center;margin-top:14px}
+@media (prefers-reduced-motion:reduce){.vo-wave{display:none}.qk-sheet,.vo-card,.qk-scrim,.vo-scrim,.qk-ok{animation:none}.vo-ring{transition:none}}
+</style>
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1381,6 +1440,9 @@ const IP={
  edit:'<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>',
  check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ mic:'<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+ kbd:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
+ retry:'<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/>',
  inbox:'<path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/>',
  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01" stroke-width="2.6"/>',
  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
@@ -1440,8 +1502,16 @@ const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').ma
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 
 let SV=0;
-function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}return null;}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+/* ?quick=voice|text: the Android widget/shortcut popup. Only the Catat sheet is shown, over the home screen. */
+const QUICK=(()=>{try{const q=new URLSearchParams(location.search).get('quick');return q==='voice'||q==='text'?q:'';}catch(e){return '';}})();
+if(QUICK)document.documentElement.classList.add('quick');
+/* The popup and the main app are two pages on the same storage. Each stamps its writes, so neither
+   silently drops a catatan the other saved meanwhile (see persist and the visibilitychange reload). */
+const TABID=Math.random().toString(36).slice(2);let SEEN=0;
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);SEEN=(o&&o.wAt)||0;return o;}}catch(e){}return null;}
+function foreignState(){try{const r=localStorage.getItem(KEY);if(!r)return null;const o=JSON.parse(r);return o&&o.wBy&&o.wBy!==TABID&&(o.wAt||0)>SEEN?o:null;}catch(e){return null;}}
+function persist(){try{const f=foreignState();if(f){const have=new Set(S.tx.map(t=>t.id)),del=S.deleted||{};(f.tx||[]).forEach(t=>{if(t&&t.id&&!have.has(t.id)&&!del[t.id])S.tx.push(t);});}
+  S.wAt=Date.now();S.wBy=TABID;SEEN=S.wAt;localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}widgetPush();}
 function save(){SV++;persist();if(typeof schedSync==='function')schedSync();}
 function samplePockets(){return DEFAULT_POCKETS.map(p=>Object.assign({},p,{start:{usaha:350000,emas:4500000}[p.id]||0,owner:{gaji:'m1',usaha:'m2',side1:'m1',side2:'m2'}[p.id]||'shared',u:1}));}
 function samplePeople(){return [{id:'f_kakak',n:'Kakak',role:'anak',e:'👧',k:2,sample:true,u:1},{id:'f_adik',n:'Adik',role:'anak',e:'👦',k:1,sample:true,u:1},{id:'f_nenek',n:'Nenek',role:'ortu',e:'👵',k:5,sample:true,u:1}];}
@@ -2236,7 +2306,8 @@ function vAdd(){
   if(!mb0&&BOOKT[F.type])F=newForm('out',{date:F.date});
   const ty=F.type,B=balances(),amount=F._amt||0;
   const seg=MODE()?bookSeg(MODE()):'<div class="seg" role="group" aria-label="Jenis transaksi"><button class="o" data-act="ftype:out" aria-pressed="'+(ty==='out')+'">Keluar</button><button class="i" data-act="ftype:in" aria-pressed="'+(ty==='in')+'">Masuk</button><button class="t" data-act="ftype:tf" aria-pressed="'+(ty==='tf')+'">Pindah</button></div>';
-  const desc='<div class="field"><label for="fdesc">Keterangan'+(ty==='tf'?' <span class="hint">(boleh kosong)</span>':'')+'</label><input class="inp" id="fdesc" autocomplete="off" placeholder="'+({out:'contoh: nasi padang 25rb',in:'contoh: gaji oktober 6,2jt',tf:'contoh: nabung emas'})[ty]+'"></div>';
+  const descIn='<input class="inp" id="fdesc" autocomplete="off" placeholder="'+({out:'contoh: nasi padang 25rb',in:'contoh: gaji oktober 6,2jt',tf:'contoh: nabung emas'})[ty]+'">';
+  const desc='<div class="field"><label for="fdesc">Keterangan'+(ty==='tf'?' <span class="hint">(boleh kosong)</span>':'')+'</label>'+(hasVoice()?'<div class="qk-in">'+descIn+'<button class="mic-btn" data-act="vmic" aria-label="Catat dengan suara">'+ic('mic')+'</button></div>':descIn)+'</div>';
   const amt='<div class="field"><label for="famt">Nominal</label><input class="inp amt" id="famt" inputmode="numeric" autocomplete="off" placeholder="Rp 0"><span class="err" id="ferr" hidden></span></div>';
   const recent=sortTx(S.tx.filter(t=>!t.sample)).slice(0,3);
   const recentH=recent.length?'<section><h2 style="margin-bottom:8px">Baru kamu catat</h2><div class="list">'+recent.map(txRow).join('')+'</div></section>':'';
@@ -2271,6 +2342,7 @@ function refreshForm(){
   const tmp=document.createElement('div');tmp.innerHTML=vAdd();
   ['fbiz','fai','fcats','fpk','ffrom','fto','fwarn','ftab','fhide','ffor'].forEach(id=>{const a=document.getElementById(id),b=tmp.querySelector('#'+id);if(a&&b)a.innerHTML=b.innerHTML;});
   const fw=document.getElementById('fforw'),fw2=tmp.querySelector('#fforw');if(fw&&fw2)fw.hidden=fw2.hidden;
+  if(QUICK)qkPaint();
 }
 function onDescInput(){
   const d=document.getElementById('fdesc'),a=document.getElementById('famt'),v=d.value;
@@ -2311,8 +2383,144 @@ function saveForm(){
     learn(cty,desc,c,F.pocket);save();
     if(tx.hidden){toast('Tersimpan sebagai rahasia. '+partner().n+' akan melihatnya sebagai kado tertutup.');if(S.family&&!SECKEY)setTimeout(pinSheet,350);}else toast((F.biz?bname(F.biz)+' · ':'')+(corrected?'AI belajar: "'+desc+'" → '+cat(cty,c).n:'Tersimpan di '+cat(cty,c).n+' · '+pname(F.pocket)));
   }
+  if(QUICK){quickSaved(S.tx[S.tx.length-1]);return;}
   F=newForm(F.type,{date});if(mkey(date)!==CUR)CUR=mkey(date);
   render();const nd=document.getElementById('fdesc');if(nd)nd.focus();
+}
+
+/* ---------- Quick add popup (Android widget / shortcut / Quick Settings) ---------- */
+const QK={ty:'',done:''};
+const QK_DAYS=['Hari ini','Kemarin','2 hari lalu'];
+function quickClose(){const N=window.KasQuickNative;if(N&&N.close){N.close();return;}if(history.length>1)history.back();else location.replace('./');}
+function qkShell(inner){return '<div class="qk-scrim" data-act="qclose"></div><div class="qk-sheet" role="dialog" aria-modal="true" aria-label="Catat cepat"><div class="grab"></div>'+inner+'</div>';}
+function vQuick(){
+  if(BOOKT[F.type]||!['out','in','tf'].includes(F.type))F=newForm('out');
+  const ty=F.type,amt=F._amt||0,gap=Math.round((parseISO(todayISO())-parseISO(F.date||todayISO()))/864e5);
+  const top='<div class="qk-top"><span class="qk-brand"><img src="brand/muarakas-mark.svg" alt="">Catat cepat</span><button class="qk-x" data-act="qclose" aria-label="Tutup">'+ic('x')+'</button></div>';
+  const inp='<div class="qk-in"><input class="inp" id="fdesc" autocomplete="off" enterkeyhint="done" placeholder="'+({out:'bakso 15rb',in:'gaji 6,2jt',tf:'nabung 500rb'})[ty]+'" aria-label="Keterangan dan nominal">'+(hasVoice()?'<button class="mic-btn" data-act="vmic" aria-label="Catat dengan suara">'+ic('mic')+'</button>':'')+'</div>'+
+    '<input type="hidden" id="famt"><input type="hidden" id="fdate" value="'+(F.date||todayISO())+'"><span class="err" id="ferr" hidden></span>';
+  const mid='<div class="qk-mid"><div class="qk-amt'+(amt?'':' zero')+'" id="qamt">'+(amt?fmt(amt):'Rp 0')+'</div><button class="chip" data-act="qdate" id="qdate">'+ic('cal','ci')+(QK_DAYS[gap]||QK_DAYS[0])+'</button></div>';
+  const seg='<div class="seg" role="group" aria-label="Jenis transaksi"><button class="o" data-act="ftype:out" aria-pressed="'+(ty==='out')+'">Keluar</button><button class="i" data-act="ftype:in" aria-pressed="'+(ty==='in')+'">Masuk</button><button class="t" data-act="ftype:tf" aria-pressed="'+(ty==='tf')+'">Pindah</button></div>';
+  const body=ty==='tf'
+    ?'<div class="qk-l">Dari kantong</div><div class="pchips" id="ffrom"></div><div class="qk-l">Ke kantong</div><div class="pchips" id="fto"></div><div id="fwarn"></div>'
+    :'<div class="ai" id="fai"></div><div class="qk-l">Kategori</div><div class="chips" id="fcats"></div><div class="qk-l">'+(ty==='out'?'Ambil dari kantong':'Masuk ke kantong')+'</div><div class="pchips" id="fpk"></div><div id="fwarn"></div><div id="fhide"></div>';
+  return top+seg+'<div style="height:12px"></div>'+inp+mid+body+'<button class="btn '+(ty==='in'?'i':ty==='out'?'o':'')+' qk-save" data-act="fsave">'+ic('check')+'Simpan</button>';
+}
+function renderQuick(){
+  let el=document.getElementById('qk');
+  if(!el){el=document.createElement('div');el.id='qk';el.className='qk';document.body.appendChild(el);}
+  el.classList.toggle('locked',!!lsGet('kas.lock'));
+  if(needOnb()){QK.ty='';el.innerHTML=qkShell('<div class="qk-done"><p style="margin-bottom:14px">Siapkan Muarakas dulu di aplikasinya, lalu catat cepat bisa dipakai dari sini.</p><button class="btn" data-act="qopen">Buka Muarakas</button></div>');return;}
+  if(QK.done){QK.ty='';el.innerHTML=qkShell(QK.done);return;}
+  // Background redraws (sync, timers) must not wipe what is being typed: refresh in place instead.
+  if(QK.ty===F.type&&document.getElementById('fdesc')){refreshForm();return;}
+  const old=document.getElementById('fdesc'),keep=old?old.value:'';
+  QK.ty=F.type;el.innerHTML=qkShell(vQuick());
+  const d=document.getElementById('fdesc');if(keep){d.value=keep;const p=parseAmount(keep);document.getElementById('famt').value=p&&!F.amtManual?NF.format(p.val):'';}
+  refreshForm();
+}
+function qkPaint(){
+  const a=document.getElementById('qamt');if(a){const v=F._amt||0;a.textContent=v?fmt(v):'Rp 0';a.classList.toggle('zero',!v);}
+  const sel=document.querySelector('.qk #fcats [aria-pressed="true"],.qk #fpk [aria-pressed="true"]');
+  document.querySelectorAll('.qk #fcats [aria-pressed="true"],.qk #fpk [aria-pressed="true"],.qk #ffrom [aria-pressed="true"],.qk #fto [aria-pressed="true"]').forEach(b=>{try{b.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}});
+}
+async function quickSaved(t){
+  if(!t)return;
+  const label=t.type==='tf'?pname(t.pocket)+' → '+pname(t.to):cat(ctype(t),t.cat).n+' · '+pname(t.pocket);
+  QK.done='<div class="qk-done"><div class="qk-ok">'+ic('check')+'</div><b>Tersimpan</b><div class="qk-damt">'+fmt(t.amount)+'</div><p class="small muted">'+esc(label)+'</p></div>';
+  renderQuick();try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
+  widgetPushNow();
+  try{await Promise.race([syncNow(),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
+  setTimeout(quickClose,650);
+}
+
+/* ---------- Home screen widget: numbers handed to the native widget (Android app only) ---------- */
+function widgetPush(){clearTimeout(widgetPush.t);widgetPush.t=setTimeout(widgetPushNow,700);}
+function widgetPushNow(){
+  const N=window.KasQuickNative;if(!N||!N.widget)return;
+  try{
+    const now=new Date(),t=totals(mkey(todayISO()),null,'home'),bud=+(S.settings&&S.settings.budget)||0;
+    const left=bud>0?bud-t.hout:t.hin-t.hout,frac=bud>0?t.hout/bud:t.hin>0?t.hout/t.hin:0,short=n=>fmtS(n).replace('Rp ','');
+    N.widget(JSON.stringify({ok:!needOnb(),locked:!!lsGet('kas.lock'),
+      label:(bud>0?'Sisa anggaran ':'Sisa ')+BULAN[now.getMonth()],big:fmtS(left),
+      sub:bud>0?'terpakai '+short(t.hout)+' · '+Math.round(frac*100)+'%':'masuk '+short(t.hin)+' · keluar '+short(t.hout),
+      pct:Math.max(0,Math.min(100,Math.round(frac*100))),tone:left<0||frac>1?'bad':frac>=.8?'warn':'ok'}));
+  }catch(e){}
+}
+
+/* ---------- Voice input: own listening sheet; native recognizer in the app, Web Speech in browsers ---------- */
+const VO={on:false,final:false,text:'',eng:null};
+function webSpeech(R){let r=null;return {start(){r=new R();r.lang='id-ID';r.interimResults=true;r.maxAlternatives=5;r.continuous=false;
+    r.onstart=()=>voiceEvent({type:'ready'});
+    r.onresult=e=>{const res=e.results[e.results.length-1],alts=[];for(let i=0;i<res.length;i++)alts.push(res[i].transcript);voiceEvent(res.isFinal?{type:'final',alts}:{type:'partial',text:alts[0]});};
+    r.onerror=e=>voiceEvent({type:'error',code:e.error==='not-allowed'||e.error==='service-not-allowed'?'perm':e.error==='no-speech'?'nomatch':e.error==='network'?'network':e.error==='language-not-supported'?'lang':'other'});
+    r.onend=()=>{if(VO.on&&!VO.final)voiceEvent({type:'error',code:'nomatch'});};
+    r.start();},stop(){try{r&&r.stop();}catch(e){}},cancel(){try{r&&r.abort();}catch(e){}}};}
+function voiceEngine(){
+  const N=window.KasQuickNative;
+  if(N&&N.voiceStart){let ok=true;try{ok=N.voiceAvailable();}catch(e){}if(ok)return {start:()=>N.voiceStart('id-ID'),stop:()=>N.voiceStop(),cancel:()=>N.voiceCancel()};}
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  return R?webSpeech(R):null;
+}
+function hasVoice(){try{return !!voiceEngine();}catch(e){return false;}}
+window.__kasVoice=function(ev){try{voiceEvent(typeof ev==='string'?JSON.parse(ev):ev);}catch(e){}};
+/* Speech often says "lima belas ribu": turn Indonesian number words into digits for parseAmount. */
+function normSpeech(str){
+  const U={satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9};
+  const w=String(str||'').toLowerCase().replace(/\brp\.?\s*(?=\d)/g,' ').split(/\s+/).filter(Boolean),out=[];
+  let tot=0,cur=0,last=0,any=false;
+  const flush=()=>{if(any)out.push(String(tot+cur+last));tot=cur=last=0;any=false;};
+  w.forEach(x=>{
+    if(U[x]){if(last)cur+=last;last=U[x];any=true;}
+    else if(x==='sepuluh'){cur+=10;any=true;}else if(x==='sebelas'){cur+=11;any=true;}else if(x==='seratus'){cur+=100;any=true;}
+    else if(x==='seribu'){tot+=1000;any=true;}else if(x==='sejuta'){tot+=1e6;any=true;}
+    else if(x==='belas'&&last){cur+=last+10;last=0;}else if(x==='puluh'&&last){cur+=last*10;last=0;}else if(x==='ratus'&&last){cur+=last*100;last=0;}
+    else if((x==='ribu'||x==='juta')&&any){tot+=(cur+last||1)*(x==='ribu'?1000:1e6);cur=last=0;}
+    else{flush();out.push(x);}
+  });flush();return out.join(' ');
+}
+function voiceStart(){
+  const eng=voiceEngine();if(!eng){toast('Input suara belum tersedia di perangkat ini');return;}
+  const d=document.getElementById('fdesc');if(d)d.blur();
+  VO.eng=eng;VO.on=true;VO.final=false;VO.text='';voiceShow('wait');
+  try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}
+}
+function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();}
+function voiceShow(st,code){
+  let o=document.getElementById('vo');if(!o){o=document.createElement('div');o.id='vo';document.body.appendChild(o);}
+  o.className='vo '+st;
+  const msg={wait:'Siap mendengarkan…',listen:'Mendengarkan…',think:'Memproses…',err:'Belum berhasil'}[st];
+  const em={perm:'Izinkan mikrofon untuk Muarakas, lalu ketuk mikrofon lagi.',nomatch:'Belum terdengar. Ketuk mikrofon untuk coba lagi.',network:'Butuh internet untuk mengenali suara.',
+    lang:'Bahasa Indonesia belum tersedia di pengenal suara HP ini.',busy:'Mikrofon sedang dipakai aplikasi lain.',unavailable:'HP ini belum punya layanan pengenal suara.',other:'Suara belum bisa dikenali. Coba lagi.'}[code]||'Suara belum bisa dikenali. Coba lagi.';
+  const err=st==='err';
+  o.innerHTML='<div class="vo-scrim" data-act="vcancel"></div><div class="vo-card" role="dialog" aria-modal="true" aria-label="Catat dengan suara"><div class="vo-state">'+msg+'</div>'+
+    '<div class="vo-mic"><span class="vo-wave"></span><span class="vo-ring"></span><button data-act="'+(err?'vretry':'vstop')+'" aria-label="'+(err?'Coba lagi':'Selesai bicara')+'">'+ic(err?'retry':'mic')+'</button></div>'+
+    '<div class="vo-text'+(err||!VO.text?' ph':'')+'" id="vo-text">'+esc(err?em:VO.text||'Sebutkan, misal “bakso lima belas ribu”')+'</div><div class="vo-parse" id="vo-parse"></div>'+
+    '<div class="vo-btns"><button class="btn ghost sm" data-act="vkbd">'+ic('kbd','ci')+'Ketik saja</button></div></div>';
+  if(!err)voicePaint();
+}
+function voicePaint(){
+  const t=document.getElementById('vo-text'),p=document.getElementById('vo-parse');if(!t||!p)return;
+  if(VO.text){t.textContent=VO.text;t.classList.remove('ph');}
+  const n=normSpeech(VO.text),a=parseAmount(n),rest=a?(n.slice(0,a.start)+' '+n.slice(a.start+a.len)).trim():n;
+  const ty=F.type==='in'?'in':'out',ai=rest?predict(ty,rest):null;
+  p.innerHTML=(a?fmt(a.val):'')+(ai&&ai.conf>0?'<span>'+esc(cat(ty,ai.best).n)+'</span>':'');
+}
+function voiceEvent(ev){
+  if(!VO.on||!ev)return;
+  if(ev.type==='ready')voiceShow('listen');
+  else if(ev.type==='rms'){const o=document.getElementById('vo');if(o)o.style.setProperty('--lv',String(Math.max(0,Math.min(1,((+ev.level||0)+2)/12))));}
+  else if(ev.type==='partial'){if(ev.text){VO.text=ev.text;voicePaint();}}
+  else if(ev.type==='end'){if(!VO.final)voiceShow('think');}
+  else if(ev.type==='final'){VO.final=true;const alts=(ev.alts||[]).filter(Boolean);voiceApply(alts.find(x=>parseAmount(normSpeech(x)))||alts[0]||'');}
+  else if(ev.type==='error')voiceShow('err',ev.code);
+}
+function voiceApply(text){
+  voiceClose();if(!text)return;
+  if(!QUICK&&TAB!=='add'){TAB='add';F=newForm('out');render();}
+  const d=document.getElementById('fdesc');if(!d)return;
+  d.value=normSpeech(text);onDescInput();
+  const nd=document.getElementById('fdesc');if(nd)nd.blur();
 }
 
 function rules(t){
@@ -4091,7 +4299,7 @@ function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('
 /* ---------- render ---------- */
 const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
-function render(anim){BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClose();
+function render(anim){if(QUICK){renderQuick();return;}BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClose();
   ANIM=!!anim&&!RM;
   if(TAB==='zakat'&&!modOn('zakat'))TAB='chart';
   const mb=MODE(),mc=document.getElementById('modechip');if(mc){mc.hidden=!mb;if(mb){mc.innerHTML='<span class="mi" style="--c:var(--k'+mb.k+')">'+ic(BOOK_IC[bkind(mb)]||'target')+'</span><span class="mn">'+esc(mb.n)+'</span><svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';mc.setAttribute('aria-label','Tutup halaman '+mb.n+', kembali ke '+HOMEN().toLowerCase());}}
@@ -4247,6 +4455,15 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
   if(a==='watch-link'){watchLink(el);return;}
+  if(a==='vmic'){voiceStart();return;}
+  if(a==='vstop'){if(VO.eng)try{VO.eng.stop();}catch(e){}voiceShow('think');return;}
+  if(a==='vcancel'){if(VO.eng)try{VO.eng.cancel();}catch(e){}voiceClose();return;}
+  if(a==='vretry'){voiceStart();return;}
+  if(a==='vkbd'){if(VO.eng)try{VO.eng.cancel();}catch(e){}voiceClose();const d=document.getElementById('fdesc');if(d)d.focus();return;}
+  if(a==='qclose'){if(VO.eng)try{VO.eng.cancel();}catch(e){}quickClose();return;}
+  if(a==='qopen'){const N=window.KasQuickNative;if(N&&N.openApp)N.openApp();else location.href='./';return;}
+  if(a==='qdate'){const t0=parseISO(todayISO()),g=(Math.round((t0-parseISO(F.date||todayISO()))/864e5)+1)%3,d=new Date(t0);d.setDate(d.getDate()-g);F.date=iso(d);
+    const f=document.getElementById('fdate');if(f)f.value=F.date;el.innerHTML=ic('cal','ci')+QK_DAYS[g];return;}
   if(a==='fam-copy'){copyPlain(fmtCode(S.family.code),'Kode keluarga disalin');return;}
   if(a==='fam-invite'){inviteSheet();return;}
   if(a==='fam-link'){const txt='Yuk pakai Muarakas bareng. Ketuk tautan ini untuk bergabung: '+inviteURL(S.family.code)+' (atau Pengaturan → Gabung dengan kode: '+fmtCode(S.family.code)+')';
@@ -4485,6 +4702,13 @@ if(IS_APK){hookOldShimBack();document.addEventListener('DOMContentLoaded',hookOl
   document.addEventListener('touchcancel',end,{passive:true});
 })();
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
+if(QUICK){
+  // Popup: no lock screen (it can only add, and hides balances when the app lock is on), no onboarding.
+  try{const N=window.KasQuickNative;if(N&&N.navInset)document.documentElement.style.setProperty('--nb',(+N.navInset()||0)+'px');}catch(e){}
+  render(true);loadKey().then(()=>{unlockOwnSealed();syncNow();});
+  if(QUICK==='voice'&&!needOnb())setTimeout(voiceStart,180);
+  else if(!needOnb())setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);
+}else{
 render(true);
 if(needOnb())openOnb();
 showLock();bioProbe().then(v=>{BIO_OK=v;});
@@ -4492,8 +4716,13 @@ loadKey().then(()=>{unlockOwnSealed();syncNow();});
 checkInviteHash();window.addEventListener('hashchange',checkInviteHash);
 fetchGold();setInterval(()=>{if(document.visibilityState==='visible')fetchGold();},36e5);
 setInterval(()=>{if(document.visibilityState==='visible')syncNow();},15000);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;
+  // A catatan saved from the widget popup while this page sat in the background: take it in.
+  const f=foreignState();if(f){const before=S.tx.length;S=f;SEEN=f.wAt||0;applyCats();remapCats();buildModel();render();const n=S.tx.length-before;if(n>0)toast(n+' catatan baru dari catat cepat');}
+  syncNow();});
 window.addEventListener('online',()=>syncNow());
+widgetPush();
+}
 window.__kas={parseReceipt,parseAmount,predict,merge,buildTips,balances,S:()=>S,exportObj,syncNow,SB,setPin};
 })();
 </script>
