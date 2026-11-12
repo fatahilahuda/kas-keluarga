@@ -12,7 +12,7 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.tiles.renderer.TileRenderer
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.android.resources.ScreenRound
+import com.android.resources.Density
 import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
@@ -64,12 +64,12 @@ class ScreenshotTest {
     @Test fun home() = shot("home") { HomeScreen(kas, {}, {}, {}, {}, {}) }
 
     @Test fun homeFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500, screenRound = ScreenRound.NOTROUND))
+        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 450, screenHeight = 1500, density = Density.XHIGH, xdpi = 320, ydpi = 320))
         shot("home_full") { HomeScreen(kas, {}, {}, {}, {}, {}) }
     }
 
     @Test fun summaryFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500, screenRound = ScreenRound.NOTROUND))
+        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 450, screenHeight = 1500, density = Density.XHIGH, xdpi = 320, ydpi = 320))
         shot("summary_full") { SummaryScreen(kas) }
     }
 

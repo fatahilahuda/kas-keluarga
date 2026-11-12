@@ -81,7 +81,7 @@ object TileStyle {
  */
 object TileLayouts {
     const val RES_VERSION = "2"
-    private const val W = 136f // content width that fits the smallest round watches
+    private const val W = 150f // content width that fits the smallest round watches
 
     fun resources(): ResourceBuilders.Resources {
         fun img(id: Int) = ResourceBuilders.ImageResource.Builder()
@@ -197,8 +197,8 @@ object TileLayouts {
                         .build())
                     .build(),
             )
-            .addContent(L.Box.Builder().setWidth(dp(W - 10f - 52f)).setHorizontalAlignment(L.HORIZONTAL_ALIGN_START).addContent(text(r.name, 12f, TileStyle.INK, L.FONT_WEIGHT_MEDIUM)).build())
-            .addContent(L.Box.Builder().setWidth(dp(52f)).setHorizontalAlignment(L.HORIZONTAL_ALIGN_END).addContent(text(Fmt.short(r.amount, rp = false), 12f, if (r.amount < 0) TileStyle.BAD else TileStyle.INK, L.FONT_WEIGHT_BOLD)).build())
+            .addContent(L.Box.Builder().setWidth(dp(W - 10f - 48f)).setHorizontalAlignment(L.HORIZONTAL_ALIGN_START).addContent(text(r.name, 12f, TileStyle.INK, L.FONT_WEIGHT_MEDIUM)).build())
+            .addContent(L.Box.Builder().setWidth(dp(48f)).setHorizontalAlignment(L.HORIZONTAL_ALIGN_END).addContent(text(Fmt.short(r.amount, rp = false), 12f, if (r.amount < 0) TileStyle.BAD else TileStyle.INK, L.FONT_WEIGHT_BOLD)).build())
             .build()
         val col = L.Column.Builder().setHorizontalAlignment(L.HORIZONTAL_ALIGN_START).addContent(head)
         if (showBar) {
