@@ -1133,11 +1133,16 @@ details[open]>summary::before{transform:rotate(45deg)}
 .perm.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .perm[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none;border-color:var(--accent)}
 /* page transitions */
-#view.pg-r{animation:pgR .3s cubic-bezier(.2,.8,.2,1)}
-#view.pg-l{animation:pgL .3s cubic-bezier(.2,.8,.2,1)}
+#view.pg-r{animation:pgR .3s .12s cubic-bezier(.2,.8,.2,1) both}
+#view.pg-l{animation:pgL .3s .12s cubic-bezier(.2,.8,.2,1) both}
 @keyframes pgR{from{opacity:0;transform:translateX(24px)}}
 @keyframes pgL{from{opacity:0;transform:translateX(-24px)}}
-@media (prefers-reduced-motion:reduce){#view.pg-r,#view.pg-l{animation:none}}
+.pg-ghost{position:fixed;z-index:3;overflow:hidden;pointer-events:none;margin:0;contain:paint;background:var(--bg);box-shadow:0 0 0 16px var(--bg)}
+.pg-out-l{animation:pgOutL .14s cubic-bezier(.4,0,1,1) both}
+.pg-out-r{animation:pgOutR .14s cubic-bezier(.4,0,1,1) both}
+@keyframes pgOutL{to{opacity:0;transform:translateX(-20px)}}
+@keyframes pgOutR{to{opacity:0;transform:translateX(20px)}}
+@media (prefers-reduced-motion:reduce){#view.pg-r,#view.pg-l,.pg-ghost{animation:none}.pg-ghost{display:none}}
 </style>
 
 <div class="app">
@@ -2028,15 +2033,29 @@ addEventListener('resize',()=>{if(perIsOpen())perClose();});
 /* ---------- page transitions: every tab, Kita section and Pengaturan subpage slides in from the
    side it sits on; changing month slides the same way as the month moved. ---------- */
 const PG_ORDER=['home','hist','add','chart','tips','zakat','kita','set'],KT_ORDER=['sum','prop','gift','game'];let PG_LAST=null;
-function pageAnim(){
-  const v=document.getElementById('view'),key=TAB+'|'+(TAB==='set'?(UI.st||''):'')+'|'+(TAB==='kita'?(UI.kt||'sum'):''),prev=PG_LAST;
-  PG_LAST={k:key,cur:CUR};if(!prev||RM)return;
-  let dir=0;const [pt,ps,pk]=prev.k.split('|');
-  if(prev.k!==key){if(pt!==TAB)dir=PG_ORDER.indexOf(TAB)>=PG_ORDER.indexOf(pt)?1:-1;else if(TAB==='set')dir=UI.st?1:-1;else if(TAB==='kita')dir=KT_ORDER.indexOf(UI.kt||'sum')>=KT_ORDER.indexOf(pk)?1:-1;}
-  else if(prev.cur!==CUR)dir=CUR>prev.cur?1:-1;
-  if(!dir)return;
-  v.classList.remove('pg-r','pg-l');void v.offsetWidth;v.classList.add(dir>0?'pg-r':'pg-l');
+/* Which way the page moved since the last render: 1 forward, -1 back, 0 same page. */
+function pageDir(){
+  const key=TAB+'|'+(TAB==='set'?(UI.st||''):'')+'|'+(TAB==='kita'?(UI.kt||'sum'):''),prev=PG_LAST;
+  PG_LAST={k:key,cur:CUR};if(!prev||RM)return 0;
+  const [pt,ps,pk]=prev.k.split('|');
+  if(prev.k!==key){if(pt!==TAB)return PG_ORDER.indexOf(TAB)>=PG_ORDER.indexOf(pt)?1:-1;if(TAB==='set')return UI.st?1:-1;if(TAB==='kita')return KT_ORDER.indexOf(UI.kt||'sum')>=KT_ORDER.indexOf(pk)?1:-1;return 1;}
+  return prev.cur!==CUR?(CUR>prev.cur?1:-1):0;
 }
+/* The old page leaves while the new one arrives: a frozen copy of the old page (ids stripped so
+   nothing can find it) is pinned where it was and slides out under the header, and the new page
+   slides in from the other side. The real DOM swaps instantly, so code after render() sees it. */
+function pageGhost(dir){
+  const v=document.getElementById('view');if(!v||!v.firstChild)return;
+  document.querySelectorAll('.pg-ghost').forEach(g=>g.remove());
+  const r=v.getBoundingClientRect(),g=v.cloneNode(true);
+  g.removeAttribute('id');g.removeAttribute('aria-live');g.setAttribute('aria-hidden','true');g.setAttribute('inert','');
+  g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+  g.className='stack pg-ghost '+(dir>0?'pg-out-l':'pg-out-r');
+  g.style.cssText='top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,innerHeight-r.top)+'px';
+  document.body.appendChild(g);
+  const kill=()=>g.remove();g.addEventListener('animationend',kill);setTimeout(kill,600);
+}
+function pageIn(dir){const v=document.getElementById('view');v.classList.remove('pg-r','pg-l');void v.offsetWidth;v.classList.add(dir>0?'pg-r':'pg-l');}
 document.addEventListener('animationend',e=>{if(e.target&&e.target.id==='view')e.target.classList.remove('pg-r','pg-l');});
 /* ---------- our own dropdown and date field (no device pickers) ----------
    ddField() renders a hidden input (same id the old <select> had, so save code and change
@@ -3816,7 +3835,7 @@ function vSet(){
   UI.st=null;
   const on=MODS.filter(m=>modOn(m[0])).map(m=>m[1]),rec=SET().rec.length,cbn=Object.keys(SET().cbud).length,locked=!!lsGet('kas.lock');
   const who=SOLO()?'Dipakai sendiri':esc(mem('m1').n)+' & '+esc(mem('m2').n)+' · HP ini milik '+esc(me().n);
-  return '<div class="pgh"><h1>Pengaturan</h1></div>'+
+  return '<div class="pgh"><button class="ib" data-act="setleave" aria-label="Kembali">'+ic('back')+'</button><h1>Pengaturan</h1></div>'+
    '<button class="card mecard" data-act="settings:profil">'+av(S.me,2)+'<span class="st"><b>'+esc(me().n)+'</b><span class="hint">'+who+'</span></span>'+ic('chev','chv')+'</button>'+
    setGroup(SOLO()?'Akun':'Keluarga',[setRow('profil','users','var(--k0)',SOLO()?'Profil':'Profil & pasangan',SOLO()?'Nama, dipakai sendiri atau berdua':'Nama, pemilik HP, pemasukan rahasia')].concat(SOLO()?[]:[setRow('sinkron','link','var(--k3)','Sinkron dua HP',!onlineOK()?'Hanya di aplikasi terpasang':S.family?'<span id="setsync">'+syncLabel()+'</span>':'Belum tersambung')]))+
    setGroup('Keuangan',[
@@ -3833,9 +3852,13 @@ function vSet(){
    '<div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div>';
 }
 /* Open Pengaturan, or refresh it. With a subpage name it goes there; '' is the menu. */
+/* Pengaturan remembers where it was opened from, so leaving it goes back there, not to Ringkasan. */
+let SET_FROM=null;
+function leaveSettings(){const f=SET_FROM||{tab:'home',y:0};SET_FROM=null;TAB=f.tab==='set'?'home':f.tab;if(f.kt)UI.kt=f.kt;UI.st=null;UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,f.y||0);}
 function openSettings(sub){
   if(!document.getElementById('sheet').hidden)closeSheet();
   const from=TAB!=='set';if(from&&sub==null)sub='';
+  if(from)SET_FROM={tab:TAB,kt:UI.kt,y:scrollY};
   const moved=from||(sub!=null&&(sub||null)!==UI.st);
   TAB='set';if(sub!=null)UI.st=sub||null;
   render(moved);if(moved)window.scrollTo(0,0);
@@ -3967,8 +3990,9 @@ function render(anim){BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClo
   const kl=document.getElementById('kitalbl');if(kl)kl.textContent=SOLO()?'Keluarga':'Kita';
   const kc=SOLO()?0:kitaCount(),kb=document.getElementById('kitabadge');if(kb){kb.hidden=!kc;kb.textContent=kc;}
   document.querySelectorAll('.nav button').forEach(b=>{if(b.getAttribute('data-act')==='tab:'+(TAB==='tips'||TAB==='zakat'?'chart':TAB))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  const pgd=pageDir();if(pgd)pageGhost(pgd);
   document.getElementById('view').innerHTML=(TAB==='chart'||TAB==='tips'||TAB==='zakat'?chartSeg(TAB):'')+VIEWS[TAB]();
-  pageAnim();
+  if(pgd)pageIn(pgd);
   if(TAB==='hist'){refreshHistFilters();renderHistList();}
   if(TAB==='add')refreshForm();
   if(TAB==='home')heroAnim();
@@ -4198,6 +4222,7 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a.indexOf('fdpick:')===0){F.calOpen=false;setFDate(v);return;}
   if(a==='settings'){openSettings('');return;}
   if(a.indexOf('settings:')===0){openSettings(v);return;}
+  if(a==='setleave'){leaveSettings();return;}
   if(a==='setback'){UI.st=null;render(true);window.scrollTo(0,0);return;}
   if(a==='clearsamples'){clearSamplesData();save();closeSheet();render(true);toast('Data contoh dihapus. Isi saldo awal tiap kantong, lalu mulai catat!');return;}
   if(a==='wipe'){if(el.dataset.armed!=='1'){el.dataset.armed='1';el.textContent='Ketuk lagi untuk menghapus semuanya';return;}
@@ -4247,6 +4272,7 @@ function backStep(){
   if(perIsOpen()){perClose(true);return true;}
   if(!document.getElementById('sheet').hidden){closeSheet();return true;}
   if(TAB==='set'&&UI.st){UI.st=null;render(true);window.scrollTo(0,0);return true;}
+  if(TAB==='set'){leaveSettings();return true;}
   if(UI.gfs){closeGame();return true;}
   if(TAB!=='home'){TAB='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
   if(MODE()){PG='home';UI.bd=null;UI.bm=null;render(true);window.scrollTo(0,0);return true;}
