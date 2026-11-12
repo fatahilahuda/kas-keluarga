@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
@@ -101,7 +102,7 @@ val LocalStaticPage = staticCompositionLocalOf { false }
 
 /** A scrolling round-screen page with the clock on top and the scroll indicator on the side. */
 @Composable
-fun Page(content: PageScope.() -> Unit) {
+fun Page(centerFirst: Boolean = false, content: PageScope.() -> Unit) {
     val rows = PageScope().apply(content).entries
     if (LocalStaticPage.current) {
         Column(
@@ -111,7 +112,7 @@ fun Page(content: PageScope.() -> Unit) {
         ) { rows.forEach { it() } }
         return
     }
-    val st = rememberScalingLazyListState()
+    val st = rememberScalingLazyListState(initialCenterItemIndex = if (centerFirst) 0 else 1)
     Scaffold(
         timeText = { TimeText() },
         positionIndicator = { PositionIndicator(scalingLazyListState = st) },
@@ -120,6 +121,7 @@ fun Page(content: PageScope.() -> Unit) {
             modifier = Modifier.fillMaxSize(),
             state = st,
             horizontalAlignment = Alignment.CenterHorizontally,
+            autoCentering = AutoCenteringParams(itemIndex = if (centerFirst) 0 else 1),
         ) { rows.forEach { r -> item { r() } } }
     }
 }

@@ -12,6 +12,7 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.tiles.renderer.TileRenderer
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
+import com.android.resources.ScreenRound
 import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
@@ -63,12 +64,12 @@ class ScreenshotTest {
     @Test fun home() = shot("home") { HomeScreen(kas, {}, {}, {}, {}, {}) }
 
     @Test fun homeFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500))
+        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500, screenRound = ScreenRound.NOTROUND))
         shot("home_full") { HomeScreen(kas, {}, {}, {}, {}, {}) }
     }
 
     @Test fun summaryFull() {
-        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500))
+        paparazzi.unsafeUpdateConfig(deviceConfig = large.copy(screenHeight = 1500, screenRound = ScreenRound.NOTROUND))
         shot("summary_full") { SummaryScreen(kas) }
     }
 

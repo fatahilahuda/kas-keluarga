@@ -74,5 +74,6 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
-    testImplementation("androidx.wear.tiles:tiles-renderer:1.4.0")
+    // Only for tile screenshots (Paparazzi runs on debug); the renderer needs its R classes on the classpath.
+    debugImplementation("androidx.wear.tiles:tiles-renderer:1.4.0")
 }

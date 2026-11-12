@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -136,12 +137,13 @@ fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onTypeText: ()
     val tone = when { left < 0 || frac > 1f -> Bad; frac >= 0.8f -> Warn; else -> Accent }
     val recent = k.recent(3)
     val today = k.visible.filter { it.date == now.toString() && it.type == "out" && !k.isUsaha(it.biz) }.sumOf { it.amount }
-    Page {
+    val small = LocalConfiguration.current.screenWidthDp < 210
+    Page(centerFirst = true) {
         item {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().clickable { onOpen("summary") }) {
                 Image(painterResource(R.drawable.mark), contentDescription = "Muarakas", modifier = Modifier.size(18.dp))
                 Text((if (budget > 0) "Sisa anggaran " else "Sisa ") + BULAN[now.monthValue - 1], color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
-                Text(Fmt.short(left), color = if (left < 0) Bad else Ink, fontSize = 30.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(Fmt.short(left), color = if (left < 0) Bad else Ink, fontSize = if (small) 26.sp else 30.sp, fontFamily = Display, fontWeight = FontWeight.Bold, maxLines = 1)
                 Bar(frac, tone, Modifier.padding(horizontal = 34.dp, vertical = 3.dp))
                 Text(
                     if (budget > 0) "terpakai " + Fmt.short(t.hout, rp = false) + " · " + Math.round(frac * 100) + "%"
@@ -151,10 +153,11 @@ fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onTypeText: ()
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)) {
-                RoundAction(Ic.mic, "Suara", onVoice, filled = true)
-                RoundAction(Ic.keypad, "Nominal", onKeypad, filled = false)
-                RoundAction(Ic.keyboard, "Ketik", onTypeText, filled = false)
+            val sz = if (small) 40 else 48
+            Row(horizontalArrangement = Arrangement.spacedBy(if (small) 6.dp else 10.dp), modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)) {
+                RoundAction(Ic.mic, "Suara", onVoice, filled = true, size = sz)
+                RoundAction(Ic.keypad, "Nominal", onKeypad, filled = false, size = sz)
+                RoundAction(Ic.keyboard, "Ketik", onTypeText, filled = false, size = sz)
             }
         }
         item { RowChip("Ringkasan", { onOpen("summary") }, icon = Ic.chart, iconColor = kColor(2), secondary = "Hari ini keluar " + Fmt.short(today, rp = false)) }
