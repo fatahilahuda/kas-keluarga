@@ -1,0 +1,83 @@
+name: Wear OS APK
+
+on:
+  push:
+    branches: [aplikasi-wear]
+    paths:
+      - 'wear-app/**'
+      - '.github/workflows/wear-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Restore signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.WEAR_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > wear-app/app/release.keystore
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+          else
+            echo "::notice::No WEAR_KEYSTORE_BASE64 secret, building an unsigned APK"
+          fi
+
+      - name: Build release APK
+        working-directory: wear-app
+        env:
+          KAS_VERSION_CODE: ${{ github.run_number }}
+          KAS_KEYSTORE_PASSWORD: ${{ secrets.WEAR_KEYSTORE_PASSWORD }}
+          KAS_KEY_ALIAS: ${{ secrets.WEAR_KEY_ALIAS }}
+          KAS_KEY_PASSWORD: ${{ secrets.WEAR_KEY_PASSWORD }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          src=wear-app/app/build/outputs/apk/release
+          if [ "$SIGNED" = "1" ]; then
+            cp "$src/app-release.apk" out/Muarakas-Wear.apk
+          else
+            cp "$src/app-release-unsigned.apk" out/Muarakas-Wear-unsigned.apk
+          fi
+          rm -f wear-app/app/release.keystore
+          ls -l out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: muarakas-wear-apk-${{ github.run_number }}
+          path: out/
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="1.0.${{ github.run_number }}"
+          if [ "$SIGNED" = "1" ]; then
+            gh release create "wear-v$v" out/Muarakas-Wear.apk \
+              --target "${{ github.sha }}" \
+              --title "Muarakas Wear OS $v" \
+              --notes "Aplikasi Muarakas untuk jam Wear OS (Galaxy Watch 4 ke atas). Pasang lewat ADB nirkabel, lalu sambungkan dari HP: Pengaturan → Jam tangan." \
+              --latest=false
+          else
+            gh release create "wear-unsigned-v$v" out/Muarakas-Wear-unsigned.apk \
+              --target "${{ github.sha }}" \
+              --title "Muarakas Wear OS $v (belum ditandatangani)" \
+              --notes "APK belum ditandatangani, belum bisa dipasang." \
+              --draft
+          fi

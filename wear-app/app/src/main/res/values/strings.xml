@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Muarakas</string>
+    <string name="tile_label">Muarakas: catat cepat</string>
+    <string name="comp_label">Muarakas: pengeluaran bulan ini</string>
+</resources>
