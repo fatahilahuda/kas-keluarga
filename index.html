@@ -916,9 +916,11 @@ body.noscroll{overflow:hidden}
 .calg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
 .calw{font-size:12px;color:var(--muted);padding:4px 0;font-weight:600}
 .calw.sun,.cald.sun{color:var(--out)}
-.cald{height:40px;border:0;background:none;border-radius:999px;font:inherit;font-size:14.5px;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+.cald{height:40px;width:40px;max-width:100%;justify-self:center;border:0;background:none;border-radius:999px;font:inherit;font-size:14.5px;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
 .cald.today{box-shadow:inset 0 0 0 1.5px var(--accent);font-weight:700}
 .cald[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:none}
+.chip.addc{border-style:dashed;color:var(--accent);background:none}
+.chip.addc .ci{color:var(--accent)}
 </style>
 
 <div class="app">
@@ -1720,11 +1722,10 @@ function fundsWarn(B){
    only redraws this box, so whatever is typed in the form stays put. */
 function dateField(){
   const t=todayISO(),s=F.date||t,d=parseISO(s),full=HARI[d.getDay()]+', '+d.getDate()+' '+BULAN[d.getMonth()].slice(0,3)+' '+d.getFullYear();
-  const rel=s===t?'Hari ini':s===addDay(t,-1)?'Kemarin':s===addDay(t,1)?'Besok':'';
+  const gap=Math.round((parseISO(t)-d)/864e5),rel=gap===0?'':gap===1?'Kemarin':gap===-1?'Besok':gap>1&&gap<7?gap+' hari lalu':'';
   return '<div class="fdate" id="fdatebox"><input type="hidden" id="fdate" value="'+s+'">'+
-   '<div class="fdbar"><button class="ib" data-act="fd:-1" aria-label="Sehari sebelumnya">'+ic('back')+'</button>'+
-   '<button class="fdlbl" data-act="fdcal" aria-expanded="'+!!F.calOpen+'" aria-label="Pilih tanggal, sekarang '+full+'">'+ic('cal')+'<span><b>'+(rel||full)+'</b>'+(rel?'<small>'+full+'</small>':'')+'</span></button>'+
-   '<button class="ib" data-act="fd:1" aria-label="Sehari sesudahnya">'+ic('chev')+'</button>'+
+   '<div class="fdbar">'+
+   '<button class="fdlbl" data-act="fdcal" aria-expanded="'+!!F.calOpen+'" aria-label="Pilih tanggal, sekarang '+full+'">'+ic('cal')+'<span><b>'+full+'</b>'+(rel?'<small>'+rel+'</small>':'')+'</span></button>'+
    '<button class="fdtoday" data-act="fdtoday" aria-pressed="'+(s===t)+'">Hari ini</button></div>'+
    (F.calOpen?calGrid(s):'')+'</div>';
 }
@@ -1748,16 +1749,16 @@ function vAdd(){
   const amt='<div class="field"><label for="famt">Nominal</label><input class="inp amt" id="famt" inputmode="numeric" autocomplete="off" placeholder="Rp 0"><span class="err" id="ferr" hidden></span></div>';
   const recent=sortTx(S.tx.filter(t=>!t.sample)).slice(0,3);
   const recentH=recent.length?'<section><h2 style="margin-bottom:8px">Baru kamu catat</h2><div class="list">'+recent.map(txRow).join('')+'</div></section>':'';
-  if(ty==='tf')return '<section class="card stack">'+seg+dateField()+amt+
+  if(ty==='tf')return '<section class="card stack">'+seg+amt+
       '<div class="field"><span class="flabel">Dari kantong</span>'+pocketChips('ffrom',F.pocket,'ffrom',B,null,amount,true)+'</div>'+
       '<div class="field"><span class="flabel">Ke kantong</span>'+pocketChips('fto',F.to,'fto',B,F.pocket,0,false)+'</div>'+
-      '<div id="fwarn">'+fundsWarn(B)+'</div>'+desc+'<button class="btn" data-act="fsave">Pindahkan saldo</button></section>'+recentH;
+      '<div id="fwarn">'+fundsWarn(B)+'</div>'+dateField()+desc+'<button class="btn" data-act="fsave">Pindahkan saldo</button></section>'+recentH;
   const cty=F.biz?(ty==='in'?'bin':'bout'):ty,ai=F.ai,list=CATS[cty];
   const aiLine=ai&&ai.conf>0?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg><span>AI menebak <b>'+esc(cat(cty,ai.best).n)+'</b> · '+Math.round(ai.conf*100)+'% yakin</span>'
     :'<span class="muted">Ketik keterangan, AI akan memilih kategori dan kantong. Bisa langsung tulis nominal, misal <b>bakso 15rb</b>.</span>';
   const tabHint=!F.biz&&ty==='out'&&F.cat==='tabungan'&&activePockets().some(p=>p.save)?'<div class="ai"><span>Menabung ke kantong sendiri? Pakai <b>Pindah</b> supaya saldonya tetap terhitung.</span><button class="link" data-act="ftype:tf">Jadikan pindah</button></div>':'';
-  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+dateField()+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">'+HOMEN()+' atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
-    '<div class="field"><span class="flabel">Kategori</span><div class="chips" id="fcats">'+list.filter(c=>cty!=='out'||c.id!=='tabungan'||F.cat==='tabungan').map(c=>'<button class="chip" data-act="fcat:'+c.id+'" aria-pressed="'+(F.cat===c.id)+'" style="--cc:'+ccolor(cty,c.id)+'">'+ic(catIc(cty,c.id),'ci')+esc(c.n)+(ai&&ai.conf>0&&ai.best===c.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'</div></div>'+
+  return (MODE()?modeBanner(MODE()):'')+'<section class="card stack">'+seg+(ty==='out'?scanBlock():'')+(ty==='in'&&!F.biz&&modOn('utang')?'<div class="ai"><span>Dapat uang dari <b>gadai emas</b> atau pinjaman? Itu utang, bukan pemasukan.</span><button class="link" data-act="gadai">Catat sebagai gadai</button></div>':'')+dateField()+desc+amt+(modOn('usaha')?'<div class="field"><span class="flabel">'+HOMEN()+' atau usaha</span><div class="chips" id="fbiz">'+bizChips()+'</div></div>':'')+'<div class="ai" id="fai">'+aiLine+'</div>'+
+    '<div class="field"><span class="flabel">Kategori</span><div class="chips" id="fcats">'+list.filter(c=>cty!=='out'||c.id!=='tabungan'||F.cat==='tabungan').map(c=>'<button class="chip" data-act="fcat:'+c.id+'" aria-pressed="'+(F.cat===c.id)+'" style="--cc:'+ccolor(cty,c.id)+'">'+ic(catIc(cty,c.id),'ci')+esc(c.n)+(ai&&ai.conf>0&&ai.best===c.id?'<span class="tag">AI</span>':'')+'</button>').join('')+'<button class="chip addc" data-act="catnew:'+cty+'">'+ic('plus','ci')+'Kategori baru</button></div></div>'+
     '<div class="field" id="fforw"'+(ty==='out'&&!F.biz&&(!SOLO()||people().length)?'':' hidden')+'><span class="flabel">Untuk siapa</span><div class="chips" id="ffor">'+forChips(F.forId,'ffor',!F.forManual)+'</div></div>'+
     '<div id="ftab">'+tabHint+'</div>'+
     '<div class="field"><span class="flabel">'+(ty==='out'?'Ambil dari kantong':'Masuk ke kantong')+'</span>'+pocketChips('fpk',F.pocket,'fpk',B,null,amount,ty==='out')+'</div>'+
@@ -2868,7 +2869,7 @@ function vBookAdd(b){
   const pk='<div class="field"><span class="flabel">'+labels[1]+'</span>'+chips+'</div>'+(!nobp?(bp?'<p class="hint">'+(inward?'Masuk ke':'Diambil dari')+' kantong <b>'+esc(pname(bp))+'</b>.</p>':'<p class="warnline">Pilih kantongnya dulu lewat tombol Ubah di bagian bawah.</p>'):'');
   const desc='<div class="field"><label for="fdesc">Keterangan <span class="hint">(boleh kosong)</span></label><input class="inp" id="fdesc" autocomplete="off" placeholder="'+esc(labels[0])+'"></div>';
   const green=inward||RECVF[ty];
-  return modeBanner(b)+'<section class="card stack">'+bookSeg(b)+dateField()+amt+qty+'<div id="fpkw">'+pk+'</div><div id="fwarn">'+warn+'</div>'+desc+'<button class="btn '+(green?'i':PAYF[ty]?'o':'')+'" data-act="fsave">'+esc(labels[0])+'</button></section>';
+  return modeBanner(b)+'<section class="card stack">'+bookSeg(b)+amt+qty+'<div id="fpkw">'+pk+'</div><div id="fwarn">'+warn+'</div>'+dateField()+desc+'<button class="btn '+(green?'i':PAYF[ty]?'o':'')+'" data-act="fsave">'+esc(labels[0])+'</button></section>';
 }
 function qtyHint(b){const pr=curPrice(b),u=b.unit||'gram';if(F._qty&&F._amt)return 'Harga per '+u+': '+fmt(F._amt/F._qty)+(pr?' · acuan hari ini '+fmt(pr):'');return pr?'Harga acuan hari ini '+fmt(pr)+'/'+u+'. Isi jumlahnya, totalnya terisi otomatis.':'Isi jumlah dan total rupiah sesuai struk.';}
 function bookRefresh(){const b=MODE();if(!b)return;const fa=document.getElementById('famt'),fq=document.getElementById('fqty');
@@ -3327,9 +3328,9 @@ function catsBody(){
    L.map(c=>{const n=catCount(CTAB,c.id);return '<button class="prow" data-act="catedit:'+CTAB+':'+c.id+'"><span class="mono" style="--c:'+ccolor(CTAB,c.id)+'">'+ic(catIc(CTAB,c.id))+'</span><span>'+esc(c.n)+(c.custom?' <span class="hint">· buatan sendiri</span>':'')+'</span><span class="hint num">'+(n?n+' catatan':'')+'</span></button>';}).join('')+'</div></section>'+
    (gone.length?'<section class="card stack"><h2>Bawaan yang dihapus</h2>'+gone.map(c=>'<div class="meter-row" style="margin:0"><span>'+esc(c.n)+'</span><button class="link" data-act="catrestore:'+CTAB+':'+c.id+'">Kembalikan</button></div>').join('')+'</section>':'')+
    '<p class="hint">'+catScope()+' AI kategori langsung memakai daftar ini.</p>';}
-function catForm(t,id){
+function catForm(t,id,from){
   const c=id?CATS[t].find(x=>x.id===id):null;if(id&&!c){catsSheet(t);return;}
-  EDC={t,id:id||null,ic:c?catIc(t,c.id):'tag',g:(c&&c.g)||'want'};
+  EDC={t,id:id||null,ic:c?catIc(t,c.id):'tag',g:(c&&c.g)||'want',from:from||''};
   const n=c?catCount(t,c.id):0,others=CATS[t].filter(x=>!c||x.id!==c.id);
   openSheet(sheetHead(c?'Ubah kategori':'Tambah kategori')+'<div class="stack"><section class="card stack">'+
    '<p class="small muted">'+CT_LONG[t]+'</p>'+
@@ -3356,7 +3357,9 @@ function saveCat(){
   const f={n:name,ic:EDC.ic,w:words};if(t==='out')f.g=EDC.g;
   if(EDC.id){putCat(t,EDC.id,f);toast('Kategori '+name+' disimpan');}
   else{const used=CATS[t].map(x=>x.k);let k=0;for(let i=0;i<7;i++)if(used.filter(u=>u===i).length<used.filter(u=>u===k).length)k=i;
-    putCat(t,'c'+uid(),Object.assign(f,{custom:true,at:Date.now(),k}));toast('Kategori '+name+' dibuat');}
+    const nid='c'+uid();putCat(t,nid,Object.assign(f,{custom:true,at:Date.now(),k}));toast('Kategori '+name+' dibuat');
+    /* made from the Catat form: go back there with the new category picked, keeping what was typed */
+    if(EDC.from==='catat'){buildModel();closeSheet();if(TAB==='add'){F.cat=nid;F.catManual=true;refreshForm();}save();return;}}
   buildModel();render();catsSheet(t);}
 function deleteCat(){
   const t=EDC.t,id=EDC.id,c=CATS[t].find(x=>x.id===id);if(!c||id==='lain')return;
@@ -3720,6 +3723,7 @@ document.addEventListener('click',e=>{
   if(a==='cats'){catsSheet();return;}
   if(a.indexOf('ctab:')===0){catsSheet(v);return;}
   if(a==='catnew'){catForm(CTAB,null);return;}
+  if(a.indexOf('catnew:')===0){catForm(v,null,'catat');return;}
   if(a.indexOf('catedit:')===0){catForm(parts[1],parts[2]);return;}
   if(a.indexOf('catrestore:')===0){const d=putCat(parts[1],parts[2],{del:false});delete d.to;buildModel();render();catsSheet(parts[1]);toast('Kategori '+cat(parts[1],parts[2]).n+' dikembalikan');return;}
   if(a.indexOf('ctic:')===0&&EDC){EDC.ic=v;pickIn('ct-ic','ctic',el);return;}
@@ -3777,7 +3781,6 @@ document.addEventListener('click',e=>{
   if(a==='bdelete'&&EDITB.id){const b=bizOf(EDITB.id),i=S.biz.indexOf(b);S.biz.splice(i,1);S.deleted[b.id]=Date.now();if(PG===b.id)PG='home';save();closeSheet();render();toast(b.n+' dihapus','Urungkan',()=>{delete S.deleted[b.id];b.u=Date.now();S.biz.splice(i,0,b);save();render();});return;}
   if(a.indexOf('bizadd:')===0){TAB='add';F=newForm(v,{typeManual:true});render(true);window.scrollTo(0,0);softFocus(document.getElementById(BOOKT[v]?(v==='beli'||v==='jual'?'fqty':'famt'):'fdesc'));return;}
   if(a.indexOf('fbiz:')===0){F.biz=v==='home'?null:v;F.bizManual=true;F.bizAuto=false;F.cat=null;F.catManual=false;F.pocketManual=false;refreshForm();return;}
-  if(a.indexOf('fd:')===0){setFDate(addDay(F.date||todayISO(),+v));return;}
   if(a==='fdtoday'){F.calOpen=false;setFDate(todayISO());return;}
   if(a==='fdcal'){F.calOpen=!F.calOpen;F.calM=mkey(F.date||todayISO());redrawDate();return;}
   if(a.indexOf('fdm:')===0){F.calM=addMonth(F.calM||mkey(F.date||todayISO()),+v);redrawDate();return;}
