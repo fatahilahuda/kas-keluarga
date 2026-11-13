@@ -136,8 +136,6 @@ public class Reminders extends BroadcastReceiver {
             nm.createNotificationChannel(new NotificationChannel(CHANNEL_BILL, "Pengingat tagihan", NotificationManager.IMPORTANCE_DEFAULT));
         if (nm.getNotificationChannel(CHANNEL_WEEK) == null)
             nm.createNotificationChannel(new NotificationChannel(CHANNEL_WEEK, "Rangkuman mingguan", NotificationManager.IMPORTANCE_LOW));
-        if (nm.getNotificationChannel(KasNotifListener.CHANNEL) == null)
-            nm.createNotificationChannel(new NotificationChannel(KasNotifListener.CHANNEL, "Tawaran catat dari bank", NotificationManager.IMPORTANCE_DEFAULT));
     }
 
     private static void post(Context ctx, String channel, int id, String title, String body) {

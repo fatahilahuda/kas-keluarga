@@ -245,7 +245,7 @@ public class KasNative {
         return s == null ? "" : s;
     }
 
-    // ---------- reminders, bank notifications (optional modules) ----------
+    // ---------- reminders (optional modules) ----------
 
     public static final int REQ_NOTIF = 4712;
 
@@ -262,44 +262,6 @@ public class KasNative {
         if (p.getBoolean("asked", false)) return;
         p.edit().putBoolean("asked", true).apply();
         main.post(() -> ActivityCompat.requestPermissions(activity, new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQ_NOTIF));
-    }
-
-    private ComponentName listener() {
-        return new ComponentName(activity, KasNotifListener.class);
-    }
-
-    /** "on" when the module's listener is enabled and the user granted notification access. */
-    @JavascriptInterface
-    public String notifState() {
-        boolean granted = androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(activity).contains(activity.getPackageName());
-        boolean enabled = activity.getPackageManager().getComponentEnabledSetting(listener()) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-        return granted && enabled ? "on" : "off";
-    }
-
-    @JavascriptInterface
-    public void notifSet(boolean on) {
-        activity.getPackageManager().setComponentEnabledSetting(listener(),
-            on ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP);
-        if (on && Build.VERSION.SDK_INT >= 33 && !Reminders.canPost(activity))
-            main.post(() -> ActivityCompat.requestPermissions(activity, new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQ_NOTIF));
-    }
-
-    /** Android only lets the user grant notification access, in this system screen. */
-    @JavascriptInterface
-    public void notifSettings() {
-        main.post(() -> {
-            Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (Build.VERSION.SDK_INT >= 30)
-                i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
-                    .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener().flattenToString())
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                activity.startActivity(i);
-            } catch (RuntimeException e) {
-                activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            }
-        });
     }
 
     /** Closes the quick-add popup (does nothing in the main app). */
