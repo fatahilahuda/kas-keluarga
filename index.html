@@ -18,9 +18,24 @@
 <meta name="apple-mobile-web-app-title" content="Muarakas">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}
 .card hr.sep{border:0;border-top:1px solid var(--line);margin:4px 0}
+/* Running glow around the screen edge (catat cepat and voice), in Muarakas colours */
+@property --ga{syntax:'<angle>';initial-value:0deg;inherits:false}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:80;opacity:0;transition:opacity .35s ease}
+.glow.on{opacity:.75}
+.glow.listen{opacity:1}
+.glow i{position:absolute;inset:0;border-radius:var(--scr,44px);padding:var(--gw,4px);
+  background:conic-gradient(from var(--ga),#3BB3AB,#7F96FF,#A496F0,#E0C25A,#4FC1B4,#3BB3AB);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:glowspin 3.2s linear infinite}
+.glow i+i{--gw:calc(10px + var(--lv,0) * 14px);filter:blur(16px);opacity:.85;transition:padding .12s ease-out}
+.glow i+i+i{--gw:calc(18px + var(--lv,0) * 26px);filter:blur(34px);opacity:.55}
+.glow.listen i{animation-duration:1.8s}
+.glow.saved i{background:conic-gradient(from var(--ga),#4CC48E,#3BB3AB,#B6F0D6,#4CC48E);animation-duration:1.1s}
+@keyframes glowspin{to{--ga:360deg}}
+@media (prefers-reduced-motion:reduce){.glow i{animation:none}}
 /* Quick add popup (Android widget, shortcut and Quick Settings tile open index.html?quick=voice|text) */
 html.quick,html.quick body{background:transparent!important;min-height:100%}
-html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(script){display:none!important}
+html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(#glow):not(script){display:none!important}
 .qk{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;z-index:40}
 .qk-scrim{position:absolute;inset:0;background:rgba(6,12,10,.42);animation:qkf .2s ease}
 .qk-sheet{position:relative;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + var(--nb,0px) + env(safe-area-inset-bottom));box-shadow:0 -10px 34px rgba(0,0,0,.2);animation:qku .28s cubic-bezier(.2,.8,.2,1);max-height:94vh;overflow:auto}
@@ -2384,6 +2399,7 @@ function saveForm(){
     learn(cty,desc,c,F.pocket);save();
     if(tx.hidden){toast('Tersimpan sebagai rahasia. '+partner().n+' akan melihatnya sebagai kado tertutup.');if(S.family&&!SECKEY)setTimeout(pinSheet,350);}else toast((F.biz?bname(F.biz)+' · ':'')+(corrected?'AI belajar: "'+desc+'" → '+cat(cty,c).n:'Tersimpan di '+cat(cty,c).n+' · '+pname(F.pocket)));
   }
+  SFX.play('coins');
   if(QUICK){quickSaved(S.tx[S.tx.length-1]);return;}
   F=newForm(F.type,{date});if(mkey(date)!==CUR)CUR=mkey(date);
   render();const nd=document.getElementById('fdesc');if(nd)nd.focus();
@@ -2429,11 +2445,21 @@ async function quickSaved(t){
   if(!t)return;
   const label=t.type==='tf'?pname(t.pocket)+' → '+pname(t.to):cat(ctype(t),t.cat).n+' · '+pname(t.pocket);
   QK.done='<div class="qk-done"><div class="qk-ok">'+ic('check')+'</div><b>Tersimpan</b><div class="qk-damt">'+fmt(t.amount)+'</div><p class="small muted">'+esc(label)+'</p></div>';
-  renderQuick();try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
+  renderQuick();glow('saved');try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
   widgetPushNow();
   try{await Promise.race([syncNow(),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   setTimeout(quickClose,650);
 }
+
+/* ---------- Edge glow: on while catat cepat is open, stronger while listening, green flash on save ---------- */
+function glow(state){
+  let g=document.getElementById('glow');
+  if(!g){g=document.createElement('div');g.id='glow';g.className='glow';g.setAttribute('aria-hidden','true');g.innerHTML='<i></i><i></i><i></i>';document.body.appendChild(g);}
+  g.classList.toggle('on',state!=='off');g.classList.toggle('listen',state==='listen');g.classList.toggle('saved',state==='saved');
+  if(state!=='listen')g.style.removeProperty('--lv');
+}
+function glowRest(){glow(QUICK?'on':'off');}
+function glowLevel(v){const g=document.getElementById('glow');if(g)g.style.setProperty('--lv',String(v));}
 
 /* ---------- Home screen widget: numbers handed to the native widget (Android app only) ---------- */
 function widgetPush(){clearTimeout(widgetPush.t);widgetPush.t=setTimeout(widgetPushNow,700);}
@@ -2483,10 +2509,11 @@ function normSpeech(str){
 function voiceStart(){
   const eng=voiceEngine();if(!eng){toast('Input suara belum tersedia di perangkat ini');return;}
   const d=document.getElementById('fdesc');if(d)d.blur();
-  VO.eng=eng;VO.on=true;VO.final=false;VO.text='';voiceShow('wait');
-  try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}
+  VO.eng=eng;VO.on=true;VO.final=false;VO.text='';voiceShow('wait');glow('on');
+  SFX.play('muara');
+  setTimeout(()=>{if(!VO.on||VO.eng!==eng)return;try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}},SFX.on?380:0);
 }
-function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();}
+function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();glowRest();}
 function voiceShow(st,code){
   let o=document.getElementById('vo');if(!o){o=document.createElement('div');o.id='vo';document.body.appendChild(o);}
   o.className='vo '+st;
@@ -2509,12 +2536,12 @@ function voicePaint(){
 }
 function voiceEvent(ev){
   if(!VO.on||!ev)return;
-  if(ev.type==='ready')voiceShow('listen');
-  else if(ev.type==='rms'){const o=document.getElementById('vo');if(o)o.style.setProperty('--lv',String(Math.max(0,Math.min(1,((+ev.level||0)+2)/12))));}
+  if(ev.type==='ready'){voiceShow('listen');glow('listen');}
+  else if(ev.type==='rms'){const lv=String(Math.max(0,Math.min(1,((+ev.level||0)+2)/12)));const o=document.getElementById('vo');if(o)o.style.setProperty('--lv',lv);glowLevel(lv);}
   else if(ev.type==='partial'){if(ev.text){VO.text=ev.text;voicePaint();}}
-  else if(ev.type==='end'){if(!VO.final)voiceShow('think');}
+  else if(ev.type==='end'){if(!VO.final)voiceShow('think');glow('on');}
   else if(ev.type==='final'){VO.final=true;const alts=(ev.alts||[]).filter(Boolean);voiceApply(alts.find(x=>parseAmount(normSpeech(x)))||alts[0]||'');}
-  else if(ev.type==='error')voiceShow('err',ev.code);
+  else if(ev.type==='error'){voiceShow('err',ev.code);glow(QUICK?'on':'off');}
 }
 function voiceApply(text){
   voiceClose();if(!text)return;
@@ -3015,9 +3042,15 @@ const SFX=(()=>{let ctx=null,on=true,nb=null;try{on=localStorage.getItem('kas.sf
     win:()=>{[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,i*.1,.32,'triangle',.2));[1046.5,1318.5,1568,2093].forEach(f=>tone(f,.42,1.1,'sine',.07));
       tone(130.8,.42,.9,'triangle',.22);noise(.4,1.3,.18,7000,.6,'highpass');for(let i=0;i<8;i++)tone(2200+Math.random()*2600,.55+i*.08,.12,'sine',.045);},
     draw:()=>{tone(587,0,.18,'triangle',.18);tone(587,.22,.4,'triangle',.18);noise(.2,.5,.08,6000,.6,'highpass');},
-    zonk:()=>{tone(392,0,.28,'sawtooth',.07,330);tone(330,.3,.28,'sawtooth',.07,262);tone(262,.6,.7,'sawtooth',.08,180);}
+    zonk:()=>{tone(392,0,.28,'sawtooth',.07,330);tone(330,.3,.28,'sawtooth',.07,262);tone(262,.6,.7,'sawtooth',.08,180);},
+    /* Muarakas signature: a water drop into the estuary, then two soft bells (catat cepat opens, mic starts) */
+    muara:()=>{tone(900,0,.09,'sine',.05,1500);tone(1318.5,.07,.38,'sine',.034);tone(2637,.07,.2,'sine',.009);tone(1975.5,.16,.5,'sine',.03);tone(3951,.16,.25,'sine',.007);},
+    /* Saved: a small handful of coins settling, kept quiet */
+    coins:()=>{[0,.045,.085,.13,.19,.255,.33,.42].forEach((t,i)=>{const f=2300+Math.random()*1900,v=.032*(1-i*.07);tone(f,t,.09+Math.random()*.06,'sine',v);tone(f*1.52,t,.06,'sine',v*.45);noise(t,.02,.03,6500,.8,'highpass');});}
   };
-  return {play(k,a){if(!on||!P[k])return;try{P[k](a);}catch(e){}},unlock(){if(on)ac();},get on(){return on;},
+  /* Ringer on silent or vibrate (Android app tells us): stay quiet for the everyday sounds */
+  const hush=k=>{if(k!=='muara'&&k!=='coins')return false;try{const N=window.KasQuickNative;return !!(N&&N.soundOk&&!N.soundOk());}catch(e){return false;}};
+  return {play(k,a){if(!on||!P[k]||hush(k))return;try{P[k](a);}catch(e){}},unlock(){if(on)ac();},get on(){return on;},
     toggle(){on=!on;try{localStorage.setItem('kas.sfx',on?'1':'0');}catch(e){}if(on){ac();P.pop();}return on;}};
 })();
 const buzz=p=>{try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}};
@@ -4739,8 +4772,9 @@ if(QUICK){
   // Popup: no lock screen (it can only add, and hides balances when the app lock is on), no onboarding.
   try{const N=window.KasQuickNative;if(N&&N.navInset)document.documentElement.style.setProperty('--nb',(+N.navInset()||0)+'px');}catch(e){}
   render(true);loadKey().then(()=>{unlockOwnSealed();syncNow();});
+  if(!needOnb())requestAnimationFrame(()=>glow('on'));
   if(QUICK==='voice'&&!needOnb())setTimeout(voiceStart,180);
-  else if(!needOnb())setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);
+  else if(!needOnb()){SFX.play('muara');setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);}
 }else{
 render(true);
 if(needOnb())openOnb();
