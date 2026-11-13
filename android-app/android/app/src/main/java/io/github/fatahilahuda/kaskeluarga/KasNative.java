@@ -6,6 +6,7 @@ import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -94,11 +95,50 @@ public class KasNative {
             .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, activity.getPackageName());
+        muteBeep();
         try {
             recognizer.startListening(intent);
         } catch (RuntimeException e) {
+            unmuteBeep();
             error("other");
         }
+    }
+
+    /** False when the phone is on silent or vibrate: the web app then skips its little sounds. */
+    @JavascriptInterface
+    public boolean soundOk() {
+        AudioManager am = (AudioManager) activity.getSystemService(android.content.Context.AUDIO_SERVICE);
+        return am == null || am.getRingerMode() == AudioManager.RINGER_MODE_NORMAL;
+    }
+
+    // The speech service plays its own "ding" when it starts listening. Muarakas already plays its own
+    // chime, so the system streams that ding usually uses are muted for a moment around the start.
+    private final java.util.List<Integer> muted = new java.util.ArrayList<>();
+    private final Runnable unmute = this::unmuteBeep;
+
+    private void muteBeep() {
+        AudioManager am = (AudioManager) activity.getSystemService(android.content.Context.AUDIO_SERVICE);
+        if (am == null || !muted.isEmpty()) return;
+        for (int stream : new int[] { AudioManager.STREAM_MUSIC, AudioManager.STREAM_SYSTEM }) {
+            try {
+                if (am.isStreamMute(stream)) continue;
+                am.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+                muted.add(stream);
+            } catch (RuntimeException ignored) {}
+        }
+        main.removeCallbacks(unmute);
+        main.postDelayed(unmute, 2000); // never leave the phone muted
+    }
+
+    private void unmuteBeep() {
+        main.removeCallbacks(unmute);
+        AudioManager am = (AudioManager) activity.getSystemService(android.content.Context.AUDIO_SERVICE);
+        if (am != null) for (int stream : muted) {
+            try {
+                am.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
+            } catch (RuntimeException ignored) {}
+        }
+        muted.clear();
     }
 
     /** Called by the host activity from onRequestPermissionsResult. */
@@ -111,6 +151,7 @@ public class KasNative {
     }
 
     public void destroy() {
+        if (!muted.isEmpty()) unmuteBeep();
         if (recognizer == null) return;
         try {
             recognizer.cancel();
@@ -124,7 +165,11 @@ public class KasNative {
     }
 
     private class Listener implements RecognitionListener {
-        @Override public void onReadyForSpeech(Bundle params) { emit(event("ready")); }
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+            emit(event("ready"));
+            main.postDelayed(unmute, 450); // after the ding, before anything the user wants to hear
+        }
         @Override public void onBeginningOfSpeech() {}
         @Override public void onBufferReceived(byte[] buffer) {}
         @Override public void onEvent(int eventType, Bundle params) {}
