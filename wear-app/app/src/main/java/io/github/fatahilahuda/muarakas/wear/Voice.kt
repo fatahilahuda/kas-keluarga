@@ -190,7 +190,7 @@ fun EdgeGlow(active: Boolean, level: Float, saved: Boolean = false) {
     Canvas(Modifier.fillMaxSize()) {
         val r0 = size.minDimension / 2
         val depth = (if (active) 30f + lv * 24f else 24f).dp.toPx()
-        val steps = 16
+        val steps = 30
         val w = depth / steps
         val baseBrush = Brush.sweepGradient(baseColors, center)
         val runBrush = Brush.sweepGradient(
@@ -201,8 +201,9 @@ fun EdgeGlow(active: Boolean, level: Float, saved: Boolean = false) {
             val f = 1f - k / steps.toFloat()
             val a = f * f
             val r = r0 - w * (k + 0.5f)
-            rotate(base) { drawCircle(baseBrush, radius = r, alpha = a * 0.45f, style = Stroke(w + 0.6f)) }
-            rotate(run) { drawCircle(runBrush, radius = r, alpha = a * 0.95f, style = Stroke(w + 0.6f)) }
+            // strokes overlap (2.4x the step) so neighbouring rings blend instead of banding
+            rotate(base) { drawCircle(baseBrush, radius = r, alpha = a * 0.2f, style = Stroke(w * 2.4f)) }
+            rotate(run) { drawCircle(runBrush, radius = r, alpha = a * 0.42f, style = Stroke(w * 2.4f)) }
         }
     }
 }
