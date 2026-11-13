@@ -126,7 +126,14 @@ public class QuickAddActivity extends AppCompatActivity {
             lp.height = 1; // grows to the card once the page reports its height
             lp.y = dp(10);
             w.setAttributes(lp);
-            if (Build.VERSION.SDK_INT >= 31) w.setBackgroundBlurRadius(dp(30));
+            if (Build.VERSION.SDK_INT >= 31) {
+                w.setBackgroundBlurRadius(dp(30));
+                // Blur can be switched off by the system (battery saver, some devices): tell the page
+                // so the card turns more opaque instead of showing a sharp background through it.
+                WindowManager wm = getSystemService(WindowManager.class);
+                if (wm != null) wm.addCrossWindowBlurEnabledListener(getMainExecutor(), on ->
+                    web.evaluateJavascript("document.documentElement.classList.toggle('noblur'," + !on + ")", null));
+            }
         }
         root.post(() -> {
             if (!isFinishing()) card.show();
