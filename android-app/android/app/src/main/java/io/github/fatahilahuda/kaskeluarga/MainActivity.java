@@ -17,6 +17,15 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Back from the "display over other apps" screen, or the app just opened: show the bubble if wanted.
+        try {
+            BubbleService.sync(this);
+        } catch (RuntimeException ignored) {}
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == KasNative.REQ_MIC && KasQuickPlugin.bridge != null) {

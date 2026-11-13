@@ -46,6 +46,52 @@
             android:windowSoftInputMode="adjustNothing"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode|density" />
 
+        <!-- Digital assistant: long-press side key / corner swipe opens catat suara (Setelan → Aplikasi default) -->
+        <activity-alias
+            android:name=".QuickAssist"
+            android:exported="true"
+            android:label="@string/quick_label"
+            android:targetActivity=".QuickAddActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Separate "Catat cepat" app icon, off until switched on in Pengaturan → Catat cepat.
+             Samsung's side key (double press → open app) can only pick launcher icons. -->
+        <activity-alias
+            android:name=".QuickLauncher"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_quick"
+            android:roundIcon="@mipmap/ic_quick"
+            android:label="@string/quick_label"
+            android:targetActivity=".QuickAddActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <service
+            android:name=".BubbleService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Floating quick-add button the user switched on" />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".KasWidget"
             android:exported="true"
@@ -101,6 +147,12 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Catat dengan suara (KasNative uses SpeechRecognizer directly, no Google dialog) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Gelembung melayang (BubbleService) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Lets SpeechRecognizer find the phone's speech service (package visibility, Android 11+) -->
     <queries>

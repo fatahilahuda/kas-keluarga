@@ -2,8 +2,13 @@ package io.github.fatahilahuda.kaskeluarga;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.role.RoleManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -192,6 +197,80 @@ public class KasNative {
             Intent i = new Intent(activity, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activity.startActivity(i);
             if (activity instanceof QuickAddActivity) activity.finish();
+        });
+    }
+
+    // ---------- ways to open catat cepat (Pengaturan → Catat cepat) ----------
+
+    /** True when this is the Android app with these switches (the web page shows the settings then). */
+    @JavascriptInterface
+    public boolean quickSettings() {
+        return true;
+    }
+
+    /** "on", "off", or "perm" (turned on, waiting for the display-over-apps permission). */
+    @JavascriptInterface
+    public String bubbleState() {
+        if (!BubbleService.wanted(activity)) return "off";
+        return Settings.canDrawOverlays(activity) ? "on" : "perm";
+    }
+
+    @JavascriptInterface
+    public String bubbleSet(boolean on) {
+        BubbleService.prefs(activity).edit().putBoolean(BubbleService.WANT, on).apply();
+        if (on && !Settings.canDrawOverlays(activity)) {
+            main.post(() -> {
+                try {
+                    activity.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + activity.getPackageName())));
+                } catch (RuntimeException e) {
+                    activity.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+                }
+            });
+            return "perm";
+        }
+        main.post(() -> BubbleService.sync(activity));
+        return on ? "on" : "off";
+    }
+
+    private ComponentName launcherAlias() {
+        return new ComponentName(activity.getPackageName(), "io.github.fatahilahuda.kaskeluarga.QuickLauncher");
+    }
+
+    /** The separate "Catat cepat" icon, for the Samsung side key (double press → open app). */
+    @JavascriptInterface
+    public boolean launcherIcon() {
+        return activity.getPackageManager().getComponentEnabledSetting(launcherAlias()) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+    }
+
+    @JavascriptInterface
+    public void launcherIconSet(boolean on) {
+        activity.getPackageManager().setComponentEnabledSetting(launcherAlias(),
+            on ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP);
+    }
+
+    /** Whether Muarakas is the phone's digital assistant (long-press side key / corner swipe). */
+    @JavascriptInterface
+    public boolean assistantOn() {
+        if (Build.VERSION.SDK_INT >= 29) {
+            RoleManager rm = activity.getSystemService(RoleManager.class);
+            return rm != null && rm.isRoleAvailable(RoleManager.ROLE_ASSISTANT) && rm.isRoleHeld(RoleManager.ROLE_ASSISTANT);
+        }
+        String cur = Settings.Secure.getString(activity.getContentResolver(), "assistant");
+        return cur != null && cur.startsWith(activity.getPackageName() + "/");
+    }
+
+    /** Android does not let apps take the assistant role themselves; this opens the picker. */
+    @JavascriptInterface
+    public void assistantSettings() {
+        main.post(() -> {
+            String[] actions = { "android.settings.MANAGE_DEFAULT_APPS_SETTINGS", Settings.ACTION_VOICE_INPUT_SETTINGS, Settings.ACTION_SETTINGS };
+            for (String a : actions) {
+                try {
+                    activity.startActivity(new Intent(a));
+                    return;
+                } catch (RuntimeException ignored) {}
+            }
         });
     }
 

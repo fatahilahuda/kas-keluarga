@@ -152,6 +152,18 @@ public class QuickAddActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        BubbleService.setHidden(true);
+    }
+
+    @Override
+    protected void onPause() {
+        BubbleService.setHidden(false);
+        super.onPause();
+    }
+
+    @Override
     public void finish() {
         super.finish();
         overridePendingTransition(0, 0);
