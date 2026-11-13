@@ -168,6 +168,7 @@ public class KasNative {
         @Override
         public void onReadyForSpeech(Bundle params) {
             emit(event("ready"));
+            glowState("listen");
             main.postDelayed(unmute, 450); // after the ding, before anything the user wants to hear
         }
         @Override public void onBeginningOfSpeech() {}
@@ -180,9 +181,13 @@ public class KasNative {
             if (now - lastRms < 70) return;
             lastRms = now;
             emit(event("rms").put2("level", rmsdB));
+            if (activity instanceof QuickAddActivity) {
+                float lv = rmsdB;
+                main.post(() -> ((QuickAddActivity) activity).setVoiceLevel(lv));
+            }
         }
 
-        @Override public void onEndOfSpeech() { emit(event("end")); }
+        @Override public void onEndOfSpeech() { emit(event("end")); glowState("on"); }
 
         @Override
         public void onError(int code) {
@@ -199,6 +204,7 @@ public class KasNative {
                 default: c = "other";
             }
             error(c);
+            glowState("on");
             main.post(KasNative.this::destroy);
         }
 
@@ -319,6 +325,25 @@ public class KasNative {
         });
     }
 
+    // ---------- catat cepat card window (QuickAddActivity) ----------
+
+    /** Present only in the popup: the page reports its card height and the window follows. */
+    @JavascriptInterface
+    public void sheetHeight(int cssPx) {
+        if (activity instanceof QuickAddActivity) main.post(() -> ((QuickAddActivity) activity).setCardHeightCss(cssPx));
+    }
+
+    /** Edge glow state drawn natively behind the card: on, listen, saved, off. */
+    @JavascriptInterface
+    public void glow(String state) {
+        if (activity instanceof QuickAddActivity) main.post(() -> ((QuickAddActivity) activity).setGlow(state));
+    }
+
+    @JavascriptInterface
+    public boolean blurOn() {
+        return activity instanceof QuickAddActivity && ((QuickAddActivity) activity).blurOn();
+    }
+
     /** Height of the gesture/navigation bar in CSS px, for the popup's bottom padding. */
     @JavascriptInterface
     public int navInset() {
@@ -345,6 +370,10 @@ public class KasNative {
             } catch (JSONException ignored) {}
             return this;
         }
+    }
+
+    private void glowState(String s) {
+        if (activity instanceof QuickAddActivity) main.post(() -> ((QuickAddActivity) activity).setGlow(s));
     }
 
     private static Ev event(String type) {

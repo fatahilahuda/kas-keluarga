@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Android 12+: frosted background behind the catat cepat popup -->
-    <style name="AppTheme.Quick.Blur" parent="AppTheme.Quick">
-        <item name="android:windowBlurBehindEnabled">true</item>
-        <item name="android:windowBlurBehindRadius">26dp</item>
-    </style>
-</resources>
