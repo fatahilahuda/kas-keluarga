@@ -18,27 +18,32 @@
 <meta name="apple-mobile-web-app-title" content="Muarakas">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}
 .card hr.sep{border:0;border-top:1px solid var(--line);margin:4px 0}
-/* Running glow around the screen edge (catat cepat and voice), in Muarakas colours */
+/* Running glow around the screen edge (catat cepat and voice), in Muarakas colours.
+   Blur sits on the wrapper and the ring mask on the child, so the inner edge fades to nothing (no line). */
 @property --ga{syntax:'<angle>';initial-value:0deg;inherits:false}
-.glow{position:fixed;inset:0;pointer-events:none;z-index:80;opacity:0;transition:opacity .35s ease}
-.glow.on{opacity:.75}
-.glow.listen{opacity:1}
-.glow i{position:absolute;inset:0;border-radius:var(--scr,44px);padding:var(--gw,4px);
-  background:conic-gradient(from var(--ga),#3BB3AB,#7F96FF,#A496F0,#E0C25A,#4FC1B4,#3BB3AB);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-  animation:glowspin 3.2s linear infinite}
-.glow i+i{--gw:calc(10px + var(--lv,0) * 14px);filter:blur(16px);opacity:.85;transition:padding .12s ease-out}
-.glow i+i+i{--gw:calc(18px + var(--lv,0) * 26px);filter:blur(34px);opacity:.55}
-.glow.listen i{animation-duration:1.8s}
-.glow.saved i{background:conic-gradient(from var(--ga),#4CC48E,#3BB3AB,#B6F0D6,#4CC48E);animation-duration:1.1s}
+.glow{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .45s ease}
+#glow{z-index:39}
+.glow.on{opacity:1}
+.glow i{position:absolute;inset:0;filter:blur(var(--gb,22px))}
+.glow b{position:absolute;inset:0;border-radius:var(--scr,44px);padding:var(--gw,26px);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.glow .base b{background:conic-gradient(from var(--ga),#3BB3AB,#7F96FF,#A496F0,#E0C25A,#4FC1B4,#3BB3AB);opacity:.5;animation:glowspin 8s linear infinite}
+.glow .run{--gb:16px}
+.glow .run b{--gw:36px;background:conic-gradient(from var(--ga),transparent 0deg 190deg,#3BB3AB 240deg,#7F96FF 280deg,#C9B8FF 312deg,#FFE8A3 336deg,transparent 360deg);animation:glowspin 2.8s linear infinite}
+.glow .run2 b{--gw:28px;background:conic-gradient(from calc(var(--ga) + 180deg),transparent 0deg 250deg,#4FC1B4 300deg,#A496F0 335deg,transparent 360deg);opacity:.8;animation:glowspin 2.8s linear infinite}
+.glow.listen .base b{--gw:calc(30px + var(--lv,0) * 26px);opacity:.7}
+.glow.listen .run b{--gw:calc(42px + var(--lv,0) * 34px);animation-duration:1.7s}
+.glow.listen .run2 b{--gw:calc(32px + var(--lv,0) * 26px);animation-duration:1.7s}
+.glow.saved b{background:conic-gradient(from var(--ga),#4CC48E,#3BB3AB,#B6F0D6,#4CC48E)!important;animation-duration:1.2s}
 @keyframes glowspin{to{--ga:360deg}}
-@media (prefers-reduced-motion:reduce){.glow i{animation:none}}
+@media (prefers-reduced-motion:reduce){.glow b{animation:none}}
 /* Quick add popup (Android widget, shortcut and Quick Settings tile open index.html?quick=voice|text) */
 html.quick,html.quick body{background:transparent!important;min-height:100%}
 html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(#glow):not(script){display:none!important}
 .qk{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;z-index:40}
-.qk-scrim{position:absolute;inset:0;background:rgba(6,12,10,.42);animation:qkf .2s ease}
-.qk-sheet{position:relative;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + var(--nb,0px) + env(safe-area-inset-bottom));box-shadow:0 -10px 34px rgba(0,0,0,.2);animation:qku .28s cubic-bezier(.2,.8,.2,1);max-height:94vh;overflow:auto}
+.qk-scrim{position:absolute;inset:0;background:transparent}
+html.quick body{background:rgba(6,12,10,.26)!important;transition:background .3s}
+.qk-sheet{position:relative;background:color-mix(in srgb,var(--surface) 64%,transparent);-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);border:1px solid color-mix(in srgb,#fff 16%,transparent);border-bottom:0;transition:opacity .25s,transform .25s;color:var(--ink);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + var(--nb,0px) + env(safe-area-inset-bottom));box-shadow:0 -10px 34px rgba(0,0,0,.2);animation:qku .28s cubic-bezier(.2,.8,.2,1);max-height:94vh;overflow:auto}
 .qk-sheet .grab{margin:0 auto 6px}
 .qk-top{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
 .qk-brand{display:flex;align-items:center;gap:7px;font:700 15px var(--display);margin-right:auto}
@@ -73,8 +78,11 @@ html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(#glow):not(scrip
 @keyframes qkpop{from{transform:scale(.4);opacity:0}}
 /* Voice: Muarakas's own listening sheet, never the Google dialog */
 .vo{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end}
-.vo-scrim{position:absolute;inset:0;background:rgba(6,12,10,.55);animation:qkf .2s ease}
-.vo-card{position:relative;width:100%;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:20px 20px calc(20px + var(--nb,0px) + env(safe-area-inset-bottom));text-align:center;animation:qku .24s cubic-bezier(.2,.8,.2,1)}
+.vo-scrim{position:absolute;inset:0;background:rgba(6,12,10,.5);animation:qkf .2s ease}
+html.quick .vo-scrim{background:transparent}
+html.quick body:has(#vo) .qk-sheet{opacity:0;transform:translateY(24px);pointer-events:none}
+.vo .glow{opacity:1}
+.vo-card{position:relative;width:100%;background:color-mix(in srgb,var(--surface) 64%,transparent);-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);border:1px solid color-mix(in srgb,#fff 16%,transparent);border-bottom:0;color:var(--ink);border-radius:26px 26px 0 0;padding:20px 20px calc(20px + var(--nb,0px) + env(safe-area-inset-bottom));text-align:center;animation:qku .24s cubic-bezier(.2,.8,.2,1)}
 .vo-state{font-weight:700;color:var(--accent);font-size:14px}
 .vo.err .vo-state{color:var(--warn)}
 .vo-mic{position:relative;width:120px;height:120px;margin:14px auto 10px;display:grid;place-items:center}
@@ -2445,6 +2453,7 @@ async function quickSaved(t){
   if(!t)return;
   const label=t.type==='tf'?pname(t.pocket)+' → '+pname(t.to):cat(ctype(t),t.cat).n+' · '+pname(t.pocket);
   QK.done='<div class="qk-done"><div class="qk-ok">'+ic('check')+'</div><b>Tersimpan</b><div class="qk-damt">'+fmt(t.amount)+'</div><p class="small muted">'+esc(label)+'</p></div>';
+  const tt=document.getElementById('toast');if(tt)tt.hidden=true; // the done card says it already
   renderQuick();glow('saved');try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
   widgetPushNow();
   try{await Promise.race([syncNow(),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
@@ -2452,14 +2461,15 @@ async function quickSaved(t){
 }
 
 /* ---------- Edge glow: on while catat cepat is open, stronger while listening, green flash on save ---------- */
+function glowHTML(cls){return '<div class="glow '+(cls||'')+'" aria-hidden="true"><i class="base"><b></b></i><i class="run"><b></b></i><i class="run2"><b></b></i></div>';}
 function glow(state){
   let g=document.getElementById('glow');
-  if(!g){g=document.createElement('div');g.id='glow';g.className='glow';g.setAttribute('aria-hidden','true');g.innerHTML='<i></i><i></i><i></i>';document.body.appendChild(g);}
+  if(!g){const t=document.createElement('div');t.innerHTML=glowHTML('');g=t.firstChild;g.id='glow';document.body.appendChild(g);}
   g.classList.toggle('on',state!=='off');g.classList.toggle('listen',state==='listen');g.classList.toggle('saved',state==='saved');
   if(state!=='listen')g.style.removeProperty('--lv');
 }
 function glowRest(){glow(QUICK?'on':'off');}
-function glowLevel(v){const g=document.getElementById('glow');if(g)g.style.setProperty('--lv',String(v));}
+function glowLevel(v){document.querySelectorAll('.glow').forEach(g=>g.style.setProperty('--lv',String(v)));}
 
 /* ---------- Home screen widget: numbers handed to the native widget (Android app only) ---------- */
 function widgetPush(){clearTimeout(widgetPush.t);widgetPush.t=setTimeout(widgetPushNow,700);}
@@ -2521,7 +2531,7 @@ function voiceShow(st,code){
   const em={perm:'Izinkan mikrofon untuk Muarakas, lalu ketuk mikrofon lagi.',nomatch:'Belum terdengar. Ketuk mikrofon untuk coba lagi.',network:'Butuh internet untuk mengenali suara.',
     lang:'Bahasa Indonesia belum tersedia di pengenal suara HP ini.',busy:'Mikrofon sedang dipakai aplikasi lain.',unavailable:'HP ini belum punya layanan pengenal suara.',other:'Suara belum bisa dikenali. Coba lagi.'}[code]||'Suara belum bisa dikenali. Coba lagi.';
   const err=st==='err';
-  o.innerHTML='<div class="vo-scrim" data-act="vcancel"></div><div class="vo-card" role="dialog" aria-modal="true" aria-label="Catat dengan suara"><div class="vo-state">'+msg+'</div>'+
+  o.innerHTML='<div class="vo-scrim" data-act="vcancel"></div>'+(err?'':glowHTML(st==='listen'?'listen':''))+'<div class="vo-card" role="dialog" aria-modal="true" aria-label="Catat dengan suara"><div class="vo-state">'+msg+'</div>'+
     '<div class="vo-mic"><span class="vo-wave"></span><span class="vo-ring"></span><button data-act="'+(err?'vretry':'vstop')+'" aria-label="'+(err?'Coba lagi':'Selesai bicara')+'">'+ic(err?'retry':'mic')+'</button></div>'+
     '<div class="vo-text'+(err||!VO.text?' ph':'')+'" id="vo-text">'+esc(err?em:VO.text||'Sebutkan, misal “bakso lima belas ribu”')+'</div><div class="vo-parse" id="vo-parse"></div>'+
     '<div class="vo-btns"><button class="btn ghost sm" data-act="vkbd">'+ic('kbd','ci')+'Ketik saja</button></div></div>';
@@ -2536,7 +2546,7 @@ function voicePaint(){
 }
 function voiceEvent(ev){
   if(!VO.on||!ev)return;
-  if(ev.type==='ready'){voiceShow('listen');glow('listen');}
+  if(ev.type==='ready'){voiceShow('listen');}
   else if(ev.type==='rms'){const lv=String(Math.max(0,Math.min(1,((+ev.level||0)+2)/12)));const o=document.getElementById('vo');if(o)o.style.setProperty('--lv',lv);glowLevel(lv);}
   else if(ev.type==='partial'){if(ev.text){VO.text=ev.text;voicePaint();}}
   else if(ev.type==='end'){if(!VO.final)voiceShow('think');glow('on');}
