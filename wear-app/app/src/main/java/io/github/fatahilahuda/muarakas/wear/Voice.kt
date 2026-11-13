@@ -173,21 +173,36 @@ class BeepMute(ctx: android.content.Context) {
 
 private val GlowColors = listOf(Color(0xFF3BB3AB), Color(0xFF7F96FF), Color(0xFFA496F0), Color(0xFFE0C25A), Color(0xFF4FC1B4), Color(0xFF3BB3AB))
 
-/** Running glow around the round screen's edge, like the phone's; thicker with the voice. */
+/**
+ * Running glow around the round screen's edge, like the phone's. No hard line: it is drawn as
+ * thin rings whose opacity falls to zero going inward. A slow multicolour base plus a bright band
+ * that runs around the edge; louder voice reaches further in.
+ */
 @Composable
-fun EdgeGlow(active: Boolean, level: Float, colors: List<Color> = GlowColors) {
+fun EdgeGlow(active: Boolean, level: Float, saved: Boolean = false) {
     val spin = rememberInfiniteTransition(label = "glow")
-    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(if (active) 1800 else 3200, easing = LinearEasing), RepeatMode.Restart), label = "angle")
+    val run by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(if (active) 1700 else 2800, easing = LinearEasing), RepeatMode.Restart), label = "run")
+    val base by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(8000, easing = LinearEasing), RepeatMode.Restart), label = "base")
     val lv by animateFloatAsState(level, tween(140), label = "lv")
-    val alpha by animateFloatAsState(if (active) 1f else 0.6f, tween(300), label = "a")
+    val baseColors = if (saved) listOf(Color(0xFF4CC48E), Color(0xFF3BB3AB), Color(0xFFB6F0D6), Color(0xFF4CC48E)) else GlowColors
+    val band = if (saved) listOf(Color(0xFF4CC48E), Color(0xFFB6F0D6), Color(0xFF3BB3AB), Color(0xFFE6FFF3))
+        else listOf(Color(0xFF3BB3AB), Color(0xFF7F96FF), Color(0xFFC9B8FF), Color(0xFFFFE8A3))
     Canvas(Modifier.fillMaxSize()) {
-        val brush = Brush.sweepGradient(colors, center)
-        rotate(angle) {
-            // soft outer layers fake the blur, then the crisp line on the very edge
-            listOf(26f to 0.10f, 16f to 0.18f, 9f to 0.32f, 4f to 0.95f).forEach { (w, a) ->
-                val width = (w + if (w > 5f) lv * w * 0.9f else 0f).dp.toPx()
-                drawCircle(brush, radius = size.minDimension / 2 - width / 2, alpha = a * alpha, style = Stroke(width))
-            }
+        val r0 = size.minDimension / 2
+        val depth = (if (active) 30f + lv * 24f else 24f).dp.toPx()
+        val steps = 16
+        val w = depth / steps
+        val baseBrush = Brush.sweepGradient(baseColors, center)
+        val runBrush = Brush.sweepGradient(
+            0f to Color.Transparent, 0.53f to Color.Transparent, 0.67f to band[0], 0.78f to band[1],
+            0.87f to band[2], 0.93f to band[3], 1f to Color.Transparent, center = center,
+        )
+        for (k in 0 until steps) {
+            val f = 1f - k / steps.toFloat()
+            val a = f * f
+            val r = r0 - w * (k + 0.5f)
+            rotate(base) { drawCircle(baseBrush, radius = r, alpha = a * 0.45f, style = Stroke(w + 0.6f)) }
+            rotate(run) { drawCircle(runBrush, radius = r, alpha = a * 0.95f, style = Stroke(w + 0.6f)) }
         }
     }
 }

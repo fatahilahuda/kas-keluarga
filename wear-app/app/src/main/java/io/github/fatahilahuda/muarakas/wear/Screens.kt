@@ -345,6 +345,7 @@ private fun SmallRound(icon: androidx.compose.ui.graphics.vector.ImageVector, la
 @Composable
 fun DoneScreen(k: Kas, d: Store.Draft?, onBack: () -> Unit) {
     LaunchedEffect(Unit) { delay(1600); onBack() }
+    Box(Modifier.fillMaxSize().background(Color.Black)) { EdgeGlow(active = true, level = 0.3f, saved = true) }
     Centered {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(52.dp).clip(CircleShape).background(Accent), contentAlignment = Alignment.Center) {

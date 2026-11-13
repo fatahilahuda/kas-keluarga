@@ -325,7 +325,7 @@ object Ic {
 
 @Composable
 fun Centered(content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color.Black).padding(18.dp), contentAlignment = Alignment.Center) { content() }
+    Box(Modifier.fillMaxSize().padding(18.dp), contentAlignment = Alignment.Center) { content() }
 }
 
 @Composable

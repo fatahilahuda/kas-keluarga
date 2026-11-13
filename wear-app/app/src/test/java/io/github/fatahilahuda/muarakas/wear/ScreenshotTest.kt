@@ -79,6 +79,8 @@ class ScreenshotTest {
         VoiceView(kas, VoiceUi(VoicePhase.LISTENING, heard = "bakso lima belas ribu", level = 0.6f), {}, {})
     }
 
+    @Test fun done() = shot("done") { DoneScreen(kas, Store.Draft(amount = 15000, cat = "makan")) {} }
+
     @Test fun voiceError() = shot("voice_error") {
         VoiceView(kas, VoiceUi(VoicePhase.ERROR, error = "Belum terdengar. Ketuk untuk coba lagi."), {}, {})
     }
