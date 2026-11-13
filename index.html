@@ -2686,21 +2686,42 @@ function billSave(){
 }
 
 /* ---- Rangkuman mingguan (Sunday evening to Tuesday, on the home screen) ---- */
-function weekSummary(){
-  const t=parseISO(todayISO()),dow=(t.getDay()+6)%7,mon=new Date(t);mon.setDate(t.getDate()-dow-(dow<6?7:0));
+function weekSummary(thisWeek){
+  const t=parseISO(todayISO()),dow=(t.getDay()+6)%7,mon=new Date(t);mon.setDate(t.getDate()-dow-(thisWeek||dow===6?0:7));
   const s=iso(mon),e=addDay(s,6),ps=addDay(s,-7),pe=addDay(s,-1),inR=(x,a,b)=>x.date>=a&&x.date<=b&&x.type==='out'&&!isUsahaTx(x);
   const cur={},prev={};let tc=0,tp=0;V().forEach(x=>{if(inR(x,s,e)){tc+=x.amount;cur[x.cat]=(cur[x.cat]||0)+x.amount;}else if(inR(x,ps,pe)){tp+=x.amount;prev[x.cat]=(prev[x.cat]||0)+x.amount;}});
   let up=null;Object.keys(cur).forEach(c=>{const d=cur[c]-(prev[c]||0);if(d>0&&(!up||d>up.d))up={c,d,p:prev[c]?Math.round(d/prev[c]*100):null};});
   return {s,e,tc,tp,up,top:Object.keys(cur).sort((a,b)=>cur[b]-cur[a])[0]};
 }
 const isUsahaTx=x=>{try{return !!(x.biz&&bizOf(x.biz)&&bkind(bizOf(x.biz))==='usaha');}catch(e){return false;}};
-function weekText(){const w=weekSummary();if(!w.tc&&!w.tp)return null;
+function weekText(cur){const w=weekSummary(cur);if(!w.tc&&!w.tp)return null;
   const diff=w.tp?Math.round((w.tc-w.tp)/w.tp*100):null;
-  return {title:'Minggu ini keluar '+fmtS(w.tc),body:(diff!=null?(diff>0?'Naik '+diff+'%':diff<0?'Turun '+(-diff)+'%':'Sama')+' dibanding minggu lalu. ':'')+(w.up?cat('out',w.up.c).n+' naik '+fmtS(w.up.d)+'.':w.top?'Terbesar: '+cat('out',w.top).n+'.':'')};}
+  return {mon:w.s,title:'Minggu ini keluar '+fmtS(w.tc),body:(diff!=null?(diff>0?'Naik '+diff+'%':diff<0?'Turun '+(-diff)+'%':'Sama')+' dibanding minggu lalu. ':'')+(w.up?cat('out',w.up.c).n+' naik '+fmtS(w.up.d)+'.':w.top?'Terbesar: '+cat('out',w.top).n+'.':'')};}
 function weekCard(){
   if(!modOn('rangkuman'))return '';const d=new Date(),dow=d.getDay(),h=d.getHours();
   if(!((dow===0&&h>=17)||dow===1||dow===2))return '';const w=weekText();if(!w)return '';
   return '<section class="card weekcard"><div class="card-h">'+hh('chart','Rangkuman minggu '+(dow===0?'ini':'lalu'),'var(--k2)')+'</div><p><b>'+esc(w.title)+'</b></p><p class="small muted">'+esc(w.body)+'</p></section>';
+}
+
+/* ---- Android: bill and weekly-summary notifications, bank notification capture ---- */
+function remindPush(){
+  const N=window.KasQuickNative;if(!N||!N.reminders)return;
+  try{const cm=mkey(todayISO()),lock=!!lsGet('kas.lock');
+    const bills=modOn('tagihan')?SET().rec.filter(r=>r.type==='out').map(r=>({id:r.id,n:r.desc||cat('out',r.cat).n,amt:lock?'':fmt(r.amount),day:r.day,paid:(r.last||'')>=cm?cm:''})):[];
+    const w=modOn('rangkuman')?weekText(true):null;
+    N.reminders(JSON.stringify({bills,week:modOn('rangkuman')?(w&&!lock?w:{mon:weekSummary(true).s,title:'Rangkuman minggu ini sudah siap',body:'Buka Muarakas untuk melihat ke mana uangmu minggu ini.'}):null}));
+  }catch(e){}
+}
+const notifNative=()=>!!(window.KasQuickNative&&window.KasQuickNative.notifState);
+function notifApply(on){const N=window.KasQuickNative;if(!N||!N.notifSet)return;try{N.notifSet(!!on);}catch(e){}if(on&&N.notifState()!=='on')setTimeout(()=>{TAB='set';UI.st='notifbank';render();},400);}
+function notifSection(){
+  const N=window.KasQuickNative;if(!notifNative())return '<section class="card"><p class="small muted">Fitur ini hanya ada di aplikasi Android Muarakas.</p></section>';
+  const st=N.notifState(),on=modOn('notif');
+  return '<section class="card stack"><h2>Tangkap notifikasi bank</h2><p class="small muted">Saat bank atau e-wallet mengirim notifikasi pembayaran, Muarakas menawarkan <b>Catat?</b> dengan nominal dan tujuan sudah terisi. Kamu tetap yang memutuskan; tidak ada yang dicatat sendiri.</p>'+
+    '<div class="meter-row"><span>Izin akses notifikasi</span><span class="pill '+(st==='on'?'good':'warn')+'">'+(st==='on'?'Aktif':'Belum diizinkan')+'</span></div>'+
+    (on&&st!=='on'?'<button class="btn" data-act="notifperm">Buka pengaturan izin</button><p class="hint">Cari <b>Muarakas</b> di daftar, lalu nyalakan.</p>':'')+
+    (on?'':'<p class="hint">Nyalakan modul <b>Tangkap notifikasi bank</b> di Pengaturan, Modul.</p>')+'</section>'+
+    '<section class="card stack"><h2>Privasi</h2><p class="small muted">Yang dibaca hanya notifikasi dari aplikasi bank dan e-wallet: BCA, Mandiri, BRI, BNI, BSI, CIMB, Permata, Jago, SeaBank, blu, Jenius, GoPay, OVO, DANA, ShopeePay, LinkAja, dan Flip. Isinya diproses di HP ini dan tidak dikirim ke mana pun. Notifikasi aplikasi lain diabaikan.</p></section>';
 }
 
 /* ---------- Quick add popup (Android widget / shortcut / Quick Settings) ---------- */
@@ -2788,6 +2809,7 @@ function glowLevel(v){document.querySelectorAll('.glow').forEach(g=>g.style.setP
 /* ---------- Home screen widget: numbers handed to the native widget (Android app only) ---------- */
 function widgetPush(){clearTimeout(widgetPush.t);widgetPush.t=setTimeout(widgetPushNow,700);}
 function widgetPushNow(){
+  remindPush();
   const N=window.KasQuickNative;if(!N||!N.widget)return;
   try{
     const now=new Date(),t=totals(mkey(todayISO()),null,'home'),bud=+(S.settings&&S.settings.budget)||0;
@@ -4444,7 +4466,7 @@ const MOD_ADD={usaha:'<button class="link" data-act="newbiz">+ Daftarkan usaha</
 function modSection(){
   const tg=S.biz.filter(b=>bkind(b)==='tabungan');
   let h='<section class="card stack" id="modsec"><div><h2>Modul</h2><p class="hint" style="margin-top:4px">Nyalakan yang kalian pakai saja. Mematikan modul hanya menyembunyikannya; datanya tetap tersimpan dan muncul lagi saat dinyalakan. Berlaku di HP kalian berdua.</p></div>';
-  MODS.forEach(([k,n,sub])=>{const on=modOn(k),L=S.biz.filter(b=>KIND_MOD[bkind(b)]===k);
+  MODS.filter(([k])=>k!=='notif'||notifNative()).forEach(([k,n,sub])=>{const on=modOn(k),L=S.biz.filter(b=>KIND_MOD[bkind(b)]===k);
     h+='<div class="modrow"><label class="toggle" for="mod-'+k+'"><span>'+n+'<br><span class="hint">'+sub+'</span></span><input type="checkbox" id="mod-'+k+'" data-act="mod:'+k+'"'+(on?' checked':'')+'></label>'+
       (on&&MOD_ADD[k]?(L.length?'<div class="plist">'+L.map(bizRowS).join('')+'</div>':'')+'<div class="modadd">'+MOD_ADD[k]+'</div>':'')+'</div>';});
   h+='<div class="modrow"><b>Target tabungan</b> <span class="hint">· selalu ada, dipasang di kantong</span>'+(tg.length?'<div class="plist">'+tg.map(bizRowS).join('')+'</div>':'<p class="hint" style="margin-top:4px">Buka sebuah kantong lalu ketuk <b>Pasang target</b>, misal untuk haji atau DP rumah.</p>')+'</div>';
@@ -4515,7 +4537,7 @@ function deleteCat(){
 /* ---------- Pengaturan: its own page. The first screen is a menu; each row opens a subpage.
    Forms that edit one thing (kantong, kategori, usaha, PIN) still open as sheets on top. ---------- */
 const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||!!navigator.standalone;
-const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',cepat:'Catat cepat',suara:'Suara',pasang:'Pasang aplikasi'};
+const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',cepat:'Catat cepat',notifbank:'Notifikasi bank',suara:'Suara',pasang:'Pasang aplikasi'};
 const SET_BODY={
   profil:()=>whoSection()+(SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
@@ -4530,6 +4552,7 @@ const SET_BODY={
   anggaran:()=>'<section class="card stack"><h2>Anggaran bulanan</h2><div class="field"><label for="budget">Batas pengeluaran per bulan</label><input class="inp" id="budget" inputmode="numeric" placeholder="contoh: 5.000.000" value="'+(S.settings.budget?NF.format(S.settings.budget):'')+'"><span class="hint">Dipakai untuk jatah harian dan garis anggaran di grafik laju. Kosongkan untuk mematikan.</span></div><button class="btn ghost" data-act="savebudget">Simpan anggaran</button></section>'+cbudSection(),
   rutin:()=>recSection(),
   modul:()=>modSection(),
+  notifbank:()=>notifSection(),
   tampilan:()=>'<section class="card stack"><h2>Tema</h2>'+skinPicker()+'<p class="hint">Bisa juga diganti cepat lewat tombol di pojok atas: terang, gelap, lalu pink.</p></section>',
   keamanan:()=>lockSection(),
   cadangan:()=>{const n=S.tx.filter(t=>!t.sample).length;return (SOLO()?'<section class="card stack"><h2>Cadangan</h2><p class="small muted">Simpan file berisi semua catatanmu, misalnya ke Google Drive. Di HP baru, buka Muarakas lalu ketuk <b>Pulihkan</b>.</p><div class="btns"><button class="btn" data-act="sharefull">Buat cadangan</button><button class="btn ghost" data-act="import">Pulihkan</button></div></section>':'<section class="card stack"><h2>Kirim manual & cadangan</h2><p class="small muted">Tanpa internet. Kirim file data lewat Quick Share, AirDrop, Bluetooth, atau WhatsApp, lalu buka di HP '+esc(partner().n)+' dengan <b>Terima data</b>. Catatan, kantong, usaha, dan pengajuan digabung, tidak ditimpa. Nominal pemasukan rahasiamu <b>tidak ikut terkirim</b>.</p>'+
@@ -4895,6 +4918,7 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a.indexOf('blcat:')===0){UI.blc=v;UI.blpk=pocketForCat('out',v);const k=['bln','bla','bld'].map(i=>document.getElementById(i).value);billSheet();['bln','bla','bld'].forEach((i,j)=>{document.getElementById(i).value=k[j];});return;}
   if(a.indexOf('blpk:')===0){UI.blpk=v;const k=['bln','bla','bld'].map(i=>document.getElementById(i).value);billSheet();['bln','bla','bld'].forEach((i,j)=>{document.getElementById(i).value=k[j];});return;}
   if(a==='blsave'){billSave();return;}
+  if(a==='notifperm'){try{window.KasQuickNative.notifSettings();}catch(e){}return;}
   if(a==='qc-asst'){try{window.KasQuickNative.assistantSettings();}catch(e){}return;}
   if(a==='vmic'||a.indexOf('vmic:')===0){VO.target=v||'';voiceStart();return;}
   if(a==='vstop'){if(VO.eng)try{VO.eng.stop();}catch(e){}voiceShow('think');return;}
@@ -4954,7 +4978,8 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a.indexOf('who:')===0){if(v==='solo'&&S.family){toast('Putuskan sambungan dengan '+partner().n+' dulu sebelum beralih ke Sendiri.');return;}
     if((v==='solo')===SOLO())return;S.settings.who=v;S.settings.u=Date.now();if(v==='solo'&&TAB==='kita')UI.kt='sum';save();settingsSheet();render();toast(v==='solo'?'Dipakai sendiri':'Dipakai berdua. Isi nama pasangan, lalu sambungkan HP-nya.');return;}
   if(a.indexOf('mod:')===0){const m={};MODS.forEach(x=>{m[x[0]]=modOn(x[0]);});m[v]=!!el.checked;S.settings.mods=m;S.settings.u=Date.now();if(PG!=='home'&&!MODE())PG='home';save();
-    const sec=document.getElementById('modsec');if(sec)sec.outerHTML=modSection();render();toast(MODS.find(x=>x[0]===v)[1]+(m[v]?' dinyalakan':' dimatikan'));return;}
+    const sec=document.getElementById('modsec');if(sec)sec.outerHTML=modSection();render();toast(MODS.find(x=>x[0]===v)[1]+(m[v]?' dinyalakan':' dimatikan'));
+    if(v==='notif')notifApply(m[v]);if(v==='tagihan'||v==='rangkuman')remindPush();return;}
   if(a.indexOf('newmod:')===0){UI.gadaiNext=0;bizSheet(null,v);return;}
   if(a.indexOf('newtarget:')===0){UI.gadaiNext=0;const p=pocket(v);bizSheet(null,'tabungan',p?p.n:'',v);return;}
   if(a.indexOf('bizedit:')===0){bizSheet(v);return;}
@@ -5149,7 +5174,10 @@ if(QUICK){
   sndPreload();render(true);loadKey().then(()=>{unlockOwnSealed();syncNow();});
   if(!needOnb())requestAnimationFrame(()=>glow('on'));
   if(QUICK==='voice'&&!needOnb())setTimeout(voiceStart,180);
-  else if(!needOnb()){sndOpen();setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);}
+  else if(!needOnb()){sndOpen();
+    const P=new URLSearchParams(location.search),q=P.get('q');
+    if(q){if(P.get('ty')==='in'){F=newForm('in',{typeManual:true});render(true);}setTimeout(()=>{const d=document.getElementById('fdesc');if(d){d.value=q;onDescInput();}},150);}
+    else setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);}
 }else{
 render(true);
 if(needOnb())openOnb();
@@ -5160,6 +5188,7 @@ fetchGold();setInterval(()=>{if(document.visibilityState==='visible')fetchGold()
 setInterval(()=>{if(document.visibilityState==='visible')syncNow();},15000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;
   // A catatan saved from the widget popup while this page sat in the background: take it in.
+  if(TAB==='set'&&UI.st==='notifbank')render();
   const f=foreignState();if(f){const before=S.tx.length;S=f;SEEN=f.wAt||0;applyCats();remapCats();buildModel();render();const n=S.tx.length-before;if(n>0)toast(n+' catatan baru dari catat cepat');}
   syncNow();});
 window.addEventListener('online',()=>syncNow());
