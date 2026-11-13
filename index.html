@@ -61,11 +61,24 @@ html.quick body{background:rgba(6,12,10,.26)!important;transition:background .3s
 .qk .seg{flex:1}
 .qk .ai{margin-top:8px}
 .qk-l{font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 6px}
-.qk .chips,.qk .pchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.qk .chips,.qk .pchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:3px 16px 4px;margin:-3px -16px 0}
 .qk .chips::-webkit-scrollbar,.qk .pchips::-webkit-scrollbar{display:none}
 .qk .pchips{display:flex;gap:8px}
 .qk .chip,.qk .pchip{flex:none}
 .qk .pchip{min-width:128px}
+/* The scroll row would clip an outer ring: draw the selected ring inside the chip's own edge instead */
+.qk .pchip[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c);background:color-mix(in srgb,var(--c) 9%,var(--surface))}
+.qk #fwarn:not(:empty),.qk #fhide:not(:empty){margin-top:12px}
+/* Native popup (Android): the sheet is its own window, blurred by the system only behind the card.
+   The screen-edge glow and the dim are drawn natively behind it. */
+html.quick.nq body{background:transparent!important}
+html.quick.nq #glow,html.quick.nq .vo .glow{display:none!important}
+html.quick.nq .qk{justify-content:flex-start}
+html.quick.nq .vo{align-items:flex-start}
+html.quick.nq .qk-sheet,html.quick.nq .vo-card{border-radius:28px;max-height:none;animation:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding-bottom:18px;
+  background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid color-mix(in srgb,#fff 14%,transparent)}
+html.quick.nq.noblur .qk-sheet,html.quick.nq.noblur .vo-card{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+html.quick.nq .vo-card{text-align:center}
 .qk .chip.addc{display:none}
 .qk.locked .pchip small{visibility:hidden}
 .qk .btn.qk-save{margin-top:16px;width:100%;font-size:16px;padding:15px}
@@ -1529,6 +1542,9 @@ let SV=0;
 /* ?quick=voice|text: the Android widget/shortcut popup. Only the Catat sheet is shown, over the home screen. */
 const QUICK=(()=>{try{const q=new URLSearchParams(location.search).get('quick');return q==='voice'||q==='text'?q:'';}catch(e){return '';}})();
 if(QUICK)document.documentElement.classList.add('quick');
+/* Android popup window that sizes itself to the card and blurs only behind it */
+const NQ=!!(QUICK&&window.KasQuickNative&&window.KasQuickNative.sheetHeight);
+if(NQ){document.documentElement.classList.add('nq');try{if(!window.KasQuickNative.blurOn())document.documentElement.classList.add('noblur');}catch(e){}}
 /* The popup and the main app are two pages on the same storage. Each stamps its writes, so neither
    silently drops a catatan the other saved meanwhile (see persist and the visibilitychange reload). */
 const TABID=Math.random().toString(36).slice(2);let SEEN=0;
@@ -2435,12 +2451,12 @@ function renderQuick(){
   let el=document.getElementById('qk');
   if(!el){el=document.createElement('div');el.id='qk';el.className='qk';document.body.appendChild(el);}
   el.classList.toggle('locked',!!lsGet('kas.lock'));
-  if(needOnb()){QK.ty='';el.innerHTML=qkShell('<div class="qk-done"><p style="margin-bottom:14px">Siapkan Muarakas dulu di aplikasinya, lalu catat cepat bisa dipakai dari sini.</p><button class="btn" data-act="qopen">Buka Muarakas</button></div>');return;}
-  if(QK.done){QK.ty='';el.innerHTML=qkShell(QK.done);return;}
+  if(needOnb()){QK.ty='';setTimeout(nqWatch,0);el.innerHTML=qkShell('<div class="qk-done"><p style="margin-bottom:14px">Siapkan Muarakas dulu di aplikasinya, lalu catat cepat bisa dipakai dari sini.</p><button class="btn" data-act="qopen">Buka Muarakas</button></div>');return;}
+  if(QK.done){QK.ty='';el.innerHTML=qkShell(QK.done);setTimeout(nqWatch,0);return;}
   // Background redraws (sync, timers) must not wipe what is being typed: refresh in place instead.
   if(QK.ty===F.type&&document.getElementById('fdesc')){refreshForm();return;}
   const old=document.getElementById('fdesc'),keep=old?old.value:'';
-  QK.ty=F.type;el.innerHTML=qkShell(vQuick());
+  QK.ty=F.type;el.innerHTML=qkShell(vQuick());setTimeout(nqWatch,0);
   const d=document.getElementById('fdesc');if(keep){d.value=keep;const p=parseAmount(keep);document.getElementById('famt').value=p&&!F.amtManual?NF.format(p.val):'';}
   refreshForm();
 }
@@ -2462,7 +2478,13 @@ async function quickSaved(t){
 
 /* ---------- Edge glow: on while catat cepat is open, stronger while listening, green flash on save ---------- */
 function glowHTML(cls){return '<div class="glow '+(cls||'')+'" aria-hidden="true"><i class="base"><b></b></i><i class="run"><b></b></i><i class="run2"><b></b></i></div>';}
+/* Tell the native window how tall the visible card is (voice card while listening, else the sheet). */
+function nqReport(){if(!NQ)return;const el=document.querySelector('.vo-card')||document.querySelector('.qk-sheet');if(!el)return;
+  try{window.KasQuickNative.sheetHeight(Math.ceil(el.getBoundingClientRect().height));}catch(e){}}
+const NQ_RO=NQ&&window.ResizeObserver?new ResizeObserver(nqReport):null;
+function nqWatch(){if(!NQ_RO)return;NQ_RO.disconnect();document.querySelectorAll('.qk-sheet,.vo-card').forEach(e=>NQ_RO.observe(e));nqReport();}
 function glow(state){
+  if(NQ){try{window.KasQuickNative.glow(state);}catch(e){}return;}
   let g=document.getElementById('glow');
   if(!g){const t=document.createElement('div');t.innerHTML=glowHTML('');g=t.firstChild;g.id='glow';document.body.appendChild(g);}
   g.classList.toggle('on',state!=='off');g.classList.toggle('listen',state==='listen');g.classList.toggle('saved',state==='saved');
@@ -2523,7 +2545,7 @@ function voiceStart(){
   SFX.play('muara');
   setTimeout(()=>{if(!VO.on||VO.eng!==eng)return;try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}},SFX.on?380:0);
 }
-function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();glowRest();}
+function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();glowRest();setTimeout(nqWatch,0);}
 function voiceShow(st,code){
   let o=document.getElementById('vo');if(!o){o=document.createElement('div');o.id='vo';document.body.appendChild(o);}
   o.className='vo '+st;
@@ -2536,6 +2558,7 @@ function voiceShow(st,code){
     '<div class="vo-text'+(err||!VO.text?' ph':'')+'" id="vo-text">'+esc(err?em:VO.text||'Sebutkan, misal “bakso lima belas ribu”')+'</div><div class="vo-parse" id="vo-parse"></div>'+
     '<div class="vo-btns"><button class="btn ghost sm" data-act="vkbd">'+ic('kbd','ci')+'Ketik saja</button></div></div>';
   if(!err)voicePaint();
+  nqWatch();
 }
 function voicePaint(){
   const t=document.getElementById('vo-text'),p=document.getElementById('vo-parse');if(!t||!p)return;
