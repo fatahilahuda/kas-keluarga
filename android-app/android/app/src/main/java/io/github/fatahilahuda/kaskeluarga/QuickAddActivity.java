@@ -37,6 +37,8 @@ public class QuickAddActivity extends AppCompatActivity {
 
     static final String BASE = "https://fatahilahuda.github.io/kas-keluarga/";
     public static final String EXTRA_MODE = "mode";
+    public static final String EXTRA_Q = "q";
+    public static final String EXTRA_TY = "ty";
 
     private WebView web;
     private KasNative bridge;
@@ -138,7 +140,18 @@ public class QuickAddActivity extends AppCompatActivity {
         root.post(() -> {
             if (!isFinishing()) card.show();
         });
-        web.loadUrl(BASE + "?quick=" + mode);
+        web.loadUrl(quickUrl(getIntent()));
+    }
+
+    /** Popup address; a captured bank notification adds the text to prefill (q) and in/out (ty). */
+    private String quickUrl(Intent in) {
+        String url = BASE + "?quick=" + mode;
+        String q = in.getStringExtra(EXTRA_Q);
+        if (q != null && !q.isEmpty()) {
+            url += "&q=" + Uri.encode(q);
+            if ("in".equals(in.getStringExtra(EXTRA_TY))) url += "&ty=in";
+        }
+        return url;
     }
 
     /** True when the system will actually blur behind the card (off in battery saver, etc.). */
@@ -181,7 +194,7 @@ public class QuickAddActivity extends AppCompatActivity {
         mode = "text".equals(intent.getStringExtra(EXTRA_MODE)) ? "text" : "voice";
         sized = false;
         web.setAlpha(0f);
-        web.loadUrl(BASE + "?quick=" + mode);
+        web.loadUrl(quickUrl(intent));
     }
 
     private void showKeyboard() {
