@@ -17,6 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Muarakas">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}
+.card hr.sep{border:0;border-top:1px solid var(--line);margin:4px 0}
 /* Quick add popup (Android widget, shortcut and Quick Settings tile open index.html?quick=voice|text) */
 html.quick,html.quick body{background:transparent!important;min-height:100%}
 html.quick body>*:not(#qk):not(#vo):not(#toast):not(#sheet):not(script){display:none!important}
@@ -2718,6 +2719,36 @@ function syncSection(){
     '<div class="couple" style="justify-content:space-between"><span class="small muted">PIN rahasia: '+(me().pinCheck?(SECKEY?'aktif di HP ini':'perlu dimasukkan di HP ini'):'belum dibuat')+'</span><button class="link" data-act="pin">'+(me().pinCheck?(SECKEY?'':'Masukkan PIN'):'Buat PIN')+'</button></div>'+
     '<button class="btn danger" data-act="fam-leave">Putuskan sinkron di HP ini</button></section>';
 }
+/* ---------- Pengaturan → Catat cepat (Android app only): ways to open the quick-add popup ---------- */
+function quickNative(){const N=window.KasQuickNative;try{return !!(N&&N.quickSettings&&N.quickSettings());}catch(e){return false;}}
+function qcCall(f,dflt){try{const N=window.KasQuickNative;return N&&N[f]?N[f]():dflt;}catch(e){return dflt;}}
+function quickSection(){
+  if(!quickNative())return '<section class="card stack"><h2>Catat cepat</h2><p class="small muted">Fitur ini ada di aplikasi Android Muarakas.</p></section>';
+  const bub=qcCall('bubbleState','off'),icon=!!qcCall('launcherIcon',false),asst=!!qcCall('assistantOn',false);
+  const tog=(id,on,title,hint)=>'<label class="toggle" for="'+id+'"><span>'+title+'<br><span class="hint">'+hint+'</span></span><input type="checkbox" id="'+id+'"'+(on?' checked':'')+'></label>';
+  return '<section class="card stack"><h2>Catat cepat</h2><p class="small muted">Popup Catat muncul di atas layar apa pun. Ucapkan atau ketik, misal <b>bakso 15 ribu</b>, lalu sekali ketuk Simpan.</p></section>'+
+    '<section class="card stack"><h2>Seperti asisten</h2>'+
+      '<div class="stack" style="gap:6px"><b>Tahan tombol samping</b><p class="small muted">Jadikan Muarakas aplikasi asisten digital: menahan tombol samping atau mengusap dari pojok bawah langsung membuka catat suara. Gemini tidak lagi terbuka lewat gerakan itu.</p>'+
+      (asst?'<p class="small" style="color:var(--in);font-weight:700">'+ic('check','ci')+' Aktif</p>':'')+
+      '<button class="btn ghost" data-act="qc-asst">'+ic('mic')+(asst?'Ubah asisten digital':'Pilih Muarakas sebagai asisten')+'</button>'+
+      '<p class="hint">Di halaman yang terbuka: <b>Aplikasi asisten digital</b> → pilih <b>Muarakas</b>. Di Samsung, atur juga Setelan → Fitur lanjutan → Tombol samping → Tekan dan tahan → Asisten digital.</p></div>'+
+      '<hr class="sep">'+tog('qc-icon',icon,'Tekan dua kali tombol samping','Menambah ikon "Catat cepat" di laci aplikasi. Lalu di Samsung: Setelan → Fitur lanjutan → Tombol samping → Tekan dua kali → Buka aplikasi → Catat cepat.')+
+      '<hr class="sep">'+tog('qc-bubble',bub!=='off','Gelembung melayang','Tombol mikrofon kecil di tepi layar, di atas aplikasi lain. Ketuk untuk suara, tahan untuk mengetik, geser untuk memindahkan.')+
+      (bub==='perm'?'<p class="hint" style="color:var(--warn)">Izinkan <b>Tampil di atas aplikasi lain</b> untuk Muarakas, lalu kembali ke sini.</p>':'')+
+    '</section>'+
+    '<section class="card stack"><h2>Cara lain</h2><ol class="steps">'+
+      '<li><b>Widget</b>: tekan lama layar utama → Widget → Muarakas. Isinya sisa anggaran dan tombol suara serta ketik.</li>'+
+      '<li><b>Ikon aplikasi</b>: tekan lama ikon Muarakas → Catat suara atau Catat ketik.</li>'+
+      '<li><b>Panel notifikasi</b>: buka panel, ketuk ✎ edit, tambahkan tile <b>Catat Muarakas</b>.</li></ol></section>';
+}
+function quickRefresh(){if(document.getElementById('qc-bubble')){const v=document.getElementById('view');if(v&&typeof render==='function')render();}}
+document.addEventListener('change',e=>{
+  const id=e.target.id,N=window.KasQuickNative;if(!N)return;
+  if(id==='qc-bubble'){let st='off';try{st=N.bubbleSet(e.target.checked);}catch(x){}if(st==='perm')toast('Izinkan Muarakas tampil di atas aplikasi lain');else toast(e.target.checked?'Gelembung aktif':'Gelembung dimatikan');}
+  else if(id==='qc-icon'){try{N.launcherIconSet(e.target.checked);}catch(x){}toast(e.target.checked?'Ikon Catat cepat ditambahkan':'Ikon Catat cepat dihapus');}
+});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(quickRefresh,300);});
+
 /* ---------- Wear OS watch: the watch shows a 6-digit pin, this phone hands it the family code ---------- */
 const WEAR_URL='https://github.com/fatahilahuda/kas-keluarga/releases?q=wear';
 function watchSection(){
@@ -4115,7 +4146,7 @@ function deleteCat(){
 /* ---------- Pengaturan: its own page. The first screen is a menu; each row opens a subpage.
    Forms that edit one thing (kantong, kategori, usaha, PIN) still open as sheets on top. ---------- */
 const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||!!navigator.standalone;
-const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',pasang:'Pasang aplikasi'};
+const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',cepat:'Catat cepat',pasang:'Pasang aplikasi'};
 const SET_BODY={
   profil:()=>whoSection()+(SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
@@ -4140,6 +4171,7 @@ const SET_BODY={
    (S.tx.length>n?'<button class="btn ghost" data-act="clearsamples">Hapus data contoh</button>':'')+'<button class="btn danger" data-act="wipe">Hapus semua data</button></section>';},
   laporan:()=>reportSection(),
   jam:()=>watchSection(),
+  cepat:()=>quickSection(),
   pasang:()=>{return '<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
    '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
    '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>';}
@@ -4168,7 +4200,7 @@ function vSet(){
      setRow('keamanan','finger','var(--k3)','Keamanan',locked?'Kunci PIN aktif':'Kunci aplikasi mati'),
      setRow('cadangan','inbox','var(--k1)','Cadangan & data',SOLO()?'Buat cadangan, pulihkan, hapus data':'Kirim manual, cadangan, hapus data'),
      setRow('laporan','chart','var(--k2)','Laporan','Unduh CSV untuk Excel atau Sheets'),
-     setRow('jam','watch','var(--k5)','Jam tangan','Muarakas di Wear OS')].concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
+     setRow('jam','watch','var(--k5)','Jam tangan','Muarakas di Wear OS')].concat(quickNative()?[setRow('cepat','mic','var(--k0)','Catat cepat','Widget, tombol samping, gelembung')]:[]).concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
    '<div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div>';
 }
 /* Open Pengaturan, or refresh it. With a subpage name it goes there; '' is the menu. */
@@ -4455,6 +4487,7 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
   if(a==='watch-link'){watchLink(el);return;}
+  if(a==='qc-asst'){try{window.KasQuickNative.assistantSettings();}catch(e){}return;}
   if(a==='vmic'){voiceStart();return;}
   if(a==='vstop'){if(VO.eng)try{VO.eng.stop();}catch(e){}voiceShow('think');return;}
   if(a==='vcancel'){if(VO.eng)try{VO.eng.cancel();}catch(e){}voiceClose();return;}
