@@ -2510,7 +2510,7 @@ const shopKey=n=>String(n||'').toLowerCase().replace(/\d+([.,]\d+)?\s*(rb|ribu|k
 function shopPrice(n){const p=(S.shopPrice||{})[shopKey(n)];return p||0;}
 /* "telur 1 kg 28rb, minyak dan gula" → three items, the first with a price */
 function shopParse(txt){
-  return String(txt||'').split(/\s*(?:,|;|\n|\bdan\b|\bsama\b|\bserta\b|\bplus\b)\s*/i).map(s=>s.trim()).filter(Boolean).map(s=>{
+  return String(txt||'').split(/\r?\n/).map(l=>l.replace(LIST_BUL,'')).join('\n').split(/\s*(?:,|;|\n|\bdan\b|\bsama\b|\bserta\b|\bplus\b)\s*/i).map(s=>s.trim()).filter(Boolean).map(s=>{
     /* only a real price counts: 18rb, 1,5jt, Rp 7.500, 12000. "2 liter" or "1 kg" is a quantity. */
     s=normSpeech(s);const a=parseAmount(s),tok=a?s.slice(a.start,a.start+a.len).trim():'',hasMoney=!!a&&(/(rb|ribu|k|jt|juta)$/i.test(tok)||tok.replace(/\D/g,'').length>=4||/rp\.?\s*$/i.test(s.slice(0,a.start)));
     let n=s;if(hasMoney&&a.val>=500){n=(s.slice(0,a.start)+' '+s.slice(a.start+a.len)).replace(/\brp\.?/i,'').replace(/\s+/g,' ').trim();}
@@ -2722,6 +2722,33 @@ function notifSection(){
     (on&&st!=='on'?'<button class="btn" data-act="notifperm">Buka pengaturan izin</button><p class="hint">Cari <b>Muarakas</b> di daftar, lalu nyalakan.</p>':'')+
     (on?'':'<p class="hint">Nyalakan modul <b>Tangkap notifikasi bank</b> di Pengaturan, Modul.</p>')+'</section>'+
     '<section class="card stack"><h2>Privasi</h2><p class="small muted">Yang dibaca hanya notifikasi dari aplikasi bank dan e-wallet: BCA, Mandiri, BRI, BNI, BSI, CIMB, Permata, Jago, SeaBank, blu, Jenius, GoPay, OVO, DANA, ShopeePay, LinkAja, dan Flip. Isinya diproses di HP ini dan tidak dikirim ke mana pun. Notifikasi aplikasi lain diabaikan.</p></section>';
+}
+
+/* ---- Share sheet: "Catat di Muarakas" (Android). Text, lists, receipt photos, screenshots, PDF proofs. ---- */
+const LIST_BUL=/^\s*(?:-\s*\[[ xX]?\]|[-*•·▪◦–—]|\d{1,2}[.)]|\[[ xX]?\]|[☐☑✓✔])\s*/;
+function dataBlob(u){const i=u.indexOf(','),bin=atob(u.slice(i+1)),a=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)a[j]=bin.charCodeAt(j);return new Blob([a],{type:(u.slice(0,i).match(/:(.*?);/)||[])[1]||'image/jpeg'});}
+const shareLines=t=>String(t||'').split(/\r?\n/).map(l=>l.replace(LIST_BUL,'').trim()).filter(l=>l&&l.length<=60&&!/:\s*$/.test(l));
+window.__kasShare=()=>{let p=null;try{const N=window.KasQuickNative,j=N&&N.shareTake?N.shareTake():'';p=j?JSON.parse(j):null;}catch(e){}if(p)shareHandle(p);};
+function shareForm(r,income){
+  TAB='add';F=newForm(income?'in':'out',{typeManual:!!income});closeSheet();render(true);window.scrollTo(0,0);
+  const d=document.getElementById('fdesc');if(!d)return;
+  if(r.shop){d.value=r.shop;onDescInput();}
+  const a=document.getElementById('famt'),dt=document.getElementById('fdate');
+  if(r.total&&a){a.value=NF.format(r.total);F.amtManual=true;}
+  if(r.date&&dt){dt.value=r.date;F.date=r.date;}
+  refreshForm();
+}
+function shareHandle(p){
+  if(p.kind==='image'&&p.image){TAB='add';F=newForm('out');closeSheet();render(true);window.scrollTo(0,0);startScan(dataBlob(p.image));return;}
+  const text=String(p.text||'').trim();if(!text)return;
+  const tr=rcTransfer(text);if(tr){shareForm(tr,tr.income);toast('Dari bukti transaksi. Cek lagi sebelum disimpan.');return;}
+  const rc=parseReceipt(text);if(rc.sure&&rc.total){shareForm(rc,false);toast('Dari struk. Cek lagi sebelum disimpan.');return;}
+  const L=shareLines(text);
+  if(L.length>=2){UI.shareList=L;
+    openSheet('<h2>Dibagikan ke Muarakas</h2><p class="small muted">'+L.length+' baris: '+esc(L.slice(0,4).join(', '))+(L.length>4?', …':'')+'</p>'+
+      '<div class="stack" style="margin-top:14px"><button class="btn" data-act="sharelist">'+ic('basket')+'Tambah ke list belanja</button>'+
+      '<button class="btn ghost" data-act="sharecatat">'+ic('plus')+'Catat sebagai satu pengeluaran</button>'+(modOn('belanja')?'':'<p class="hint">List belanja ikut dinyalakan di Modul.</p>')+'</div>');return;}
+  TAB='add';F=newForm('out');closeSheet();render(true);window.scrollTo(0,0);const d=document.getElementById('fdesc');if(d){d.value=text.replace(/\s+/g,' ').slice(0,120);onDescInput();}
 }
 
 /* ---------- Quick add popup (Android widget / shortcut / Quick Settings) ---------- */
@@ -4152,6 +4179,28 @@ function parseReceipt(text){
   const others=[];found.concat(itemVals.map(v=>({v,score:0}))).sort((a,b)=>b.score-a.score||b.v-a.v).forEach(c=>{if(c.v!==total&&others.indexOf(c.v)<0&&others.length<4)others.push(c.v);});
   return {shop:rcShop(lines,low),total,sure,date:rcDate(low),items:items.slice(0,8),others,resto:RC_RESTO.test(low)||RC_RESTO.test(lines.slice(0,3).join(' ').toLowerCase())};
 }
+/* Transfer and e-wallet proofs (screenshot, PDF or shared text): "Transfer Berhasil · Rp 150.000 · Nama Penerima SITI AMINAH".
+   Shop receipts have a TOTAL line; these have a labelled nominal and a recipient instead. */
+const TF_PROOF=/transfer\s*(berhasil|sukses)|bukti\s*(transfer|transaksi|pembayaran)|(transaksi|pembayaran)\s*(berhasil|sukses)|nama\s*penerima|rekening\s*tujuan|dana\s*masuk|transfer\s*masuk|\bqris\b/i;
+function rcTransfer(text){
+  const t=String(text||'');if(!TF_PROOF.test(t))return null;
+  const lines=t.split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);let amt=0;
+  for(let i=0;i<lines.length&&!amt;i++)if(/^(nominal|jumlah|total|amount|nilai)\b/i.test(lines[i])){const n=rcNums(lines[i].replace(/^[a-z ]+:?/i,'')).concat(lines[i+1]?rcNums(lines[i+1]):[]);if(n.length)amt=n[0];}
+  if(!amt){const m=t.match(/(?:rp\.?|idr)\s*([\d.,]+)/i);if(m){const n=rcNums(m[1]);if(n.length)amt=n[0];}}
+  if(!amt)return null;
+  const income=/dana\s*masuk|transfer\s*masuk|diterima\s*dari|kamu\s*menerima|anda\s*menerima/i.test(t);
+  const field=re=>{for(let i=0;i<lines.length;i++){const m=lines[i].match(re);if(!m)continue;let v=(m[1]||'').trim();if(!v||/^[\d*]|^rp/i.test(v))v=lines[i+1]||'';
+    v=v.replace(/[\d*\-]{6,}.*$/,'').replace(/^(bapak|ibu|bpk|sdr|sdri)\.?\s+/i,'').replace(/[^A-Za-z0-9&'. ]/g,' ').replace(/\s+/g,' ').trim();if(/[a-z]{2}/i.test(v)&&v.length<=40)return titleCase(v);}return '';};
+  const note=field(/^(?:berita|keterangan|catatan|pesan|deskripsi|remark|news)\s*:?\s*(.*)$/i).toLowerCase();
+  const to=field(/^(?:nama\s*penerima|penerima|kepada|rekening\s*tujuan|nama\s*merchant|merchant|dibayar\s*ke)\s*:?\s*(.*)$/i);
+  const from=income?field(/^(?:nama\s*pengirim|pengirim|dari)\s*:?\s*(.*)$/i):'';
+  const fromIn=income&&!from?(t.match(/\bdari\s+([A-Za-z][A-Za-z.' ]{2,30}?)(?=\s*(?:[,.\n]|ke\b|via\b|sebesar|$))/i)||[])[1]:'';
+  const who=income?(from||(fromIn?titleCase(fromIn.trim()):'')):to,qris=/qris|merchant/i.test(t);
+  let shop;
+  if(note)shop=note.charAt(0).toUpperCase()+note.slice(1)+(who?(income?' dari ':qris?' di ':' ke ')+who:'');
+  else shop=income?(who?'Dari '+who:'Uang masuk'):who?(qris?who:'Kirim ke '+who):'Transfer';
+  return {total:amt,income,sure:true,date:rcDate(t.toLowerCase()),items:[],others:[],shop};
+}
 /* The reader runs on the phone (Tesseract, Indonesian). First scan downloads it once (~4 MB); after that it works offline. */
 const TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
 let OCRL=null,OCRW=null,OCRREADY=false;
@@ -4183,7 +4232,7 @@ function startScan(file){
   F.scan={busy:true,pct:0,stage:window.Tesseract?'Membaca tulisan di nota…':'Menyiapkan pembaca nota…'};render();
   scanImage(file).then(im=>{if(!F.scan)return;F.scan.photo=im.photo;paintScan();
     return ocrWorker().then(w=>w.recognize(im.ocr)).then(out=>{if(!F.scan)return;
-      const r=parseReceipt(out.data.text);F.scan={r,photo:im.photo,pick:r.total,words:(r.items.join(' ')+(r.resto?' makan':'')).trim()};applyScan(r);});})
+      const tr=rcTransfer(out.data.text),r=parseReceipt(out.data.text);if(tr){r.total=tr.total;r.shop=tr.shop;r.sure=true;if(tr.date)r.date=tr.date;r.items=[];}F.scan={r,photo:im.photo,pick:r.total,words:(r.items.join(' ')+(r.resto?' makan':'')).trim()};applyScan(r);});})
   .catch(e=>{if(!F.scan)return;const photo=F.scan.photo;
     F.scan={err:e&&e.message==='img'?'Foto ini tidak bisa dibuka. Coba foto ulang notanya.':!OCRREADY?'Pembaca nota perlu internet untuk diunduh pertama kali (±4 MB). Sambungkan internet, lalu scan lagi.':'Nota belum terbaca. Coba foto lebih dekat dan terang, lalu scan lagi.',photo};paintScan();});
 }
@@ -4919,6 +4968,10 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
   if(a.indexOf('blpk:')===0){UI.blpk=v;const k=['bln','bla','bld'].map(i=>document.getElementById(i).value);billSheet();['bln','bla','bld'].forEach((i,j)=>{document.getElementById(i).value=k[j];});return;}
   if(a==='blsave'){billSave();return;}
   if(a==='notifperm'){try{window.KasQuickNative.notifSettings();}catch(e){}return;}
+  if(a==='sharelist'){if(!modOn('belanja')){const m={};MODS.forEach(x=>{m[x[0]]=modOn(x[0]);});m.belanja=true;S.settings.mods=m;S.settings.u=Date.now();}
+    const n=shopAdd((UI.shareList||[]).join('\n'));UI.shareList=null;closeSheet();TAB='belanja';render(true);window.scrollTo(0,0);toast(n+' barang masuk list belanja');return;}
+  if(a==='sharecatat'){const L=shopParse((UI.shareList||[]).join('\n')),sum=L.reduce((x,i)=>x+(i.price||0),0);UI.shareList=null;
+    shareForm({shop:'Belanja: '+L.map(i=>i.n.toLowerCase()).join(', ').slice(0,90),total:sum},false);return;}
   if(a==='qc-asst'){try{window.KasQuickNative.assistantSettings();}catch(e){}return;}
   if(a==='vmic'||a.indexOf('vmic:')===0){VO.target=v||'';voiceStart();return;}
   if(a==='vstop'){if(VO.eng)try{VO.eng.stop();}catch(e){}voiceShow('think');return;}
@@ -5193,6 +5246,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState!==
   syncNow();});
 window.addEventListener('online',()=>syncNow());
 widgetPush();
+if(!needOnb())setTimeout(()=>window.__kasShare(),250);
 }
 window.__kas={parseReceipt,parseAmount,predict,merge,buildTips,balances,S:()=>S,exportObj,syncNow,SB,setPin};
 })();
