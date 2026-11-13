@@ -73,14 +73,16 @@ html.quick body{background:rgba(6,12,10,.26)!important;transition:background .3s
    The screen-edge glow and the dim are drawn natively behind it. */
 html.quick.nq body{background:transparent!important}
 html.quick.nq #glow,html.quick.nq .vo .glow{display:none!important}
-html.quick.nq .qk{justify-content:flex-start}
+html.quick.nq .qk{justify-content:flex-start;overflow:hidden}
+html.quick.nq .qk-sheet,html.quick.nq .vo-card{flex:none;overflow:visible}
 html.quick.nq .vo{align-items:flex-start}
 html.quick.nq .qk-sheet,html.quick.nq .vo-card{border-radius:28px;max-height:none;animation:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding-bottom:18px;
   background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid color-mix(in srgb,#fff 14%,transparent)}
 html.quick.nq.noblur .qk-sheet,html.quick.nq.noblur .vo-card{background:color-mix(in srgb,var(--surface) 95%,transparent)}
 html.quick.nq .vo-card{text-align:center}
 .qk .chip.addc{display:none}
-.qk.locked .pchip small{visibility:hidden}
+.qk.locked .pchip small{display:none}
+.qk.locked #fwarn{display:none} /* would show the pocket balance */
 .qk .btn.qk-save{margin-top:16px;width:100%;font-size:16px;padding:15px}
 .qk-done{text-align:center;padding:22px 0 10px}
 .qk-ok{width:64px;height:64px;border-radius:50%;background:var(--in);color:#fff;display:grid;place-items:center;margin:0 auto 12px;animation:qkpop .35s cubic-bezier(.2,1.4,.4,1)}
@@ -2464,7 +2466,9 @@ function renderQuick(){
 function qkPaint(){
   const a=document.getElementById('qamt');if(a){const v=F._amt||0;a.textContent=v?fmt(v):'Rp 0';a.classList.toggle('zero',!v);}
   const sel=document.querySelector('.qk #fcats [aria-pressed="true"],.qk #fpk [aria-pressed="true"]');
-  document.querySelectorAll('.qk #fcats [aria-pressed="true"],.qk #fpk [aria-pressed="true"],.qk #ffrom [aria-pressed="true"],.qk #fto [aria-pressed="true"]').forEach(b=>{try{b.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}});
+  // Bring the chosen chip into view by scrolling its row sideways only (scrollIntoView would also scroll the card)
+  document.querySelectorAll('.qk #fcats [aria-pressed="true"],.qk #fpk [aria-pressed="true"],.qk #ffrom [aria-pressed="true"],.qk #fto [aria-pressed="true"]').forEach(b=>{
+    const row=b.parentElement;if(!row)return;const want=b.offsetLeft-(row.clientWidth-b.offsetWidth)/2;row.scrollLeft=Math.max(0,want);});
 }
 async function quickSaved(t){
   if(!t)return;
@@ -2496,7 +2500,8 @@ function soundSection(){
 function glowHTML(cls){return '<div class="glow '+(cls||'')+'" aria-hidden="true"><i class="base"><b></b></i><i class="run"><b></b></i><i class="run2"><b></b></i></div>';}
 /* Tell the native window how tall the visible card is (voice card while listening, else the sheet). */
 function nqReport(){if(!NQ)return;const el=document.querySelector('.vo-card')||document.querySelector('.qk-sheet');if(!el)return;
-  try{window.KasQuickNative.sheetHeight(Math.ceil(el.getBoundingClientRect().height));}catch(e){}}
+  window.scrollTo(0,0);const q=document.getElementById('qk');if(q)q.scrollTop=0;
+  try{window.KasQuickNative.sheetHeight(Math.ceil(Math.max(el.scrollHeight,el.getBoundingClientRect().height)));}catch(e){}}
 const NQ_RO=NQ&&window.ResizeObserver?new ResizeObserver(nqReport):null;
 function nqWatch(){if(!NQ_RO)return;NQ_RO.disconnect();document.querySelectorAll('.qk-sheet,.vo-card').forEach(e=>NQ_RO.observe(e));nqReport();}
 function glow(state){
