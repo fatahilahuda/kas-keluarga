@@ -236,6 +236,15 @@ public class KasNative {
         KasWidget.save(activity.getApplicationContext(), json);
     }
 
+    // ---------- share sheet ("Catat di Muarakas") ----------
+
+    /** What was shared to Muarakas, as JSON {kind:text|image, text, subject, image, pdf}; "" when none. */
+    @JavascriptInterface
+    public String shareTake() {
+        String s = ShareActivity.take();
+        return s == null ? "" : s;
+    }
+
     // ---------- reminders, bank notifications (optional modules) ----------
 
     public static final int REQ_NOTIF = 4712;

@@ -35,6 +35,29 @@
         </activity>
 
         <!-- Catat cepat popup over the home screen (widget, shortcuts, Quick Settings tile) -->
+        <!-- Share sheet: "Catat di Muarakas" for text, lists, receipt photos, screenshots and PDF transfer proofs -->
+        <activity
+            android:name=".ShareActivity"
+            android:label="@string/share_label"
+            android:icon="@mipmap/ic_launcher"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".QuickAddActivity"
             android:label="@string/quick_label"

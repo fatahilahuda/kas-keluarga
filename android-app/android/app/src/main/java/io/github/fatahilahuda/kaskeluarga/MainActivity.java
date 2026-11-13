@@ -23,6 +23,11 @@ public class MainActivity extends BridgeActivity {
         try {
             BubbleService.sync(this);
         } catch (RuntimeException ignored) {}
+        // Something shared to "Catat di Muarakas" while the app was already open: tell the page.
+        // On a cold start the page asks for it itself once it has loaded (KasNative.shareTake).
+        if (ShareActivity.waiting() && getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().evaluateJavascript("window.__kasShare&&window.__kasShare()", null);
+        }
     }
 
     @Override
