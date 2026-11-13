@@ -3,7 +3,10 @@ package io.github.fatahilahuda.muarakas.wear
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -42,7 +45,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,6 +85,8 @@ fun VoiceScreen(k: Kas, onDone: (String) -> Unit, onKeyboard: () -> Unit, onFall
     var attempt by remember { mutableIntStateOf(0) }
     var granted by remember { mutableStateOf(ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
     val holder = remember { arrayOfNulls<SpeechRecognizer>(1) }
+    val handler = remember { Handler(Looper.getMainLooper()) }
+    val beep = remember { BeepMute(ctx) }
     val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         granted = ok
         if (!ok) ui = VoiceUi(VoicePhase.ERROR, error = "Izinkan mikrofon untuk mencatat dengan suara.")
@@ -94,7 +102,7 @@ fun VoiceScreen(k: Kas, onDone: (String) -> Unit, onKeyboard: () -> Unit, onFall
             sr = SpeechRecognizer.createSpeechRecognizer(ctx)
             holder[0] = sr
             sr.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) { ui = VoiceUi(VoicePhase.LISTENING) }
+                override fun onReadyForSpeech(params: Bundle?) { ui = VoiceUi(VoicePhase.LISTENING); handler.postDelayed({ beep.unmute() }, 450) }
                 override fun onBeginningOfSpeech() {}
                 override fun onRmsChanged(rmsdB: Float) { if (ui.phase == VoicePhase.LISTENING) ui = ui.copy(level = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)) }
                 override fun onBufferReceived(buffer: ByteArray?) {}
@@ -120,9 +128,15 @@ fun VoiceScreen(k: Kas, onDone: (String) -> Unit, onKeyboard: () -> Unit, onFall
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, ctx.packageName)
             ui = VoiceUi(VoicePhase.WAITING)
-            try { sr.startListening(i) } catch (_: Exception) { ui = VoiceUi(VoicePhase.ERROR, error = errorText(-1)) }
+            // Muarakas chime first, then listen with the system's own "ding" muted for a moment.
+            Sfx.play(ctx, "muara")
+            val r: SpeechRecognizer = sr!!
+            handler.postDelayed({
+                beep.mute()
+                try { r.startListening(i) } catch (_: Exception) { beep.unmute(); ui = VoiceUi(VoicePhase.ERROR, error = errorText(-1)) }
+            }, 380)
         }
-        onDispose { try { sr?.destroy() } catch (_: Exception) {}; holder[0] = null }
+        onDispose { handler.removeCallbacksAndMessages(null); beep.unmute(); try { sr?.destroy() } catch (_: Exception) {}; holder[0] = null }
     }
 
     VoiceView(
@@ -136,6 +150,46 @@ fun VoiceScreen(k: Kas, onDone: (String) -> Unit, onKeyboard: () -> Unit, onFall
         },
         onKeyboard = onKeyboard,
     )
+}
+
+/** Mutes the streams the speech service's start "ding" usually plays on, for at most two seconds. */
+class BeepMute(ctx: android.content.Context) {
+    private val am = ctx.getSystemService(android.content.Context.AUDIO_SERVICE) as? AudioManager
+    private val muted = mutableListOf<Int>()
+    private val h = Handler(Looper.getMainLooper())
+    fun mute() {
+        if (am == null || muted.isNotEmpty()) return
+        for (s in intArrayOf(AudioManager.STREAM_MUSIC, AudioManager.STREAM_SYSTEM)) {
+            try { if (!am.isStreamMute(s)) { am.adjustStreamVolume(s, AudioManager.ADJUST_MUTE, 0); muted += s } } catch (_: Exception) {}
+        }
+        h.postDelayed({ unmute() }, 2000)
+    }
+    fun unmute() {
+        h.removeCallbacksAndMessages(null)
+        if (am != null) muted.forEach { s -> try { am.adjustStreamVolume(s, AudioManager.ADJUST_UNMUTE, 0) } catch (_: Exception) {} }
+        muted.clear()
+    }
+}
+
+private val GlowColors = listOf(Color(0xFF3BB3AB), Color(0xFF7F96FF), Color(0xFFA496F0), Color(0xFFE0C25A), Color(0xFF4FC1B4), Color(0xFF3BB3AB))
+
+/** Running glow around the round screen's edge, like the phone's; thicker with the voice. */
+@Composable
+fun EdgeGlow(active: Boolean, level: Float, colors: List<Color> = GlowColors) {
+    val spin = rememberInfiniteTransition(label = "glow")
+    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(if (active) 1800 else 3200, easing = LinearEasing), RepeatMode.Restart), label = "angle")
+    val lv by animateFloatAsState(level, tween(140), label = "lv")
+    val alpha by animateFloatAsState(if (active) 1f else 0.6f, tween(300), label = "a")
+    Canvas(Modifier.fillMaxSize()) {
+        val brush = Brush.sweepGradient(colors, center)
+        rotate(angle) {
+            // soft outer layers fake the blur, then the crisp line on the very edge
+            listOf(26f to 0.10f, 16f to 0.18f, 9f to 0.32f, 4f to 0.95f).forEach { (w, a) ->
+                val width = (w + if (w > 5f) lv * w * 0.9f else 0f).dp.toPx()
+                drawCircle(brush, radius = size.minDimension / 2 - width / 2, alpha = a * alpha, style = Stroke(width))
+            }
+        }
+    }
 }
 
 /** The listening screen itself: pulsing brand circle, live transcript, live amount + category. */
@@ -157,6 +211,7 @@ fun VoiceView(k: Kas, ui: VoiceUi, onMic: () -> Unit, onKeyboard: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+        if (ui.phase != VoicePhase.ERROR) EdgeGlow(active = ui.phase == VoicePhase.LISTENING, level = ui.level)
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp)) {
             Text(
                 when (ui.phase) {

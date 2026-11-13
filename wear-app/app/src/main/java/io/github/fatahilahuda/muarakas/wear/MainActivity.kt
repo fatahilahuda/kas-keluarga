@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -72,6 +73,7 @@ fun draftFromText(k: Kas, text: String, base: Store.Draft): Store.Draft {
 fun MainNav(k: Kas, go: MutableState<String?>) {
     val nav = rememberSwipeDismissableNavController()
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
     var draft by remember { mutableStateOf(Store.Draft()) }
     var lastSaved by remember { mutableStateOf<Store.Draft?>(null) }
 
@@ -105,7 +107,7 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
     LaunchedEffect(go.value) {
         when (go.value) {
             "voice" -> { draft = Store.Draft(); voice() }
-            "keypad" -> { draft = Store.Draft(); nav.navigate("keypad") }
+            "keypad" -> { draft = Store.Draft(); Sfx.play(ctx, "muara"); nav.navigate("keypad") }
             "summary" -> nav.navigate("summary")
         }
         go.value = null
@@ -170,6 +172,7 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
                     val d = draft
                     scope.launch {
                         Store.add(d)
+                        Sfx.play(ctx, "coins")
                         lastSaved = d
                         nav.navigate("done") { popUpTo("home") }
                         Store.syncNow()
