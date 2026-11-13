@@ -21,6 +21,8 @@ data class Tx(
     val hidden: Boolean, val sealed: Boolean, val revealed: Boolean,
 )
 
+/** One line on the shared shopping list (module "List belanja"; synced as kind "x", t = "shop"). */
+data class ShopItem(val id: String, val n: String, val price: Long, val done: Boolean, val raw: JSONObject)
 data class Totals(val hin: Long, val hout: Long, val cats: Map<String, Long>, val n: Int)
 data class Usaha(val book: Book, val omzet: Long, val biaya: Long) { val laba get() = omzet - biaya }
 data class Target(val book: Book, val bal: Long, val tgt: Long) { val pct get() = if (tgt > 0) min(100.0, bal * 100.0 / tgt) else 0.0 }
@@ -70,6 +72,7 @@ class Kas(val seed: Seed, items: Collection<Item>, val me: String, val goldIdr: 
     val books: List<Book>
     val cats: Map<String, List<Cat>>
     val allTx: List<Tx>
+    val shop: List<ShopItem>
     val visible: List<Tx>
     private val deadCatTo: List<Triple<String, String, String>> // type, deleted cat, moved to
 
@@ -95,6 +98,10 @@ class Kas(val seed: Seed, items: Collection<Item>, val me: String, val goldIdr: 
         allTx = items.filter { it.kind == "tx" && it.id !in deleted }.map { toTx(it.data) }
             .filter { it.date.length >= 10 }
         visible = allTx.filter { !masked(it) }
+        val delAt = items.filter { it.kind == "del" }.associate { it.id to it.u }
+        shop = items.filter { it.kind == "x" && it.data.optString("t") == "shop" && (delAt[it.id] ?: 0L) < it.u }
+            .map { ShopItem(it.id, it.data.str("n") ?: "Barang", it.data.num("price"), it.data.flag("done"), it.data) }
+            .sortedBy { it.n.lowercase() }
     }
 
     private fun toTx(d: JSONObject): Tx {

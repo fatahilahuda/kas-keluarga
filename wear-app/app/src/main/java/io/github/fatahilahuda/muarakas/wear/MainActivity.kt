@@ -193,6 +193,16 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
             }
         }
         composable("pockets") { PocketsScreen(k) }
+        composable("shop") {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val addShop = rememberTextInput("Barang, misal: telur, minyak dan gula") { t ->
+                scope.launch {
+                    val n = Store.addShop(t)
+                    if (n > 0) android.widget.Toast.makeText(ctx, "$n barang ditambahkan", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            ShopScreen(k, onToggle = { id -> scope.launch { Store.toggleShop(id) } }, onAdd = addShop)
+        }
         composable("modules") { ModulesScreen(k) }
         composable("about") {
             AboutScreen(k, onMe = { id -> scope.launch { Store.setMe(id) } }, onUnpair = { scope.launch { Store.unpair() } })

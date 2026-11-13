@@ -312,6 +312,8 @@ object Ic {
     val box = make("M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8")
     val swap = make("M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7")
     val check = make("M5 12.5l4.5 4.5L19 7")
+    val plus = make("M12 5v14M5 12h14")
+    val basket = make("M4 9h16l-1.5 10h-13zM8 9l3-5M16 9l-3-5")
     val sync = make("M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4")
     val trash = make("M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3")
     val tag = make("M3 12V4h8l10 10-8 8zM7.5 7.5h.01")

@@ -36,7 +36,11 @@ class ScreenshotTest {
         Kas(
             seed,
             listOf(
-                Item("settings", "main", 1, JSONObject("""{"budget":4000000,"cbud":{"jajan":300000}}""")),
+                Item("settings", "main", 1, JSONObject("""{"budget":4000000,"cbud":{"jajan":300000},"mods":{"belanja":true}}""")),
+                Item("x", "s1", 1, JSONObject("""{"id":"s1","t":"shop","n":"Telur 1 kg","price":28000,"done":true}""")),
+                Item("x", "s2", 1, JSONObject("""{"id":"s2","t":"shop","n":"Minyak 2 liter","done":false}""")),
+                Item("x", "s3", 1, JSONObject("""{"id":"s3","t":"shop","n":"Gula","price":18000,"done":false}""")),
+                Item("x", "s4", 1, JSONObject("""{"id":"s4","t":"shop","n":"Kopi","done":false}""")),
                 Item("member", "m1", 1, JSONObject("""{"id":"m1","n":"Huda"}""")),
                 Item("member", "m2", 1, JSONObject("""{"id":"m2","n":"Istri"}""")),
                 Item("pocket", "bank", 1, JSONObject("""{"id":"bank","n":"Rekening","k":1,"start":3000000}""")),
@@ -103,6 +107,8 @@ class ScreenshotTest {
     @Test fun summary() = shot("summary") { SummaryScreen(kas) }
     @Test fun history() = shot("history") { HistoryScreen(kas) {} }
     @Test fun pockets() = shot("pockets") { PocketsScreen(kas) }
+    @Test fun shop() = shot("shop") { ShopScreen(kas, {}, {}) }
+    @Test fun shopLower() = lower("shop_2", 3) { ShopScreen(kas, {}, {}) }
 
     private fun tile(name: String, root: LayoutElementBuilders.LayoutElement) = paparazzi.snapshot(name) {
         AndroidView(

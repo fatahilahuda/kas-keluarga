@@ -168,6 +168,10 @@ fun HomeScreen(k: Kas, onVoice: () -> Unit, onKeypad: () -> Unit, onTypeText: ()
             val b = k.balances()
             RowChip("Kantong", { onOpen("pockets") }, icon = Ic.wallet, iconColor = kColor(1), secondary = "Total " + Fmt.short(k.activePockets.sumOf { b[it.id] ?: 0L }, rp = false))
         }
+        if (k.modOn("belanja")) item {
+            val left = k.shop.count { !it.done }
+            RowChip("List belanja", { onOpen("shop") }, icon = Ic.basket, iconColor = kColor(1), secondary = if (left > 0) "$left belum dibeli" else "Kosong")
+        }
         if (k.shownBooks.isNotEmpty()) item { RowChip("Modul", { onOpen("modules") }, icon = Ic.box, iconColor = kColor(4), secondary = "Usaha, target, utang, emas") }
         if (recent.isNotEmpty()) {
             item { Text("Terakhir", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp)) }
@@ -511,6 +515,28 @@ fun PocketsScreen(k: Kas) {
                 } else if (p.save) Text("Tabungan", color = Muted, fontSize = 10.sp)
             }
         }
+    }
+}
+
+/** Shared shopping list: tap to tick off in the shop; "Selesai belanja" happens on the phone. */
+@Composable
+fun ShopScreen(k: Kas, onToggle: (String) -> Unit, onAdd: () -> Unit) {
+    val todo = k.shop.filter { !it.done }
+    val done = k.shop.filter { it.done }
+    Page {
+        item { Heading("List belanja", if (k.shop.isEmpty()) null else "${done.size} dari ${k.shop.size} di keranjang") }
+        item { RowChip("Tambah barang", onAdd, icon = Ic.plus, secondary = "Suara atau ketik") }
+        items(todo) { s ->
+            RowChip(s.n, { onToggle(s.id) }, dot = Muted, value = if (s.price > 0) Fmt.short(s.price, rp = false) else null)
+        }
+        if (done.isNotEmpty()) {
+            item { Small("Sudah di keranjang", Accent) }
+            items(done) { s ->
+                RowChip(s.n, { onToggle(s.id) }, icon = Ic.check, iconColor = Accent, bg = Color.Black, valueColor = Muted)
+            }
+            item { Small("Ketuk Selesai belanja di HP untuk mencatat totalnya.") }
+        }
+        if (k.shop.isEmpty()) item { Small("Belum ada barang. Tambah dari sini atau dari HP.") }
     }
 }
 

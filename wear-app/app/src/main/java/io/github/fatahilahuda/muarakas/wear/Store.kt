@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.wear.tiles.TileService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -294,6 +295,40 @@ object Store {
             persist(); rebuild(); refreshSurfaces()
         }
         return _kas.value?.visible?.maxByOrNull { it.ts }
+    }
+
+    /** Ticks or unticks a shopping-list item; the phone sees it on its next sync. */
+    suspend fun toggleShop(id: String) {
+        lock.withLock {
+            val it = _kas.value?.shop?.firstOrNull { s -> s.id == id } ?: return
+            val now = System.currentTimeMillis()
+            val d = JSONObject(it.raw.toString()).put("done", !it.done).put("u", now)
+            queue("x", id, now, d)
+            persist(); rebuild(); refreshSurfaces()
+        }
+        syncSoon()
+    }
+
+    /** "telur, minyak dan gula" → three items, same split as the phone. */
+    suspend fun addShop(text: String): Int {
+        val names = text.split(Regex("\\s*(?:,|;|\\bdan\\b|\\bsama\\b|\\bserta\\b)\\s*", RegexOption.IGNORE_CASE))
+            .map { it.trim() }.filter { it.isNotEmpty() }
+        if (names.isEmpty()) return 0
+        lock.withLock {
+            names.forEach { n ->
+                val now = System.currentTimeMillis()
+                val id = "s" + uid()
+                queue("x", id, now, JSONObject().put("id", id).put("t", "shop").put("n", n.replaceFirstChar { c -> c.uppercase() })
+                    .put("price", 0).put("done", false).put("by", me).put("u", now))
+            }
+            persist(); rebuild(); refreshSurfaces()
+        }
+        syncSoon()
+        return names.size
+    }
+
+    private fun syncSoon() {
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch { syncNow() }
     }
 
     suspend fun delete(id: String) {
