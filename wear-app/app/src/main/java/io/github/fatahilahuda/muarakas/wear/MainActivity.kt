@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Store.init(this)
         SyncWorker.schedule(this)
+        Sfx.preload(this)
         go.value = intent?.getStringExtra("go")
         setContent { App(go) }
     }
@@ -107,7 +108,7 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
     LaunchedEffect(go.value) {
         when (go.value) {
             "voice" -> { draft = Store.Draft(); voice() }
-            "keypad" -> { draft = Store.Draft(); Sfx.play(ctx, "muara"); nav.navigate("keypad") }
+            "keypad" -> { draft = Store.Draft(); Sfx.play(ctx, "open"); nav.navigate("keypad") }
             "summary" -> nav.navigate("summary")
         }
         go.value = null
@@ -172,7 +173,7 @@ fun MainNav(k: Kas, go: MutableState<String?>) {
                     val d = draft
                     scope.launch {
                         Store.add(d)
-                        Sfx.play(ctx, "coins")
+                        Sfx.play(ctx, "save")
                         lastSaved = d
                         nav.navigate("done") { popUpTo("home") }
                         Store.syncNow()

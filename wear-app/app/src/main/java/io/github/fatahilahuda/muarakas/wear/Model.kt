@@ -140,6 +140,11 @@ class Kas(val seed: Seed, items: Collection<Item>, val me: String, val goldIdr: 
     val hideCats: Set<String> = items.firstOrNull { it.kind == "member" && it.id == me }?.data?.optJSONArray("hideCats")
         ?.let { a -> (0 until a.length()).map { a.optString(it) }.toSet() } ?: emptySet()
 
+    /** Sound choices set on the phone (Pengaturan → Suara), stored on this person's member row. */
+    private val snd = items.firstOrNull { it.kind == "member" && it.id == me }?.data?.optJSONObject("snd")
+    val soundOpen: String = snd?.optString("open")?.takeIf { it.isNotEmpty() } ?: "muara"
+    val soundSave: String = snd?.optString("save")?.takeIf { it.isNotEmpty() } ?: "koin"
+
     fun book(id: String?) = books.firstOrNull { it.id == id }
     fun pocket(id: String?) = pockets.firstOrNull { it.id == id }
     fun pocketName(id: String?) = pocket(id)?.n ?: "Kantong terhapus"

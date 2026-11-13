@@ -129,7 +129,7 @@ fun VoiceScreen(k: Kas, onDone: (String) -> Unit, onKeyboard: () -> Unit, onFall
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, ctx.packageName)
             ui = VoiceUi(VoicePhase.WAITING)
             // Muarakas chime first, then listen with the system's own "ding" muted for a moment.
-            Sfx.play(ctx, "muara")
+            Sfx.play(ctx, "open")
             val r: SpeechRecognizer = sr!!
             handler.postDelayed({
                 beep.mute()
