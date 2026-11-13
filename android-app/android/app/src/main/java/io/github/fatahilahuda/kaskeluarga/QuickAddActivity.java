@@ -55,6 +55,13 @@ public class QuickAddActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
         overridePendingTransition(0, 0);
+        // Android 12+: blur whatever is behind the popup (home screen, other app), so the
+        // semi-transparent sheet reads as frosted glass.
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+            getWindow().getAttributes().setBlurBehindRadius(dp(26));
+            getWindow().setAttributes(getWindow().getAttributes());
+        }
 
         mode = "text".equals(getIntent().getStringExtra(EXTRA_MODE)) ? "text" : "voice";
 

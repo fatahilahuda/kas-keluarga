@@ -38,7 +38,7 @@
         <activity
             android:name=".QuickAddActivity"
             android:label="@string/quick_label"
-            android:theme="@style/AppTheme.Quick"
+            android:theme="@style/AppTheme.Quick.Blur"
             android:exported="true"
             android:taskAffinity="io.github.fatahilahuda.muarakas.quick"
             android:excludeFromRecents="true"
