@@ -1477,6 +1477,7 @@ const IP={
  edit:'<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>',
  check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ vol:'<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
  mic:'<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
  kbd:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
  retry:'<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/>',
@@ -2423,7 +2424,7 @@ function saveForm(){
     learn(cty,desc,c,F.pocket);save();
     if(tx.hidden){toast('Tersimpan sebagai rahasia. '+partner().n+' akan melihatnya sebagai kado tertutup.');if(S.family&&!SECKEY)setTimeout(pinSheet,350);}else toast((F.biz?bname(F.biz)+' · ':'')+(corrected?'AI belajar: "'+desc+'" → '+cat(cty,c).n:'Tersimpan di '+cat(cty,c).n+' · '+pname(F.pocket)));
   }
-  SFX.play('coins');
+  sndSave();
   if(QUICK){quickSaved(S.tx[S.tx.length-1]);return;}
   F=newForm(F.type,{date});if(mkey(date)!==CUR)CUR=mkey(date);
   render();const nd=document.getElementById('fdesc');if(nd)nd.focus();
@@ -2474,6 +2475,21 @@ async function quickSaved(t){
   widgetPushNow();
   try{await Promise.race([syncNow(),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   setTimeout(quickClose,650);
+}
+
+/* ---------- Sounds: per person (synced to the watch); Pengaturan → Suara ---------- */
+const SND_OPEN=[['muara','Muara','Tetes air dan dua denting, khas Muarakas'],['gelembung','Gelembung','Letupan kecil'],['klik','Klik','Ketukan singkat'],['off','Mati','']];
+const SND_SAVE=[['koin','Koin','Segenggam koin berdenting'],['celengan','Celengan','Koin masuk celengan'],['kasir','Kasir','Ting, laci kasir terbuka'],['lonceng','Lonceng','Dua lonceng lembut'],['klik','Klik','Ketukan singkat'],['off','Mati','']];
+function sndPref(){const m=(typeof me==='function'&&me())||{},p=m.snd||{};return {open:p.open||'muara',save:p.save||'koin'};}
+function sndOpen(){const p=sndPref().open;if(p!=='off')SFX.file('open-'+p,.45);}
+function sndSave(){const p=sndPref().save;if(p!=='off')SFX.file('save-'+p,.42);}
+function sndPreload(){const p=sndPref();if(p.open!=='off')SFX.preload('open-'+p.open);if(p.save!=='off')SFX.preload('save-'+p.save);}
+function soundSection(){
+  const p=sndPref(),chips=(list,cur,act)=>'<div class="chips">'+list.map(o=>'<button class="chip" data-act="'+act+':'+o[0]+'" aria-pressed="'+(cur===o[0])+'"'+(o[2]?' title="'+esc(o[2])+'"':'')+'>'+(o[0]==='off'?ic('x','ci'):ic('vol','ci'))+esc(o[1])+'</button>').join('')+'</div>';
+  const desc=(list,cur)=>{const o=list.find(x=>x[0]===cur);return o&&o[2]?'<p class="hint">'+esc(o[2])+'</p>':'';};
+  return '<section class="card stack"><h2>Saat catat cepat dibuka</h2><p class="small muted">Juga sebelum mikrofon mulai mendengar.</p>'+chips(SND_OPEN,p.open,'sndopen')+desc(SND_OPEN,p.open)+'</section>'+
+    '<section class="card stack"><h2>Saat menyimpan catatan</h2>'+chips(SND_SAVE,p.save,'sndsave')+desc(SND_SAVE,p.save)+'</section>'+
+    '<p class="hint" style="padding:0 4px">Ketuk pilihan untuk mendengarnya. Suara tidak berbunyi saat HP dalam mode senyap atau getar. Pilihan ini ikut dipakai jam Muarakas milikmu.</p>';
 }
 
 /* ---------- Edge glow: on while catat cepat is open, stronger while listening, green flash on save ---------- */
@@ -2542,8 +2558,8 @@ function voiceStart(){
   const eng=voiceEngine();if(!eng){toast('Input suara belum tersedia di perangkat ini');return;}
   const d=document.getElementById('fdesc');if(d)d.blur();
   VO.eng=eng;VO.on=true;VO.final=false;VO.text='';voiceShow('wait');glow('on');
-  SFX.play('muara');
-  setTimeout(()=>{if(!VO.on||VO.eng!==eng)return;try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}},SFX.on?380:0);
+  sndOpen();
+  setTimeout(()=>{if(!VO.on||VO.eng!==eng)return;try{eng.start();}catch(e){voiceEvent({type:'error',code:'other'});}},sndPref().open!=='off'?380:0);
 }
 function voiceClose(){VO.on=false;const o=document.getElementById('vo');if(o)o.remove();glowRest();setTimeout(nqWatch,0);}
 function voiceShow(st,code){
@@ -3083,7 +3099,16 @@ const SFX=(()=>{let ctx=null,on=true,nb=null;try{on=localStorage.getItem('kas.sf
   };
   /* Ringer on silent or vibrate (Android app tells us): stay quiet for the everyday sounds */
   const hush=k=>{if(k!=='muara'&&k!=='coins')return false;try{const N=window.KasQuickNative;return !!(N&&N.soundOk&&!N.soundOk());}catch(e){return false;}};
-  return {play(k,a){if(!on||!P[k]||hush(k))return;try{P[k](a);}catch(e){}},unlock(){if(on)ac();},get on(){return on;},
+  /* Recorded-quality sounds (sounds/*.mp3) for catat cepat: their own on/off lives in Pengaturan → Suara */
+  const bufs={},loading={};
+  const get=name=>loading[name]||(loading[name]=fetch('sounds/'+name+'.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
+    .then(a=>new Promise((res,rej)=>ac().decodeAudioData(a,res,rej))).then(d=>(bufs[name]=d)).catch(()=>{delete loading[name];return null;}));
+  const file=(name,vol,force)=>{if(!force&&hush('coins'))return;const c=ac();if(!c)return;
+    const go=b=>{try{const s=c.createBufferSource(),g=c.createGain();g.gain.value=vol||.4;s.buffer=b;s.connect(g);g.connect(c.destination);s.start();}catch(e){}};
+    if(bufs[name]){go(bufs[name]);return;}
+    const t=Date.now();get(name).then(d=>{if(d&&Date.now()-t<1500)go(d);});};
+  const preload=name=>{if(ac())get(name);};
+  return {file,preload,silent:()=>hush('coins'),play(k,a){if(!on||!P[k]||hush(k))return;try{P[k](a);}catch(e){}},unlock(){if(on)ac();},get on(){return on;},
     toggle(){on=!on;try{localStorage.setItem('kas.sfx',on?'1':'0');}catch(e){}if(on){ac();P.pop();}return on;}};
 })();
 const buzz=p=>{try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}};
@@ -4212,7 +4237,7 @@ function deleteCat(){
 /* ---------- Pengaturan: its own page. The first screen is a menu; each row opens a subpage.
    Forms that edit one thing (kantong, kategori, usaha, PIN) still open as sheets on top. ---------- */
 const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||!!navigator.standalone;
-const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',cepat:'Catat cepat',pasang:'Pasang aplikasi'};
+const SET_T={profil:'Profil',sinkron:'Sinkron',kantong:'Kantong',kategori:'Kategori',anggaran:'Anggaran',rutin:'Transaksi rutin',modul:'Modul',tampilan:'Tampilan',keamanan:'Keamanan',cadangan:'Cadangan & data',laporan:'Laporan',jam:'Jam tangan',cepat:'Catat cepat',suara:'Suara',pasang:'Pasang aplikasi'};
 const SET_BODY={
   profil:()=>whoSection()+(SOLO()?soloProfile():'<section class="card stack"><h2>Pasangan</h2><div class="row2"><div class="field"><label for="mn-m1">Nama 1</label><input class="inp" id="mn-m1" value="'+esc(mem('m1').n)+'"></div><div class="field"><label for="mn-m2">Nama 2</label><input class="inp" id="mn-m2" value="'+esc(mem('m2').n)+'"></div></div>'+
    '<div class="field"><span class="flabel">HP ini milik</span><div class="seg">'+S.members.map(m=>'<button data-act="setme:'+m.id+'" aria-pressed="'+(S.me===m.id)+'">'+esc(m.n)+'</button>').join('')+'</div></div>'+
@@ -4238,6 +4263,7 @@ const SET_BODY={
   laporan:()=>reportSection(),
   jam:()=>watchSection(),
   cepat:()=>quickSection(),
+  suara:()=>soundSection(),
   pasang:()=>{return '<section class="card stack"><h2>Pasang di layar utama</h2>'+(deferredInstall?'<button class="btn" data-act="install">Pasang aplikasi</button>':'')+
    '<div><b class="small">Android (Chrome)</b><ol class="steps"><li>Buka alamat aplikasi di Chrome.</li><li>Ketuk menu ⋮ lalu <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li></ol></div>'+
    '<div><b class="small">iPhone (Safari)</b><ol class="steps"><li>Buka alamat aplikasi di Safari.</li><li>Ketuk tombol Bagikan, lalu <b>Tambah ke Layar Utama</b>.</li></ol></div><p class="hint">Setelah dipasang, aplikasi bisa dibuka tanpa internet.</p></section>';}
@@ -4266,7 +4292,7 @@ function vSet(){
      setRow('keamanan','finger','var(--k3)','Keamanan',locked?'Kunci PIN aktif':'Kunci aplikasi mati'),
      setRow('cadangan','inbox','var(--k1)','Cadangan & data',SOLO()?'Buat cadangan, pulihkan, hapus data':'Kirim manual, cadangan, hapus data'),
      setRow('laporan','chart','var(--k2)','Laporan','Unduh CSV untuk Excel atau Sheets'),
-     setRow('jam','watch','var(--k5)','Jam tangan','Muarakas di Wear OS')].concat(quickNative()?[setRow('cepat','mic','var(--k0)','Catat cepat','Widget, tombol samping, gelembung')]:[]).concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
+     setRow('jam','watch','var(--k5)','Jam tangan','Muarakas di Wear OS')].concat(quickNative()?[setRow('cepat','mic','var(--k0)','Catat cepat','Widget, tombol samping, gelembung')]:[]).concat([setRow('suara','vol','var(--k1)','Suara','Saat catat cepat dibuka dan saat menyimpan')]).concat(isStandalone()?[]:[setRow('pasang','phone','var(--k4)','Pasang aplikasi','Tambahkan ke layar utama')]))+
    '<div class="about">'+mkSvg('logo','mk-gs')+'<span class="small muted">Catatan keuangan '+(SOLO()?'pribadi':'keluarga')+' · versi '+APPVER+'</span></div>';
 }
 /* Open Pengaturan, or refresh it. With a subpage name it goes there; '' is the menu. */
@@ -4553,6 +4579,8 @@ if(a.indexOf('histcat:')===0){H.who='';H.type=parts[1];H.cat=parts[1]+':'+parts[
       catch(e){el.disabled=false;er.textContent='Tidak bisa terhubung ke server. Periksa internetmu lalu coba lagi.';er.hidden=false;}})();return;}
   if(a==='fam-sync'){syncNow(true);return;}
   if(a==='watch-link'){watchLink(el);return;}
+  if(a.indexOf('sndopen:')===0||a.indexOf('sndsave:')===0){const m=me(),k=a.indexOf('sndopen:')===0?'open':'save';m.snd=Object.assign({},sndPref(),{[k]:v});m.u=Date.now();save();render();
+    if(v!=='off'){if(SFX.silent())toast('HP sedang senyap, suara tidak akan berbunyi');else SFX.file(k+'-'+v,k==='open'?.45:.42,true);}return;}
   if(a==='qc-asst'){try{window.KasQuickNative.assistantSettings();}catch(e){}return;}
   if(a==='vmic'){voiceStart();return;}
   if(a==='vstop'){if(VO.eng)try{VO.eng.stop();}catch(e){}voiceShow('think');return;}
@@ -4804,10 +4832,10 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 if(QUICK){
   // Popup: no lock screen (it can only add, and hides balances when the app lock is on), no onboarding.
   try{const N=window.KasQuickNative;if(N&&N.navInset)document.documentElement.style.setProperty('--nb',(+N.navInset()||0)+'px');}catch(e){}
-  render(true);loadKey().then(()=>{unlockOwnSealed();syncNow();});
+  sndPreload();render(true);loadKey().then(()=>{unlockOwnSealed();syncNow();});
   if(!needOnb())requestAnimationFrame(()=>glow('on'));
   if(QUICK==='voice'&&!needOnb())setTimeout(voiceStart,180);
-  else if(!needOnb()){SFX.play('muara');setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);}
+  else if(!needOnb()){sndOpen();setTimeout(()=>{const d=document.getElementById('fdesc');if(d)d.focus();},150);}
 }else{
 render(true);
 if(needOnb())openOnb();
