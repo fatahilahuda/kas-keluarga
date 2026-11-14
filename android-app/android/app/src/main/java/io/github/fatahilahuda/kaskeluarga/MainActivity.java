@@ -1,5 +1,6 @@
 package io.github.fatahilahuda.kaskeluarga;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
@@ -14,11 +15,36 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(KasBioPlugin.class);
         registerPlugin(KasQuickPlugin.class);
         super.onCreate(savedInstanceState);
+        takeNav(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        takeNav(intent);
+    }
+
+    /** Opened from a notification that points at a page (Aktivitas). */
+    private void takeNav(Intent in) {
+        String tab = in == null ? null : in.getStringExtra("tab");
+        if (tab != null) KasState.navTo = tab;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        KasState.visible = false;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        KasState.visible = true;
+        if (KasState.navTo != null && getBridge() != null && getBridge().getWebView() != null) {
+            String t = KasState.navTo;
+            KasState.navTo = null;
+            getBridge().getWebView().evaluateJavascript("window.__kasNav&&window.__kasNav('" + t.replaceAll("[^a-z]", "") + "')", null);
+        }
         // Back from the "display over other apps" screen, or the app just opened: show the bubble if wanted.
         try {
             BubbleService.sync(this);

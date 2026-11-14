@@ -236,6 +236,22 @@ public class KasNative {
         KasWidget.save(activity.getApplicationContext(), json);
     }
 
+    // ---------- Aktivitas: notifications for the other person's changes ----------
+
+    @JavascriptInterface
+    public void activitySet(String json) {
+        ActivityWatch.set(activity.getApplicationContext(), json);
+        if (json.contains("\"code\"") && Build.VERSION.SDK_INT >= 33 && !Reminders.canPost(activity)) askNotifOnce();
+    }
+
+    /** Page to open, when the app was opened from an Aktivitas notification; "" otherwise. */
+    @JavascriptInterface
+    public String navTake() {
+        String t = KasState.navTo;
+        KasState.navTo = null;
+        return t == null ? "" : t;
+    }
+
     // ---------- share sheet ("Catat di Muarakas") ----------
 
     /** What was shared to Muarakas, as JSON {kind:text|image, text, subject, image, pdf}; "" when none. */

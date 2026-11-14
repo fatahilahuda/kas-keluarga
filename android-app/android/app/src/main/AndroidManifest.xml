@@ -115,6 +115,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- Aktivitas: background check for the other person's changes -->
+        <service
+            android:name=".ActivityWatch"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <!-- Bill reminders and the weekly summary (modules Pengingat tagihan, Rangkuman mingguan) -->
         <receiver
             android:name=".Reminders"
