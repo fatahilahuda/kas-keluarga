@@ -89,17 +89,38 @@ html.story-on,html.story-on body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.story,.st-slide.in-r,.st-slide.in-l{animation:none}}
 .st-q{font:700 26px/1.2 var(--display);margin:6px 2px 12px}
 .st-why{color:var(--muted);font-size:14px;margin:-4px 2px 14px;line-height:1.45}
-.st-card{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 18px 18px;border-radius:26px;background:var(--surface);border:1px solid var(--line)}
-.st-card .mono{width:56px;height:56px}.st-card .mono svg{width:26px;height:26px}
-.st-amt{font:700 36px/1.1 var(--display);margin:14px 0 4px;letter-spacing:-.01em}
+.st-card{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 14px 14px;border-radius:26px;background:var(--surface);border:1px solid var(--line)}
+.st-card .mono{width:52px;height:52px}.st-card .mono svg{width:24px;height:24px}
+.st-amt{font:700 38px/1.1 var(--display);margin:0;letter-spacing:-.01em}
 .st-amt.in{color:var(--in)}
 .st-desc{font-size:17px;font-weight:600;margin-bottom:14px;overflow-wrap:anywhere}
-.st-facts{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:2px;text-align:left}
-.st-facts li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;background:var(--surface-2);font-size:14px}
-.st-facts li>svg,.st-facts li>.dot{width:16px;height:16px;flex:none;color:var(--muted)}
-.st-facts li .av{flex:none}
-.st-alt{margin-top:14px}.st-alt>span{display:block;font-size:13px;color:var(--muted);margin:0 2px 8px}
-.st-acts{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.st-facts{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left}
+.st-f{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:10px 14px;border-radius:16px;background:var(--surface-2);border:1.5px solid transparent;color:var(--ink);text-align:left}
+.st-f.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.st-f.ro{min-height:52px;background:none;border:1px dashed var(--line)}
+.st-fi{width:28px;display:grid;place-items:center;flex:none;color:var(--muted)}
+.st-fi svg{width:22px;height:22px}.st-fi .dot{width:16px;height:16px}.st-fi .av{transform:scale(1.25)}
+.st-fb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.st-fb small{font-size:12.5px;color:var(--muted);font-weight:500}
+.st-fb b{font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.st-fe{width:20px;height:20px;flex:none;color:var(--accent)}
+.st-hb{background:none;border:0;color:inherit;padding:4px 12px;border-radius:14px;display:inline-flex;align-items:center;gap:8px;max-width:100%}
+.st-hb:first-of-type{margin-top:12px}
+.st-hb.on{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.st-hb.st-desc{margin:2px 0 14px;font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.st-hp{width:18px;height:18px;color:var(--accent);flex:none;opacity:.8}
+.st-ed{margin-top:14px}
+.st-ed.open{padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.st-edt{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.st-edt .link{padding:6px 2px}
+.st-edh{display:block;font-size:14px;color:var(--muted);font-weight:600;margin:0 2px 8px}
+.st-edt .st-edh{margin:0}
+.st-ed .chip{min-height:44px;font-size:15px}
+.st-more svg{width:16px;height:16px}
+.st-dp{margin-top:10px}
+.st-inrow{display:flex;gap:8px}.st-inrow .inp{flex:1;min-width:0;font-size:17px}.story .st-inrow .btn{flex:none;width:auto;padding:0 18px}
+/* answer buttons stay in reach while the card and editor scroll behind them */
+.st-acts{margin-top:auto;padding-top:22px;display:flex;flex-direction:column;gap:10px;position:sticky;bottom:0;z-index:2;background:linear-gradient(to bottom,transparent,var(--bg) 20px)}
 .st-acts .btn,.st-dcard .btn{display:flex;align-items:center;justify-content:center;gap:8px;line-height:1}
 .st-acts .btn svg,.st-dcard .btn svg{width:20px;height:20px;flex:none}
 .story .btn.st-main{min-height:56px;border-radius:16px;font-size:16px}
@@ -2887,33 +2908,74 @@ function storyOpen(){
   el.hidden=false;document.documentElement.classList.add('story-on');sndOpen();storyPaint(0);
 }
 function storyClose(){const el=document.getElementById('story');if(el)el.hidden=true;document.documentElement.classList.remove('story-on');ST=null;render();}
-function storyGo(d){if(!ST)return;const n=ST.i+d;if(n<0||n>=ST.slides.length)return;ST.i=n;storyPaint(d);}
-function storyNext(){if(!ST)return;if(ST.i<ST.slides.length-1){ST.i++;storyPaint(1);}else storyClose();}
+function storyGo(d){if(!ST)return;const n=ST.i+d;if(n<0||n>=ST.slides.length)return;ST.i=n;ST.ed=null;storyPaint(d);}
+function storyNext(){if(!ST)return;ST.ed=null;if(ST.i<ST.slides.length-1){ST.i++;storyPaint(1);}else storyClose();}
 const stTx=id=>S.tx.find(x=>x.id===id&&!(S.deleted[id]&&S.deleted[id]>=(x.u||x.ts)));
+/* Detail rows of a catatan in the story. Each editable row opens its own editor under the card:
+   category, pocket and "untuk" as pills, the date as pills plus our calendar, description and
+   amount as a field. ST.ed is the open editor; with none open the AI's category guesses show. */
 function stFacts(t){
-  const f=[];if(t.type==='tf')f.push([TF_ICON,esc(pname(t.pocket))+' → '+esc(pname(t.to))]);
-  else{const c=cat(ctype(t),t.cat);f.push([ic(c.i||'tag'),esc(c.n),'cat']);f.push(['<span class="dot" style="--c:'+pcolor(t.pocket)+'"></span>',esc(pname(t.pocket))]);}
-  f.push([ic('cal'),esc(dayLabel(t.date))]);
-  if(!SOLO()&&t.by)f.push([av(t.by),'dicatat '+esc(memName(t.by))]);
-  if(t.for&&person(t.for))f.push([ic('user'),'untuk '+esc(person(t.for).n)]);
+  const f=[],out=t.type==='out';
+  if(t.type==='tf'){f.push(['pocket',TF_ICON,'Dari kantong',esc(pname(t.pocket))]);f.push(['to','<span class="dot" style="--c:'+pcolor(t.to)+'"></span>','Ke kantong',esc(pname(t.to))]);}
+  else{const c=cat(ctype(t),t.cat);f.push(['cat',ic(catIc(ctype(t),t.cat)),'Kategori',esc(c.n)]);f.push(['pocket','<span class="dot" style="--c:'+pcolor(t.pocket)+'"></span>',out?'Dari kantong':'Masuk ke kantong',esc(pname(t.pocket))]);}
+  const td=todayISO(),dl=t.date===td||t.date===addDay(td,-1)?dayLabel(t.date)+' · '+parseISO(t.date).getDate()+' '+BLN[parseISO(t.date).getMonth()]:shortDate(t.date);
+  f.push(['date',ic('cal'),'Tanggal',esc(dl)]);
+  if(out&&!(t.biz&&isUsaha(t.biz)))f.push(['for',ic('user'),'Untuk',t.for&&person(t.for)?esc(person(t.for).n):esc(BERSAMA())]);
+  if(!SOLO()&&t.by)f.push(['',av(t.by),'Dicatat',esc(memName(t.by))]);
   return f;
 }
-const stAmt=t=>'<div class="st-amt num '+t.type+'">'+(t.type==='in'?'+':t.type==='out'?'−':'⇄ ')+fmt(t.amount)+'</div>';
+const stAmt=t=>'<span class="st-amt num '+t.type+'">'+(t.type==='in'?'+':t.type==='out'?'−':'⇄ ')+fmt(t.amount)+'</span>';
+const ST_ED={cat:'Ganti kategori',pocket:'Ganti kantong',to:'Ganti kantong tujuan',date:'Ganti tanggal',for:'Untuk siapa',desc:'Ubah keterangan',amt:'Ubah nominal'};
+function stEditor(t){
+  const k=ST.ed,ty=ctype(t);
+  if(!k){
+    if(t.type==='tf')return '';
+    const alt=predict(ty,t.desc).ranked.map(r=>r.id).filter(id=>id!==t.cat),more=CATS[ty].filter(x=>x.id!==t.cat&&!alt.includes(x.id)).map(x=>x.id),opts=alt.concat(more).slice(0,3);
+    return '<div class="st-ed"><span class="st-edh">Bukan '+esc(cat(ty,t.cat).n)+'? Ganti ke</span><div class="chips">'+opts.map(id=>'<button class="chip" data-act="stset:cat|'+id+'">'+esc(cat(ty,id).n)+'</button>').join('')+
+      '<button class="chip st-more" data-act="sted:cat">Semua'+ic('chevd','ci')+'</button></div></div>';
+  }
+  let body='';
+  if(k==='cat')body='<div class="chips">'+CATS[ty].map(c=>'<button class="chip" data-act="stset:cat|'+c.id+'" aria-pressed="'+(t.cat===c.id)+'" style="--cc:'+ccolor(ty,c.id)+'">'+ic(catIc(ty,c.id),'ci')+esc(c.n)+'</button>').join('')+'</div>';
+  else if(k==='pocket'||k==='to'){const cur=k==='to'?t.to:t.pocket,ex=t.type==='tf'?(k==='to'?t.pocket:t.to):null;
+    body=pocketChips('st-pk',cur,'stpk',balances(),ex).replace(/data-act="stpk:/g,'data-act="stset:'+k+'|');}
+  else if(k==='date'){const td=todayISO(),Q=[[td,'Hari ini'],[addDay(td,-1),'Kemarin'],[addDay(td,-2),'2 hari lalu'],[addDay(td,-3),'3 hari lalu']];
+    body='<div class="chips">'+Q.map(([d,l])=>'<button class="chip" data-act="stset:date|'+d+'" aria-pressed="'+(t.date===d)+'">'+l+'</button>').join('')+'</div><div class="st-dp">'+dpField('st-date',t.date)+'</div>';}
+  else if(k==='for')body='<div class="chips">'+forChips(t.for&&person(t.for)?t.for:null,'stfor').replace(/<button class="chip" data-act="newperson"[\s\S]*$/,'').replace(/data-act="stfor:/g,'data-act="stset:for|')+'</div>';
+  else if(k==='desc')body='<div class="st-inrow"><input class="inp" id="st-desc" value="'+esc(t.desc||'')+'" autocomplete="off" enterkeyhint="done" aria-label="Keterangan"><button class="btn" data-act="stsave:desc">Simpan</button></div>';
+  else if(k==='amt')body='<div class="st-inrow"><input class="inp" id="st-amt" inputmode="numeric" value="'+NF.format(t.amount)+'" autocomplete="off" enterkeyhint="done" aria-label="Nominal"><button class="btn" data-act="stsave:amt">Simpan</button></div>';
+  return '<div class="st-ed open"><div class="st-edt"><span class="st-edh">'+ST_ED[k]+'</span><button class="link" data-act="sted:">Tutup</button></div>'+body+'</div>';
+}
 function stOne(s){
   const t=stTx(s.id);if(!t)return stGone();
-  const c=t.type==='tf'?null:cat(ctype(t),t.cat),alt=t.type==='tf'?[]:predict(ctype(t),t.desc).ranked.map(r=>r.id).filter(id=>id!==t.cat);
-  const more=CATS[ctype(t)].filter(x=>x.id!==t.cat&&!alt.includes(x.id)).slice(0,Math.max(0,3-alt.length)).map(x=>x.id),opts=alt.concat(more).slice(0,3);
+  const c=t.type==='tf'?null:cat(ctype(t),t.cat),ed=ST.ed;
   return '<div class="st-q">Sudah benar?</div>'+
-    '<div class="st-card">'+mono(t)+stAmt(t)+'<div class="st-desc">'+esc(t.desc||(c?c.n:'Pindah saldo'))+'</div>'+
-      '<ul class="st-facts">'+stFacts(t).map(f=>'<li>'+f[0]+'<span>'+f[1]+'</span></li>').join('')+'</ul></div>'+
-    (opts.length?'<div class="st-alt"><span>Bukan '+esc(c.n)+'? Ganti ke</span><div class="chips">'+opts.map(id=>'<button class="chip" data-act="stcat:'+t.id+'|'+id+'">'+esc(cat(ctype(t),id).n)+'</button>').join('')+'</div></div>':'')+
-    '<div class="st-acts"><div class="st-row"><button class="btn st-sec" data-act="stedit:'+t.id+'">'+ic('edit')+'Ubah</button><button class="btn st-sec st-del" data-act="stdel:'+t.id+'">'+ic('trash')+'Hapus</button></div>'+
+    '<div class="st-card">'+mono(t)+
+      '<button class="st-hb'+(ed==='amt'?' on':'')+'" data-act="sted:amt" aria-label="Ubah nominal">'+stAmt(t)+ic('edit','st-hp')+'</button>'+
+      '<button class="st-hb st-desc'+(ed==='desc'?' on':'')+'" data-act="sted:desc" aria-label="Ubah keterangan"><span>'+esc(t.desc||(c?c.n:'Pindah saldo'))+'</span>'+ic('edit','st-hp')+'</button>'+
+      '<div class="st-facts">'+stFacts(t).map(([k,i,l,v])=>k?
+        '<button class="st-f'+(ed===k?' on':'')+'" data-act="sted:'+k+'" aria-expanded="'+(ed===k)+'"><span class="st-fi">'+i+'</span><span class="st-fb"><small>'+l+'</small><b>'+v+'</b></span>'+ic(ed===k?'chevd':'edit','st-fe')+'</button>':
+        '<div class="st-f ro"><span class="st-fi">'+i+'</span><span class="st-fb"><small>'+l+'</small><b>'+v+'</b></span></div>').join('')+'</div></div>'+
+    stEditor(t)+
+    '<div class="st-acts"><div class="st-row"><button class="btn st-sec" data-act="stedit:'+t.id+'">'+ic('dots')+'Lainnya</button><button class="btn st-sec st-del" data-act="stdel:'+t.id+'">'+ic('trash')+'Hapus</button></div>'+
       '<button class="btn st-main" data-act="stok:'+t.id+'">'+ic('check')+'Sudah benar</button></div>';
+}
+/* One field of the catatan on screen, changed in place; the review counts the catatan as "diperbaiki". */
+function stApply(id,k,v){
+  const t=stTx(id);if(!t)return;const ty=ctype(t);
+  if(k==='cat'){if(t.cat===v)return;if(!t.sample){unlearn(t.type,t.desc,t.cat);learn(t.type,t.desc,v,t.pocket);}t.cat=v;}
+  else if(k==='pocket'){if(t.pocket===v)return;t.pocket=v;if(t.type!=='tf'&&!t.sample){S.catPocket[ty]=S.catPocket[ty]||{};S.catPocket[ty][t.cat]=v;}}
+  else if(k==='to'){if(t.to===v)return;t.to=v;}
+  else if(k==='date'){if(!v||t.date===v)return;t.date=v;}
+  else if(k==='for'){if((t.for||'_')===v)return;if(v==='_')delete t.for;else t.for=v;}
+  else if(k==='desc'){v=String(v||'').trim();if(!v||v===t.desc)return;if(t.type!=='tf'&&!t.sample){unlearn(t.type,t.desc,t.cat);learn(t.type,v,t.cat,t.pocket);}t.desc=v;}
+  else if(k==='amt'){if(!(v>0)||v===t.amount)return;t.amount=v;}
+  t.u=Date.now();t.eby=S.me;ST.fixed=ST.fixed||new Set();ST.fixed.add(t.id);save();buildModel();
+  try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}
 }
 function stDup(s){
   const L=s.ids.map(stTx).filter(Boolean);if(L.length<2)return stGone(true);
   return '<div class="st-q">Tercatat dua kali?</div><p class="st-why">Nominal sama, tanggal berdekatan, '+esc(s.why)+'. Hapus yang dobel, atau biarkan kalau memang dua transaksi.</p>'+
-    '<div class="st-dups">'+L.map((t,i)=>'<div class="st-dcard">'+mono(t)+'<div class="st-dd"><b>'+esc(t.desc||cat(ctype(t),t.cat).n)+'</b><small>'+stFacts(t).map(f=>f[1]).join(' · ')+'</small>'+
+    '<div class="st-dups">'+L.map((t,i)=>'<div class="st-dcard">'+mono(t)+'<div class="st-dd"><b>'+esc(t.desc||cat(ctype(t),t.cat).n)+'</b><small>'+stFacts(t).map(f=>(f[0]==='date'?esc(dayLabel(t.date)):f[3])).join(' · ')+'</small>'+
       '<small class="muted">Disimpan '+new Date(t.ts||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</small></div><div class="st-da num">'+fmtS(t.amount)+'</div>'+
       '<button class="btn st-sec st-del st-sm" data-act="stdupdel:'+t.id+'" aria-label="Hapus catatan ke-'+(i+1)+'" title="Hapus">'+ic('trash')+'</button></div>').join('')+'</div>'+
     '<div class="st-acts"><button class="btn st-main" data-act="stdupok">'+ic('check')+'Bukan dobel, simpan semua</button></div>';
@@ -2937,10 +2999,10 @@ function storyPaint(dir){
 function stMark(t,how){t.rv=Date.now();t.u=Date.now();ST.done[how]++;save();}
 function storySwipe(el){
   let x0=null,y0=0;
-  el.addEventListener('pointerdown',e=>{if(e.target.closest('button,input,.chips'))return;x0=e.clientX;y0=e.clientY;});
+  el.addEventListener('pointerdown',e=>{if(e.target.closest('button,input,.chips,.pchips,.st-ed,.dppop'))return;x0=e.clientX;y0=e.clientY;});
   el.addEventListener('pointerup',e=>{if(x0===null)return;const dx=e.clientX-x0,dy=e.clientY-y0;x0=null;
     if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.4)storyGo(dx<0?1:-1);else if(dy>110&&Math.abs(dy)>Math.abs(dx)*1.4)storyClose();});
-  el.addEventListener('keydown',e=>{if(!document.getElementById('sheet').hidden)return;if(e.key==='Escape'){e.preventDefault();storyClose();}else if(e.key==='ArrowRight')storyGo(1);else if(e.key==='ArrowLeft')storyGo(-1);});
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='st-desc'||e.target.id==='st-amt')){e.preventDefault();const k=e.target.id==='st-amt'?'amt':'desc';storyAct('stsave:'+k,k);return;}if(e.target.closest&&e.target.closest('input'))return;if(!document.getElementById('sheet').hidden)return;if(e.key==='Escape'){e.preventDefault();storyClose();}else if(e.key==='ArrowRight')storyGo(1);else if(e.key==='ArrowLeft')storyGo(-1);});
 }
 function storyAct(a,v){
   if(a==='story'){storyOpen();return true;}
@@ -2948,8 +3010,12 @@ function storyAct(a,v){
   if(a==='stclose'){storyClose();return true;}
   if(a==='stnext'){storyNext();return true;}
   if(a==='stprev'){storyGo(-1);return true;}
-  if(a.indexOf('stok:')===0){const t=stTx(v);if(t)stMark(t,'ok');try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}storyNext();return true;}
-  if(a.indexOf('stcat:')===0){const [id,c]=v.split('|'),t=stTx(id);if(!t)return true;if(!t.sample){unlearn(t.type,t.desc,t.cat);learn(t.type,t.desc,c,t.pocket);}t.cat=c;t.eby=S.me;stMark(t,'fix');buildModel();toast('Kategori jadi '+cat(ctype(t),c).n);storyNext();return true;}
+  /* our calendar redraws itself before its change event, so the story takes the picked day here */
+  if(a.indexOf('dpp:st-date:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id),d=a.slice(12);if(DP['st-date'])DP['st-date'].open=false;if(t&&d)stApply(t.id,'date',d);ST.ed=null;storyPaint(0);return true;}
+  if(a.indexOf('sted:')===0){ST.ed=ST.ed===v?null:(v||null);storyPaint(0);const ed=document.querySelector('.st-ed.open'),sl=document.querySelector('.st-slide');if(ed&&sl)sl.scrollTo({top:Math.max(0,ed.offsetTop-sl.offsetTop-120),behavior:RM?'auto':'smooth'});const f=document.querySelector('#st-desc,#st-amt');if(f){f.focus();const n=f.value.length;try{f.setSelectionRange(n,n);}catch(e){}}return true;}
+  if(a.indexOf('stset:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id);if(!t)return true;const [k,val]=v.split('|');stApply(t.id,k,val);if(k!=='cat')ST.ed=null;storyPaint(0);return true;}
+  if(a.indexOf('stsave:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id),f=document.getElementById(v==='amt'?'st-amt':'st-desc');if(!t||!f)return true;stApply(t.id,v,v==='amt'?amountFromField(f.value):f.value);ST.ed=null;storyPaint(0);return true;}
+  if(a.indexOf('stok:')===0){const t=stTx(v);if(t)stMark(t,ST.fixed&&ST.fixed.has(t.id)?'fix':'ok');try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}storyNext();return true;}
   if(a.indexOf('stedit:')===0){const t=stTx(v);if(!t)return true;stMark(t,'fix');storyNext();openTx(t.id);return true;}
   if(a.indexOf('stdel:')===0||a.indexOf('stdupdel:')===0){const t=stTx(v);if(!t)return true;const i=S.tx.indexOf(t);S.tx.splice(i,1);S.deleted[t.id]=Date.now();
     const dup=a.indexOf('stdupdel:')===0;ST.done[dup?'dup':'del']++;save();
@@ -5400,7 +5466,7 @@ document.addEventListener('input',e=>{
   else if(id==='famt'){F.amtManual=e.target.value!=='';const v=e.target.value;if(!/[a-z]/i.test(v)){const n=v.replace(/[^\d]/g,'');e.target.value=n?NF.format(+n):'';}document.getElementById('ferr').hidden=true;refreshForm();}
   else if(id==='hq'){const had=!!H.q;H.q=e.target.value;const x=document.querySelector('.hsx');if(x)x.hidden=!H.q;if(had!==!!H.q){const hf=document.getElementById('hfilters');if(hf)hf.innerHTML=histFilterRows();}renderHistList();}
   else if(id==='fqty'){refreshForm();}
-  else if(id==='budget'||id==='ed-amt'||id==='pk-start'){const n2=e.target.value.replace(/[^\d]/g,'');e.target.value=n2?NF.format(+n2):'';}
+  else if(id==='budget'||id==='ed-amt'||id==='pk-start'||id==='st-amt'){const n2=e.target.value.replace(/[^\d]/g,'');e.target.value=n2?NF.format(+n2):'';}
 });
 document.addEventListener('change',e=>{if(e.target.id==='qr-photo'&&e.target.files&&e.target.files[0]){scanPhoto(e.target.files[0]);e.target.value='';return;}if((e.target.id==='scan-cam'||e.target.id==='scan-gal')&&e.target.files&&e.target.files[0]){startScan(e.target.files[0]);return;}if(e.target.id==='ed-photo'&&e.target.files&&e.target.files[0]){savePhoto(e.target.files[0]);return;}if(e.target.id==='fhid'){F.hidden=e.target.checked;F.hiddenManual=true;refreshForm();}if(e.target.id==='wheel-custom'){readWheelCustom();save();paintGame();}const hk={hb:'biz',hw:'who',hc:'cat',hp:'pocket'}[e.target.id];if(hk){H[hk]=e.target.value;refreshHistFilters();renderHistList();const b=document.querySelector('[data-act="dd:'+e.target.id+'"]');if(b)b.focus({preventScroll:true});}if(e.target.id==='fdate')F.date=e.target.value;});
 document.addEventListener('focusout',e=>{if(e.target.id==='famt'){const n=amountFromField(e.target.value);e.target.value=n?NF.format(n):'';refreshForm();}});
