@@ -5544,7 +5544,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState!==
 window.addEventListener('online',()=>syncNow());
 widgetPush();
 if(!needOnb())setTimeout(()=>{window.__kasShare();try{const N=window.KasQuickNative,t=N&&N.navTake?N.navTake():'';if(t)window.__kasNav(t);}catch(e){}},250);
-window.__kasNav=t=>{if(t==='log'){closeSheet();if(ST)storyClose();TAB='kita';UI.kt='log';render(true);window.scrollTo(0,0);return;}if(VIEWS[t]){closeSheet();if(ST)storyClose();TAB=t;render(true);window.scrollTo(0,0);}};
+/* A tap on the Android notification for the other person's changes opens Riwayat, where the catatan are. */
+window.__kasNav=t=>{if(t==='log')t='hist';if(VIEWS[t]){closeSheet();if(ST)storyClose();TAB=t;render(true);window.scrollTo(0,0);}};
 logNative();
 }
 window.__kas={parseReceipt,parseAmount,predict,merge,buildTips,balances,S:()=>S,save:()=>save(),exportObj,syncNow,SB,setPin};
