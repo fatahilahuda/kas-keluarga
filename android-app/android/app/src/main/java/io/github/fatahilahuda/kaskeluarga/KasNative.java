@@ -236,6 +236,16 @@ public class KasNative {
         KasWidget.save(activity.getApplicationContext(), json);
     }
 
+    /** Installed Android app version, for Pengaturan > Pembaruan aplikasi. */
+    @JavascriptInterface
+    public String appVersion() {
+        try {
+            return activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            return "";
+        }
+    }
+
     // ---------- Aktivitas: notifications for the other person's changes ----------
 
     @JavascriptInterface
