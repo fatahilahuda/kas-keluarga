@@ -81,43 +81,43 @@ html.story-on,html.story-on body{overflow:hidden}
 .st-head{display:flex;align-items:center;gap:6px;margin-top:8px;min-height:44px}
 .st-count{flex:1;font-size:13px;color:var(--muted);font-weight:600}
 .st-head .link{padding:10px}
-.st-slide{flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto;padding-top:6px}
 .st-slide.in-r{animation:stR .26s cubic-bezier(.2,.8,.2,1)}.st-slide.in-l{animation:stL .26s cubic-bezier(.2,.8,.2,1)}
 @keyframes stIn{from{opacity:0;transform:translateY(16px)}}
 @keyframes stR{from{opacity:0;transform:translateX(28px)}}
 @keyframes stL{from{opacity:0;transform:translateX(-28px)}}
 @media (prefers-reduced-motion:reduce){.story,.st-slide.in-r,.st-slide.in-l{animation:none}}
-.st-q{font:700 26px/1.2 var(--display);margin:6px 2px 12px}
 .st-why{color:var(--muted);font-size:14px;margin:-4px 2px 14px;line-height:1.45}
-.st-card{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 14px 14px;border-radius:26px;background:var(--surface);border:1px solid var(--line)}
-.st-card .mono{width:52px;height:52px}.st-card .mono svg{width:24px;height:24px}
-.st-amt{font:700 38px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.st-slide{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding-top:4px}
+.st-q{font:700 22px/1.2 var(--display);margin:2px 2px 10px}
+.st-card{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px;border-radius:22px;background:var(--surface);border:1px solid var(--line)}
+.st-card .mono{width:52px;height:52px;flex:none}.st-card .mono svg{width:24px;height:24px}
+.st-hd{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.st-amt{font:700 30px/1.1 var(--display);letter-spacing:-.01em}
 .st-amt.in{color:var(--in)}
-.st-desc{font-size:17px;font-weight:600;margin-bottom:14px;overflow-wrap:anywhere}
-.st-facts{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left}
-.st-f{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:10px 14px;border-radius:16px;background:var(--surface-2);border:1.5px solid transparent;color:var(--ink);text-align:left}
-.st-f.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
-.st-f.ro{min-height:52px;background:none;border:1px dashed var(--line)}
-.st-fi{width:28px;display:grid;place-items:center;flex:none;color:var(--muted)}
-.st-fi svg{width:22px;height:22px}.st-fi .dot{width:16px;height:16px}.st-fi .av{transform:scale(1.25)}
-.st-fb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.st-fb small{font-size:12.5px;color:var(--muted);font-weight:500}
-.st-fb b{font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
-.st-fe{width:20px;height:20px;flex:none;color:var(--accent)}
-.st-hb{background:none;border:0;color:inherit;padding:4px 12px;border-radius:14px;display:inline-flex;align-items:center;gap:8px;max-width:100%}
-.st-hb:first-of-type{margin-top:12px}
-.st-hb.on{background:color-mix(in srgb,var(--accent) 10%,transparent)}
-.st-hb.st-desc{margin:2px 0 14px;font-size:18px;font-weight:600;overflow-wrap:anywhere}
-.st-hp{width:18px;height:18px;color:var(--accent);flex:none;opacity:.8}
-.st-ed{margin-top:14px}
-.st-ed.open{padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
-.st-edt{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.st-edt .link{padding:6px 2px}
-.st-edh{display:block;font-size:14px;color:var(--muted);font-weight:600;margin:0 2px 8px}
-.st-edt .st-edh{margin:0}
-.st-ed .chip{min-height:44px;font-size:15px}
-.st-more svg{width:16px;height:16px}
-.st-dp{margin-top:10px}
+.st-hb{background:none;border:0;color:inherit;padding:2px 6px;margin-left:-6px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;max-width:100%;text-align:left}
+.st-hb.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.st-hb.st-desc{font-size:16px;font-weight:600}
+.st-hb.st-desc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-hp{width:15px;height:15px;color:var(--accent);flex:none}
+.st-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.st-f{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:72px;padding:11px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);color:var(--ink);text-align:left}
+.st-f.ro{background:none;border-style:dashed}
+.st-fl{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.st-fl svg{width:16px;height:16px}.st-fl .dot{width:11px;height:11px}.st-fl .av{transform:scale(.9)}
+.st-fl small{font-size:12.5px;font-weight:500}
+.st-f b{font-size:16px;font-weight:650;line-height:1.25;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-sug{margin-top:12px}
+.st-sug>span{display:block;font-size:13px;color:var(--muted);margin:0 2px 6px}
+.st-sugr{display:flex;gap:6px;overflow:hidden}
+.st-sugr .chip{flex:none;white-space:nowrap}
+.st-ed{margin-top:10px;padding:12px 14px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--accent);min-height:0;overflow:hidden}
+.st-edt{display:flex;align-items:center;justify-content:space-between;margin:-4px -6px 8px 0}
+.st-edt b{font-size:15px}
+.st-dense{gap:6px}
+.st-dense .chip{min-height:36px;font-size:14px;padding:0 10px}
+.st-dense .chip .ci{width:15px;height:15px}
+.st-ed .pchips{grid-template-columns:1fr 1fr}
+.st-ed .hint{margin:8px 2px 0}
 .st-inrow{display:flex;gap:8px}.st-inrow .inp{flex:1;min-width:0;font-size:17px}.story .st-inrow .btn{flex:none;width:auto;padding:0 18px}
 /* answer buttons stay in reach while the card and editor scroll behind them */
 .st-acts{margin-top:auto;padding-top:22px;display:flex;flex-direction:column;gap:10px;position:sticky;bottom:0;z-index:2;background:linear-gradient(to bottom,transparent,var(--bg) 20px)}
@@ -2926,38 +2926,43 @@ function stFacts(t){
 }
 const stAmt=t=>'<span class="st-amt num '+t.type+'">'+(t.type==='in'?'+':t.type==='out'?'−':'⇄ ')+fmt(t.amount)+'</span>';
 const ST_ED={cat:'Ganti kategori',pocket:'Ganti kantong',to:'Ganti kantong tujuan',date:'Ganti tanggal',for:'Untuk siapa',desc:'Ubah keterangan',amt:'Ubah nominal'};
+/* The open editor takes the place of the detail tiles, so a slide always fits one screen. */
 function stEditor(t){
-  const k=ST.ed,ty=ctype(t);
-  if(!k){
-    if(t.type==='tf')return '';
-    const alt=predict(ty,t.desc).ranked.map(r=>r.id).filter(id=>id!==t.cat),more=CATS[ty].filter(x=>x.id!==t.cat&&!alt.includes(x.id)).map(x=>x.id),opts=alt.concat(more).slice(0,3);
-    return '<div class="st-ed"><span class="st-edh">Bukan '+esc(cat(ty,t.cat).n)+'? Ganti ke</span><div class="chips">'+opts.map(id=>'<button class="chip" data-act="stset:cat|'+id+'">'+esc(cat(ty,id).n)+'</button>').join('')+
-      '<button class="chip st-more" data-act="sted:cat">Semua'+ic('chevd','ci')+'</button></div></div>';
-  }
-  let body='';
-  if(k==='cat')body='<div class="chips">'+CATS[ty].map(c=>'<button class="chip" data-act="stset:cat|'+c.id+'" aria-pressed="'+(t.cat===c.id)+'" style="--cc:'+ccolor(ty,c.id)+'">'+ic(catIc(ty,c.id),'ci')+esc(c.n)+'</button>').join('')+'</div>';
+  const k=ST.ed,ty=ctype(t);let body='';
+  if(k==='cat'){ // most used first; on short screens only what fits, the rest via Lainnya
+    const use={};V().forEach(x=>{if(ctype(x)===ty)use[x.cat]=(use[x.cat]||0)+1;});
+    const L=CATS[ty].slice().sort((a,b)=>(b.id===t.cat)-(a.id===t.cat)||(use[b.id]||0)-(use[a.id]||0)),cap=innerHeight>=820?L.length:innerHeight>=700?11:8,show=L.slice(0,cap);
+    body='<div class="chips st-dense">'+show.map(c=>'<button class="chip" data-act="stset:cat|'+c.id+'" aria-pressed="'+(t.cat===c.id)+'" style="--cc:'+ccolor(ty,c.id)+'">'+ic(catIc(ty,c.id),'ci')+esc(c.n)+'</button>').join('')+
+      (L.length>cap?'<button class="chip st-more" data-act="stedit:'+t.id+'">Kategori lain'+ic('chev','ci')+'</button>':'')+'</div>';}
   else if(k==='pocket'||k==='to'){const cur=k==='to'?t.to:t.pocket,ex=t.type==='tf'?(k==='to'?t.pocket:t.to):null;
     body=pocketChips('st-pk',cur,'stpk',balances(),ex).replace(/data-act="stpk:/g,'data-act="stset:'+k+'|');}
-  else if(k==='date'){const td=todayISO(),Q=[[td,'Hari ini'],[addDay(td,-1),'Kemarin'],[addDay(td,-2),'2 hari lalu'],[addDay(td,-3),'3 hari lalu']];
-    body='<div class="chips">'+Q.map(([d,l])=>'<button class="chip" data-act="stset:date|'+d+'" aria-pressed="'+(t.date===d)+'">'+l+'</button>').join('')+'</div><div class="st-dp">'+dpField('st-date',t.date)+'</div>';}
-  else if(k==='for')body='<div class="chips">'+forChips(t.for&&person(t.for)?t.for:null,'stfor').replace(/<button class="chip" data-act="newperson"[\s\S]*$/,'').replace(/data-act="stfor:/g,'data-act="stset:for|')+'</div>';
+  else if(k==='date'){const td=todayISO(),Q=[0,1,2,3,4,5,6].map(n=>[addDay(td,-n),n===0?'Hari ini':n===1?'Kemarin':(d=>HR[d.getDay()]+' '+d.getDate())(parseISO(addDay(td,-n)))]);
+    body='<div class="chips st-dense">'+Q.map(([d,l])=>'<button class="chip" data-act="stset:date|'+d+'" aria-pressed="'+(t.date===d)+'">'+l+'</button>').join('')+
+      (Q.some(([d])=>d===t.date)?'':'<button class="chip" aria-pressed="true">'+esc(shortDate(t.date))+'</button>')+'</div><p class="hint">Tanggal lebih lama lewat <b>Lainnya</b>.</p>';}
+  else if(k==='for')body='<div class="chips st-dense">'+forChips(t.for&&person(t.for)?t.for:null,'stfor').replace(/<button class="chip" data-act="newperson"[\s\S]*$/,'').replace(/data-act="stfor:/g,'data-act="stset:for|')+'</div>';
   else if(k==='desc')body='<div class="st-inrow"><input class="inp" id="st-desc" value="'+esc(t.desc||'')+'" autocomplete="off" enterkeyhint="done" aria-label="Keterangan"><button class="btn" data-act="stsave:desc">Simpan</button></div>';
   else if(k==='amt')body='<div class="st-inrow"><input class="inp" id="st-amt" inputmode="numeric" value="'+NF.format(t.amount)+'" autocomplete="off" enterkeyhint="done" aria-label="Nominal"><button class="btn" data-act="stsave:amt">Simpan</button></div>';
-  return '<div class="st-ed open"><div class="st-edt"><span class="st-edh">'+ST_ED[k]+'</span><button class="link" data-act="sted:">Tutup</button></div>'+body+'</div>';
+  return '<div class="st-ed"><div class="st-edt"><b>'+ST_ED[k]+'</b><button class="ib" data-act="sted:" aria-label="Tutup">'+ic('x')+'</button></div>'+body+'</div>';
 }
 function stOne(s){
   const t=stTx(s.id);if(!t)return stGone();
-  const c=t.type==='tf'?null:cat(ctype(t),t.cat),ed=ST.ed;
-  return '<div class="st-q">Sudah benar?</div>'+
-    '<div class="st-card">'+mono(t)+
-      '<button class="st-hb'+(ed==='amt'?' on':'')+'" data-act="sted:amt" aria-label="Ubah nominal">'+stAmt(t)+ic('edit','st-hp')+'</button>'+
-      '<button class="st-hb st-desc'+(ed==='desc'?' on':'')+'" data-act="sted:desc" aria-label="Ubah keterangan"><span>'+esc(t.desc||(c?c.n:'Pindah saldo'))+'</span>'+ic('edit','st-hp')+'</button>'+
-      '<div class="st-facts">'+stFacts(t).map(([k,i,l,v])=>k?
-        '<button class="st-f'+(ed===k?' on':'')+'" data-act="sted:'+k+'" aria-expanded="'+(ed===k)+'"><span class="st-fi">'+i+'</span><span class="st-fb"><small>'+l+'</small><b>'+v+'</b></span>'+ic(ed===k?'chevd':'edit','st-fe')+'</button>':
-        '<div class="st-f ro"><span class="st-fi">'+i+'</span><span class="st-fb"><small>'+l+'</small><b>'+v+'</b></span></div>').join('')+'</div></div>'+
-    stEditor(t)+
-    '<div class="st-acts"><div class="st-row"><button class="btn st-sec" data-act="stedit:'+t.id+'">'+ic('dots')+'Lainnya</button><button class="btn st-sec st-del" data-act="stdel:'+t.id+'">'+ic('trash')+'Hapus</button></div>'+
-      '<button class="btn st-main" data-act="stok:'+t.id+'">'+ic('check')+'Sudah benar</button></div>';
+  const c=t.type==='tf'?null:cat(ctype(t),t.cat),ed=ST.ed,ty=ctype(t);
+  const head='<div class="st-card">'+mono(t)+'<div class="st-hd">'+
+    '<button class="st-hb'+(ed==='amt'?' on':'')+'" data-act="sted:amt" aria-label="Ubah nominal">'+stAmt(t)+'</button>'+
+    '<button class="st-hb st-desc'+(ed==='desc'?' on':'')+'" data-act="sted:desc" aria-label="Ubah keterangan"><span>'+esc(t.desc||(c?c.n:'Pindah saldo'))+'</span>'+ic('edit','st-hp')+'</button></div></div>';
+  let mid;
+  if(ed)mid=stEditor(t);
+  else{
+    mid='<div class="st-tiles">'+stFacts(t).map(([k,i,l,v])=>k?
+      '<button class="st-f" data-act="sted:'+k+'"><span class="st-fl">'+i+'<small>'+l+'</small></span><b>'+v+'</b></button>':
+      '<div class="st-f ro"><span class="st-fl">'+i+'<small>'+l+'</small></span><b>'+v+'</b></div>').join('')+'</div>';
+    if(t.type!=='tf'){const alt=predict(ty,t.desc).ranked.map(r=>r.id).filter(id=>id!==t.cat).slice(0,3);
+      if(alt.length)mid+='<div class="st-sug"><span>Bukan '+esc(c.n)+'?</span><div class="st-sugr">'+alt.map(id=>'<button class="chip" data-act="stset:cat|'+id+'">'+ic(catIc(ty,id),'ci')+esc(cat(ty,id).n)+'</button>').join('')+'</div></div>';}
+  }
+  /* while a field is open, the title and the secondary buttons step aside so the editor fits */
+  const sec=ed?'':'<div class="st-row"><button class="btn st-sec" data-act="stedit:'+t.id+'">'+ic('dots')+'Lainnya</button><button class="btn st-sec st-del" data-act="stdel:'+t.id+'">'+ic('trash')+'Hapus</button></div>';
+  return (ed?'':'<div class="st-q">Sudah benar?</div>')+head+mid+
+    '<div class="st-acts">'+sec+'<button class="btn st-main" data-act="stok:'+t.id+'">'+ic('check')+'Sudah benar</button></div>';
 }
 /* One field of the catatan on screen, changed in place; the review counts the catatan as "diperbaiki". */
 function stApply(id,k,v){
@@ -3012,7 +3017,7 @@ function storyAct(a,v){
   if(a==='stprev'){storyGo(-1);return true;}
   /* our calendar redraws itself before its change event, so the story takes the picked day here */
   if(a.indexOf('dpp:st-date:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id),d=a.slice(12);if(DP['st-date'])DP['st-date'].open=false;if(t&&d)stApply(t.id,'date',d);ST.ed=null;storyPaint(0);return true;}
-  if(a.indexOf('sted:')===0){ST.ed=ST.ed===v?null:(v||null);storyPaint(0);const ed=document.querySelector('.st-ed.open'),sl=document.querySelector('.st-slide');if(ed&&sl)sl.scrollTo({top:Math.max(0,ed.offsetTop-sl.offsetTop-120),behavior:RM?'auto':'smooth'});const f=document.querySelector('#st-desc,#st-amt');if(f){f.focus();const n=f.value.length;try{f.setSelectionRange(n,n);}catch(e){}}return true;}
+  if(a.indexOf('sted:')===0){ST.ed=ST.ed===v?null:(v||null);storyPaint(0);const f=document.querySelector('#st-desc,#st-amt');if(f){f.focus();const n=f.value.length;try{f.setSelectionRange(n,n);}catch(e){}}return true;}
   if(a.indexOf('stset:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id);if(!t)return true;const [k,val]=v.split('|');stApply(t.id,k,val);if(k!=='cat')ST.ed=null;storyPaint(0);return true;}
   if(a.indexOf('stsave:')===0){const t=ST.slides[ST.i]&&stTx(ST.slides[ST.i].id),f=document.getElementById(v==='amt'?'st-amt':'st-desc');if(!t||!f)return true;stApply(t.id,v,v==='amt'?amountFromField(f.value):f.value);ST.ed=null;storyPaint(0);return true;}
   if(a.indexOf('stok:')===0){const t=stTx(v);if(t)stMark(t,ST.fixed&&ST.fixed.has(t.id)?'fix':'ok');try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}storyNext();return true;}
