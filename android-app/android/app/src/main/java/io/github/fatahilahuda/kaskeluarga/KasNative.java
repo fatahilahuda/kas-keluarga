@@ -244,7 +244,7 @@ public class KasNative {
         if (json.contains("\"code\"") && Build.VERSION.SDK_INT >= 33 && !Reminders.canPost(activity)) askNotifOnce();
     }
 
-    /** Page to open, when the app was opened from an Aktivitas notification; "" otherwise. */
+    /** Page to open when the app was opened from a change notification (the web app shows Riwayat); "" otherwise. */
     @JavascriptInterface
     public String navTake() {
         String t = KasState.navTo;

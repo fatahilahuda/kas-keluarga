@@ -186,7 +186,7 @@ public class ActivityWatch extends JobService {
         }
         // With the app lock on, say that something changed but not what, like the widget does.
         String title = lines.size() == 1 && !locked ? who + " " + lines.get(0) : lines.size() + " perubahan dari " + who;
-        String text = locked ? "Buka Muarakas untuk melihat." : lines.size() == 1 ? "Ketuk untuk melihat aktivitas." : lines.get(lines.size() - 1);
+        String text = locked ? "Buka Muarakas untuk melihat." : lines.size() == 1 ? "Ketuk untuk membuka riwayat." : lines.get(lines.size() - 1);
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("tab", "log");
         PendingIntent pi = PendingIntent.getActivity(ctx, NOTIF_ID, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL)
