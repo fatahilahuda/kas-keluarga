@@ -99,23 +99,24 @@ html.story-on,html.story-on body{overflow:hidden}
 .st-facts li>svg,.st-facts li>.dot{width:16px;height:16px;flex:none;color:var(--muted)}
 .st-facts li .av{flex:none}
 .st-alt{margin-top:14px}.st-alt>span{display:block;font-size:13px;color:var(--muted);margin:0 2px 8px}
-.st-acts{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:8px}
-.st-acts .btn{min-height:52px}
-.st-row{display:flex;gap:8px}.st-row .btn{flex:1}
+.st-acts{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.st-acts .btn,.st-dcard .btn{display:flex;align-items:center;justify-content:center;gap:8px;line-height:1}
+.st-acts .btn svg,.st-dcard .btn svg{width:20px;height:20px;flex:none}
+.story .btn.st-main{min-height:56px;border-radius:16px;font-size:16px}
+.st-row{display:flex;gap:10px}.st-row .btn{flex:1}
+.story .btn.st-sec{min-height:48px;border-radius:14px;background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.story .btn.st-sec svg{color:var(--muted)}
+.story .btn.st-del,.story .btn.st-del svg{color:var(--out)}
 .st-dups{display:flex;flex-direction:column;gap:8px}
 .st-dcard{display:flex;align-items:center;gap:10px;padding:12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
 .st-dd{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.st-dd b{font-size:14.5px}.st-dd small{font-size:12px;color:var(--muted)}
 .st-da{font-weight:700;font-size:14px}
-.st-dcard .btn{flex:none;width:auto;min-height:40px;padding:0 12px}
+.story .st-dcard .btn{flex:none;width:44px;height:44px;min-height:44px;padding:0;border-radius:12px}.st-dcard .btn svg{width:19px;height:19px}
 .st-end{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .st-check{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink,#fff);margin-bottom:10px;animation:stPop .4s cubic-bezier(.3,1.6,.5,1)}
 .st-check svg{width:42px;height:42px}
 @keyframes stPop{from{transform:scale(.5);opacity:0}}
 /* Aktivitas */
-.hact{display:flex;justify-content:flex-end;margin:-4px 2px 6px}
-.hact .link{display:inline-flex;align-items:center;gap:6px;padding:8px 4px}
-.hact svg{width:16px;height:16px}
-.lgb{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--out);color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center}
 .loglist{display:flex;flex-direction:column}
 .logday{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 2px 6px}
 .logday:first-child{margin-top:0}
@@ -1601,6 +1602,7 @@ const IP={
  x:'<path d="M6 6l12 12M18 6 6 18"/>',
  vol:'<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
  mic:'<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+ trash:'<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l.9 12.5h9.2l.9-12.5M10.2 11v5.5M13.8 11v5.5"/>',
  bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/>',
  flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
  kbd:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
@@ -1936,7 +1938,7 @@ const inMonth=k=>V().filter(t=>mkey(t.date)===k);
 const inMonthAll=k=>S.tx.filter(t=>mkey(t.date)===k);
 const giftsReady=()=>S.tx.filter(t=>t.by!==S.me&&t.revealedAt&&!t.sealed&&!t.hidden&&!S.opened[t.id]);
 const giftsLocked=()=>S.tx.filter(t=>t.by!==S.me&&(t.sealed||t.hidden));
-const kitaCount=()=>S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length+giftsReady().length;
+const kitaCount=()=>S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length+giftsReady().length+(modOn('aktivitas')?logFromOthers().length:0);
 function ago(ts){const d=(Date.now()-ts)/36e5;if(d<1)return 'baru saja';if(d<24)return Math.round(d)+' jam lalu';const dd=Math.round(d/24);return dd===1?'kemarin':dd+' hari lalu';}
 function totals(k,uptoDay,scope){
   const r={in:0,out:0,hin:0,hout:0,cats:{},icats:{},ip:{},op:{},bi:{},bo:{},ba:{},aset:0,n:0,L:{}},own=scope&&scope!=='home';
@@ -2226,8 +2228,7 @@ function refreshHistFilters(){
 }
 function vHist(){
   const mb=MODE();
-  const lgN=modOn('aktivitas')?logFromOthers().length:0;
-  return sampleBanner()+(modOn('aktivitas')&&!mb?'<div class="hact"><button class="link" data-act="tab:log">'+ic('pulse')+'Aktivitas'+(lgN?'<span class="lgb">'+lgN+'</span>':'')+'</button></div>':'')+'<div id="hcards"></div><section class="hbar">'+(mb?modeBanner(mb):'')+'<div class="tseg" role="group" aria-label="Jenis catatan">'+
+  return sampleBanner()+'<div id="hcards"></div><section class="hbar">'+(mb?modeBanner(mb):'')+'<div class="tseg" role="group" aria-label="Jenis catatan">'+
     [['all','Semua','list'],['out','Keluar','up'],['in','Masuk','down'],['tf','Pindah','swap']].map(([k,l,i])=>'<button data-act="hf:'+k+'" class="t-'+k+'" aria-pressed="'+(H.type===k)+'">'+ic(i)+'<span>'+l+'</span></button>').join('')+'</div>'+
     '<label class="hsearch">'+ic('search')+'<input id="hq" type="search" placeholder="Cari keterangan…" aria-label="Cari catatan" value="'+esc(H.q)+'" autocomplete="off"><button type="button" class="hsx" data-act="hclr:q" aria-label="Hapus pencarian"'+(H.q?'':' hidden')+'>'+ic('x')+'</button></label>'+
     '<div id="hfilters" class="fchips">'+histFilterRows()+'</div></section>'+
@@ -2906,16 +2907,16 @@ function stOne(s){
     '<div class="st-card">'+mono(t)+stAmt(t)+'<div class="st-desc">'+esc(t.desc||(c?c.n:'Pindah saldo'))+'</div>'+
       '<ul class="st-facts">'+stFacts(t).map(f=>'<li>'+f[0]+'<span>'+f[1]+'</span></li>').join('')+'</ul></div>'+
     (opts.length?'<div class="st-alt"><span>Bukan '+esc(c.n)+'? Ganti ke</span><div class="chips">'+opts.map(id=>'<button class="chip" data-act="stcat:'+t.id+'|'+id+'">'+esc(cat(ctype(t),id).n)+'</button>').join('')+'</div></div>':'')+
-    '<div class="st-acts"><button class="btn" data-act="stok:'+t.id+'">'+ic('check')+'Benar</button>'+
-      '<div class="st-row"><button class="btn ghost" data-act="stedit:'+t.id+'">'+ic('edit')+'Ubah</button><button class="btn ghost danger" data-act="stdel:'+t.id+'">'+ic('del')+'Hapus</button></div></div>';
+    '<div class="st-acts"><div class="st-row"><button class="btn st-sec" data-act="stedit:'+t.id+'">'+ic('edit')+'Ubah</button><button class="btn st-sec st-del" data-act="stdel:'+t.id+'">'+ic('trash')+'Hapus</button></div>'+
+      '<button class="btn st-main" data-act="stok:'+t.id+'">'+ic('check')+'Sudah benar</button></div>';
 }
 function stDup(s){
   const L=s.ids.map(stTx).filter(Boolean);if(L.length<2)return stGone(true);
   return '<div class="st-q">Tercatat dua kali?</div><p class="st-why">Nominal sama, tanggal berdekatan, '+esc(s.why)+'. Hapus yang dobel, atau biarkan kalau memang dua transaksi.</p>'+
     '<div class="st-dups">'+L.map((t,i)=>'<div class="st-dcard">'+mono(t)+'<div class="st-dd"><b>'+esc(t.desc||cat(ctype(t),t.cat).n)+'</b><small>'+stFacts(t).map(f=>f[1]).join(' · ')+'</small>'+
       '<small class="muted">Disimpan '+new Date(t.ts||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</small></div><div class="st-da num">'+fmtS(t.amount)+'</div>'+
-      '<button class="btn sm ghost danger" data-act="stdupdel:'+t.id+'" aria-label="Hapus catatan ke-'+(i+1)+'">Hapus</button></div>').join('')+'</div>'+
-    '<div class="st-acts"><button class="btn" data-act="stdupok">'+ic('check')+'Bukan dobel, simpan semua</button></div>';
+      '<button class="btn st-sec st-del st-sm" data-act="stdupdel:'+t.id+'" aria-label="Hapus catatan ke-'+(i+1)+'" title="Hapus">'+ic('trash')+'</button></div>').join('')+'</div>'+
+    '<div class="st-acts"><button class="btn st-main" data-act="stdupok">'+ic('check')+'Bukan dobel, simpan semua</button></div>';
 }
 function stGone(dup){return '<div class="st-q">'+(dup?'Sudah beres':'Catatan ini sudah dihapus')+'</div><div class="st-acts"><button class="btn" data-act="stnext">Lanjut</button></div>';}
 function stEnd(){
@@ -3003,9 +3004,9 @@ function logVal(k,v,s){
 }
 /* Add then delete within a day: worth pointing out, it is how money "disappears" from a report. */
 function logAddDel(r,L){if(r.op!=='del')return false;return L.some(x=>x.op==='add'&&x.tid===r.tid&&r.at-x.at<864e5);}
-function vLog(){
+function logBody(){
   const L=logList(),others=logFromOthers().length;
-  let h=pageTop('Aktivitas','Semua catat, ubah, dan hapus selama 90 hari terakhir'+(SOLO()?'':', dari kalian berdua'),'tab:hist');
+  let h='<p class="hint" style="margin:2px 4px 10px">Semua catat, ubah, dan hapus dari kalian berdua selama 90 hari terakhir.</p>';
   if(!L.length)return h+'<div class="empty">'+ic('list')+'<p>Belum ada aktivitas. Setiap catatan yang dibuat, diubah, atau dihapus akan muncul di sini.</p></div>';
   let day='';h+='<section class="card"><div class="loglist">';
   L.slice(0,300).forEach(r=>{const d=new Date(r.at),ds=d.toISOString().slice(0,10);
@@ -3023,11 +3024,11 @@ const todayISOof=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'
 function logCard(){
   const L=logFromOthers();if(!L.length||!modOn('aktivitas'))return '';
   const who=memName(L[0].by),sub=L.length===1?logLine(L[0]):L.slice(0,2).map(logLine).join(' · ')+(L.length>2?' · +'+(L.length-2)+' lagi':'');
-  return note({icon:'pulse',c:'var(--k2)',title:L.length+' perubahan dari '+who,sub,act:'tab:log',btn:'Lihat'});
+  return note({icon:'pulse',c:'var(--k2)',title:L.length+' perubahan dari '+who,sub,act:'kita:log',btn:'Lihat'});
 }
 function logNotify(){
   if(!modOn('aktivitas'))return;const L=logFromOthers().filter(r=>r.at>LOG_TOASTED);if(!L.length)return;LOG_TOASTED=Math.max(...L.map(r=>r.at));
-  toast(L.length===1?logLine(L[0]):L.length+' perubahan dari '+memName(L[0].by),'Lihat',()=>{TAB='log';render(true);});
+  toast(L.length===1?logLine(L[0]):L.length+' perubahan dari '+memName(L[0].by),'Lihat',()=>{TAB='kita';UI.kt='log';render(true);window.scrollTo(0,0);});
 }
 /* Android: background check for the other person's changes while the app is closed (KasNative.activitySet). */
 function logNative(){
@@ -4134,7 +4135,7 @@ function vKita(){
   if(SOLO())return famSection();
   const kt=UI.kt||'sum',pend=S.props.filter(p=>(p.status==='pending'&&p.by!==S.me)||(p.status==='conditional'&&p.by===S.me)).length,gr=giftsReady().length,fa=famAll();
   let h=meBanner()+'<section class="card"><div class="fam-head"><span class="avs">'+fa.slice(0,5).map(p=>av(p.id,1)).join('')+'</span><div style="min-width:0"><h2>Keluarga kita</h2><p class="hint">'+fa.length+' orang · HP '+esc(me().n)+' · <span id="kitasync">'+(S.family?syncLabel():'belum tersambung')+'</span></p></div></div></section>';
-  h+='<div class="seg ic" role="group" aria-label="Bagian">'+[['sum','Keluarga','users',0],['prop','Pengajuan','inbox',pend],['gift','Kado','gift',gr],['game','Main','dice',0]].map(([k,l,i,c])=>'<button data-act="kita:'+k+'" aria-pressed="'+(kt===k)+'">'+ic(i)+l+(c?'<span class="cnt">'+c+'</span>':'')+'</button>').join('')+'</div><div id="tabbody" class="stack tabbody">';
+  h+='<div class="seg ic" role="group" aria-label="Bagian">'+[['sum','Keluarga','users',0],['prop','Pengajuan','inbox',pend],['gift','Kado','gift',gr],['game','Main','dice',0]].concat(modOn('aktivitas')?[['log','Log','pulse',logFromOthers().length]]:[]).map(([k,l,i,c])=>'<button data-act="kita:'+k+'" aria-pressed="'+(kt===k)+'">'+ic(i)+l+(c?'<span class="cnt">'+c+'</span>':'')+'</button>').join('')+'</div><div id="tabbody" class="stack tabbody">';
   if(kt==='sum'){h+=famSection()+sumKita();}
   else if(kt==='prop'){
     h+='<button class="btn" data-act="newprop">+ Ajukan pengeluaran</button>';
@@ -4150,6 +4151,8 @@ function vKita(){
       (opened.length?'<p class="hint">Sudah dibuka: '+opened.length+' kado, total '+fmt(opened.reduce((a,t)=>a+t.amount,0))+'.</p>':'')+'</section>';
     h+='<section class="card stack">'+hh('eye','Rahasiamu','var(--k4)')+'<p class="small muted">'+esc(partner().n)+' melihatnya sebagai kado tertutup.</p>'+(secret.length?'<div class="list">'+sortTx(secret).map(txRow).join('')+'</div>':'<p class="small muted">Tidak ada pemasukan rahasia.</p>')+
       (given.length?'<p class="hint">Sudah kamu buka untuk '+esc(partner().n)+': '+given.length+' kado.</p>':'')+'</section>';
+  }else if(kt==='log'&&modOn('aktivitas')){
+    h+=logBody();
   }else{
     h+=vGames();
   }
@@ -5065,7 +5068,7 @@ function finishOnb(keepSamples){const now=Date.now(),o=ONB,m1=mem('m1'),m2=mem('
   toast(keepSamples?'Ini data contoh. Hapus kapan saja lewat kartu di atas.':'Siap! Isi saldo awal tiap kantong, lalu mulai catat.');}
 
 /* ---------- render ---------- */
-const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet,belanja:vShop,acara:vEvents,arisan:vArisan,tagihan:vBills,log:vLog};
+const VIEWS={home:vHome,hist:vHist,add:vAdd,chart:vChart,tips:vTips,kita:vKita,zakat:vZakat,set:vSet,belanja:vShop,acara:vEvents,arisan:vArisan,tagihan:vBills};
 const chartSeg=on=>'<div class="seg" role="group" aria-label="Analisis"><button data-act="tab:chart" aria-pressed="'+(on==='chart')+'">Grafik</button><button data-act="tab:tips" aria-pressed="'+(on==='tips')+'">Saran</button>'+(modOn('zakat')?'<button data-act="tab:zakat" aria-pressed="'+(on==='zakat')+'">Zakat</button>':'')+'</div>';
 function render(anim){if(QUICK){renderQuick();return;}if(ST&&document.getElementById('story')&&!document.getElementById('story').hidden)setTimeout(()=>{if(ST)storyPaint(0);},0);BG_PENDING=false;if(DDOPEN)ddClose();if(perIsOpen())perClose();
   ANIM=!!anim&&!RM;
@@ -5541,7 +5544,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState!==
 window.addEventListener('online',()=>syncNow());
 widgetPush();
 if(!needOnb())setTimeout(()=>{window.__kasShare();try{const N=window.KasQuickNative,t=N&&N.navTake?N.navTake():'';if(t)window.__kasNav(t);}catch(e){}},250);
-window.__kasNav=t=>{if(VIEWS[t]){closeSheet();if(ST)storyClose();TAB=t;render(true);window.scrollTo(0,0);}};
+window.__kasNav=t=>{if(t==='log'){closeSheet();if(ST)storyClose();TAB='kita';UI.kt='log';render(true);window.scrollTo(0,0);return;}if(VIEWS[t]){closeSheet();if(ST)storyClose();TAB=t;render(true);window.scrollTo(0,0);}};
 logNative();
 }
 window.__kas={parseReceipt,parseAmount,predict,merge,buildTips,balances,S:()=>S,save:()=>save(),exportObj,syncNow,SB,setPin};
